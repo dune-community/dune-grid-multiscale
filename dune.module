@@ -8,3 +8,4 @@ Version: 2.2.0
 Maintainer: felix.albrecht@uni-muenster.de
 #depending on 
 Depends: dune-common dune-grid
+Suggests: dune-subgrid dune-stuff

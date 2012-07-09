@@ -13,5 +13,5 @@ AC_DEFUN([DUNE_GRID_MULTISCALE_CHECKS])
 # not by dune-grid-multiscale itself
 AC_DEFUN([DUNE_GRID_MULTISCALE_CHECK_MODULE],
 [
-  DUNE_CHECK_MODULES([dune-grid-multiscale],[grid_multiscale/grid_multiscale.hh])
+  DUNE_CHECK_MODULES([dune-grid-multiscale],[grid/multiscale/provider/cube.hh])
 ])

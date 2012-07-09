@@ -3,7 +3,7 @@
 AC_PREREQ(2.50)
 DUNE_AC_INIT # gets module version from dune.module file
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([src/dune_grid_multiscale.cc])
+AC_CONFIG_SRCDIR([])
 AM_CONFIG_HEADER([config.h])
 
 
@@ -19,12 +19,12 @@ LIBS="$DUNE_LIBS"
 
 AC_CONFIG_FILES([
   Makefile
-  src/Makefile
   doc/Makefile
   doc/doxygen/Makefile
   doc/doxygen/Doxyfile
   dune/Makefile
-  dune/grid_multiscale/Makefile
+  dune/grid/Makefile
+  dune/grid/multiscale/Makefile
   m4/Makefile
   dune-grid-multiscale.pc
 ])
