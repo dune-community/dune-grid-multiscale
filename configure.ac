@@ -25,6 +25,8 @@ AC_CONFIG_FILES([
   dune/Makefile
   dune/grid/Makefile
   dune/grid/multiscale/Makefile
+  examples/Makefile
+  examples/provider/Makefile
   m4/Makefile
   dune-grid-multiscale.pc
 ])
