@@ -1,14 +1,23 @@
 
 #include "config.h"
 
+// system
+#include <iostream>
+
 // dune-common
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/common/timer.hh>
 
+// dune-fem
+#include <dune/fem/gridpart/gridpart.hh>
+#include <dune/fem/gridpart/gridpartview.hh>
+
 // dune-stuff
-#include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/common/parameter/tree.hh>
+
+// dune-grid-multiscale
+#include <dune/grid/multiscale/provider/cube.hh>
 
 /**
   \brief      Creates a parameter file if it does not exist.
