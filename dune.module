@@ -1,0 +1,10 @@
+################################
+# Dune module information file #
+################################
+
+#Name of the module
+Module: dune-grid-multiscale
+Version: 2.2.0
+Maintainer: felix.albrecht@uni-muenster.de
+#depending on 
+Depends: dune-common dune-grid
