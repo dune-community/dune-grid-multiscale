@@ -20,8 +20,6 @@
   **/
 void ensureParamFile(std::string filename)
 {
-  // only write param file if there is none
-  if (!boost::filesystem::exists(filename)) {
     std::ofstream file;
     file.open(filename);
     file << "[helper-tools.grid.provider.cube]" << std::endl;
@@ -46,7 +44,6 @@ void ensureParamFile(std::string filename)
     file << "visualize.verbose = true"  << std::endl;
     file << "visualize.name = solution"  << std::endl;
     file.close();
-  } // only write param file if there is none
 } // void ensureParamFile()
 
 int main(int argc, char** argv)
@@ -65,17 +62,17 @@ int main(int argc, char** argv)
     Dune::Timer timer;
 
     // grid
-    std::cout << "setting up grid:" << std::endl;
-    typedef Dune::Stuff::Grid::Provider::UnitCube< Dune::GridSelector::GridType > GridProviderType;
-    Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, filename);
-    GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
-    typedef GridProviderType::GridType GridType;
-    GridType& grid = gridProvider.grid();
-    typedef Dune::LeafGridPart< GridType > GridPartType;
-    GridPartType gridPart(grid);
-    typedef Dune::GridPartView< GridPartType > GridViewType;
-    GridViewType gridView(gridPart);
-    std::cout << "took " << timer.elapsed() << " sec, has " << gridView.size(0) << " entities" << std::endl;
+    //std::cout << "setting up grid:" << std::endl;
+    //typedef Dune::Stuff::Grid::Provider::UnitCube< Dune::GridSelector::GridType > GridProviderType;
+    //Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, filename);
+    //GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
+    //typedef typename GridProviderType::GridType GridType;
+    //GridType& grid = gridProvider.grid();
+    //typedef typename Dune::LeafGridPart< GridType > GridPartType;
+    //GridPartType gridPart(grid);
+    //typedef typename Dune::GridPartView< GridPartType > GridViewType;
+    //GridViewType gridView(gridPart);
+    //std::cout << "took " << timer.elapsed() << " sec, has " << gridView.size(0) << " entities" << std::endl;
 
     // if we came that far we can as well be happy about it
     return 0;
