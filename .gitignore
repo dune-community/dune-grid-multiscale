@@ -41,3 +41,5 @@ m4/Makefile
 m4/Makefile.in
 missing
 stamp-h1
+examples/provider/cube-cube.o
+examples/provider/cube
