@@ -41,6 +41,11 @@ SET( CUSTOM_FLAGS
   "-Wall -O0 -DDEBUG -g -fdiagnostics-show-option" CACHE LIST
   "CUSTOM FLAGS" )
 
+set( BOOST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../boost" )
+find_package( Boost 1.42.0 REQUIRED )
+include_directories(${Boost_INCLUDE_DIR})
+link_directories( ${Boost_LIBRARY_DIRS} )
+
 # needs to come first to include correct config.h
 include_dir( ${dune-grid-multiscale_SOURCE_DIR} )
 add_cxx_flags( -DHAVE_CONFIG_H )
@@ -75,7 +80,7 @@ ${common_cc} ${grid_cc} ${stuff_cc} ${subgrid_cc} PROPERTIES HEADER_FILE_ONLY 1 
 
 set( LIST_LIBS ${common} ${grid} ${stuff} ${subgrid} ${grid-multiscale})
 
-set( COMMON_LIBS "grid" "dunegeometry" "common" ${BLAS_LIB} "alugrid" )
+set( COMMON_LIBS "grid" "dunegeometry" "common" ${BLAS_LIB} "alugrid" "boost_filesystem" "boost_system" )
 
 ADD_EXECUTABLE( examples_provider_cube "examples/provider/cube.cc" ${LIST_LIBS} )
 TARGET_LINK_LIBRARIES( examples_provider_cube ${COMMON_LIBS} )
