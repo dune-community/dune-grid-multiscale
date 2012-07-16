@@ -48,11 +48,11 @@ public:
   void add(const EntityType& entity, const unsigned int subdomain)
   {
     // create local grid if needed
-    if (!msGrid_.localGridExists(subdomain))
-      msGrid_.createLocalGrid(subdomain);
+    if (!msGrid_->localGridExists(subdomain))
+      msGrid_->createLocalGrid(subdomain);
 
     // add entity to subdomain
-    msGrid_.localGrid(subdomain).insertPartial(entity);
+    msGrid_->localGrid(subdomain).insertPartial(entity);
   } // void add(const EntityType& entity, const unsigned int subdomain)
 
 
