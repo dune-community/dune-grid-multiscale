@@ -125,6 +125,9 @@ private:
         DUNE_THROW(Dune::InvalidStateException, msg.str());
       } // decide on the subdomain this entity shall belong to
       debug << prefix << "    subdomain: " << subdomain << std::endl;
+
+      // add entity to corresponding subdomain
+      msGridFactory.add(entity, subdomain);
     } // walk the host grid
   } // void buildMsGrid(paramTree)
 
