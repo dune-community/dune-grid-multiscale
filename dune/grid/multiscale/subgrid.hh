@@ -45,6 +45,12 @@ public:
 
   bool localGridExists(const unsigned int subdomain) const
   {
+    std::cout << "subdomain: " << subdomain << std::endl;
+    std::cout << "map: ";
+    for (typename LocalGridMapType::const_iterator it = localGridMap_.begin(); it != localGridMap_.end(); ++it) {
+        std::cout << it->first << " ";
+    }
+    std::cout << std::endl;
     return localGridMap_.find(subdomain) != localGridMap_.end();
   }
 
@@ -53,21 +59,21 @@ public:
     assert(!finalized_);
     if (localGridMap_.find(subdomain) != localGridMap_.end()) {
         localGridMap_[subdomain] = Dune::shared_ptr< LocalGridType >(new LocalGridType(hostGrid_));
-        localGridMap_[subdomain].createBegin();
+        localGridMap_[subdomain]->createBegin();
     }
-  } // void registerLocalGrid(Dune::shared_ptr< LocalGridType > localGrid, const unsigned int subdomain)
+  } // void createLocalGrid(const unsigned int subdomain)
 
   LocalGridType& localGrid(const unsigned int subdomain)
   {
     assert(!finalized_);
     assert(localGridExists(subdomain));
-    return localGridMap_[subdomain];
+    return *(localGridMap_[subdomain]);
   }
 
   const LocalGridType& localGrid(const unsigned int subdomain) const
   {
     assert(localGridExists(subdomain));
-    return localGridMap_[subdomain];
+    return *(localGridMap_[subdomain]);
   }
 
 private:
