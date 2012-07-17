@@ -36,36 +36,47 @@ private:
   typedef std::map< unsigned int, Dune::shared_ptr< LocalGridType > > LocalGridMapType;
 
 public:
-  typedef Dune::LeafGridPart< HostGridType > GridPartType;
+  typedef Dune::LeafGridPart< HostGridType > GlobalGridPartType;
+
+  typedef typename GlobalGridPartType::template Codim< 0 >::IteratorType::Entity GlobalEntityType;
+
+  typedef Dune::LeafGridPart< LocalGridType > LocalGridPartType;
+
+  typedef typename LocalGridPartType::template Codim< 0 >::IteratorType::Entity LocalEntityType;
 
   Subgrid(HostGridType& hostGrid)
     : hostGrid_(hostGrid),
-      finalized_(false)
+      finalized_(false),
+      numSubdomains_(0)
   {}
 
   bool localGridExists(const unsigned int subdomain) const
   {
-    std::cout << "subdomain: " << subdomain << std::endl;
-    std::cout << "map: ";
-    for (typename LocalGridMapType::const_iterator it = localGridMap_.begin(); it != localGridMap_.end(); ++it) {
-        std::cout << it->first << " ";
-    }
-    std::cout << std::endl;
     return localGridMap_.find(subdomain) != localGridMap_.end();
   }
 
   void createLocalGrid(const unsigned int subdomain)
   {
     assert(!finalized_);
-    if (localGridMap_.find(subdomain) != localGridMap_.end()) {
+    if (localGridMap_.find(subdomain) == localGridMap_.end()) {
         localGridMap_[subdomain] = Dune::shared_ptr< LocalGridType >(new LocalGridType(hostGrid_));
         localGridMap_[subdomain]->createBegin();
+        ++numSubdomains_;
     }
   } // void createLocalGrid(const unsigned int subdomain)
 
+  unsigned int numSubdomains() const
+  {
+    return numSubdomains_;
+  }
+
+  void finalize()
+  {
+    finalized_ = true;
+  }
+
   LocalGridType& localGrid(const unsigned int subdomain)
   {
-    assert(!finalized_);
     assert(localGridExists(subdomain));
     return *(localGridMap_[subdomain]);
   }
@@ -76,9 +87,27 @@ public:
     return *(localGridMap_[subdomain]);
   }
 
+  GlobalGridPartType globalGridPart()
+  {
+    return GlobalGridPartType(hostGrid_);
+  }
+
+  LocalGridPartType localGridPart(const unsigned int subdomain)
+  {
+    assert(localGridExists(subdomain));
+    return LocalGridPartType(*(localGridMap_[subdomain]));
+  }
+
+  const GlobalEntityType& globalEntity(const unsigned int subdomain, const LocalEntityType& localEntity) const
+  {
+    assert(localGridExists(subdomain));
+    return *(localGrid(subdomain).template getHostEntity< 0 >(localEntity));
+  }
+
 private:
   HostGridType& hostGrid_;
   bool finalized_;
+  unsigned int numSubdomains_;
   LocalGridMapType localGridMap_;
 }; // class Subgrid
 
