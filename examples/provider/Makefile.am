@@ -27,6 +27,7 @@ cube_LDADD = \
 	$(UG_LDFLAGS) $(UG_LIBS) \
 	$(DUNEMPILIBS)	\
 	$(LDADD) \
+  $(BOOST_LDADD) \
   -lboost_system \
   -lboost_filesystem
 cube_LDFLAGS = $(AM_LDFLAGS) \
@@ -35,7 +36,8 @@ cube_LDFLAGS = $(AM_LDFLAGS) \
 	$(AMIRAMESH_LDFLAGS) \
 	$(ALBERTA_LDFLAGS) \
 	$(ALUGRID_LDFLAGS) \
-	$(DUNE_LDFLAGS)
+	$(DUNE_LDFLAGS) \
+  $(BOOST_LDFLAGS)
 
 # don't follow the full GNU-standard
 # we need automake 1.5
