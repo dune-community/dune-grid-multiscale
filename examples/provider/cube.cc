@@ -38,7 +38,9 @@ void ensureParamFile(std::string filename)
     file << "numElements.0 = 2" << std::endl;
     file << "numElements.1 = 2" << std::endl;
     file << "numElements.2 = 2" << std::endl;
-    file << "refineLevel = 1" << std::endl;
+    file << "partitions.0 = 2" << std::endl;
+    file << "partitions.1 = 2" << std::endl;
+    file << "partitions.2 = 2" << std::endl;
     file.close();
   } // only write param file if there is none
 } // void ensureParamFile()
@@ -72,15 +74,15 @@ int main(int argc, char** argv)
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::GridType GridType;
-    GridType& grid = gridProvider.grid();
+//    GridType& grid = gridProvider.grid();
 //    debug.Resume();
     info << " (took " << timer.elapsed() << " sec)" << std::endl;
 
-    info << "visualizing... " << std::flush;
-    timer.reset();
-    paramTree.sub(GridProviderType::id)["visualize"] = id + "_msgrid";
-    gridProvider.visualize(paramTree.sub(GridProviderType::id));
-    info << "done (took " << timer.elapsed() << " sec)" << std::endl;
+//    info << "visualizing... " << std::flush;
+//    timer.reset();
+//    paramTree.sub(GridProviderType::id)["visualize"] = id + "_msgrid";
+//    gridProvider.visualize(paramTree.sub(GridProviderType::id));
+//    info << "done (took " << timer.elapsed() << " sec)" << std::endl;
 
     // if we came that far we can as well be happy about it
     return 0;
