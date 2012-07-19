@@ -5,7 +5,9 @@ noinst_PROGRAMS = cube
 
 cube_SOURCES = cube.cc
 
-CUSTOM_CPPFLAGS = -DALUGRID_SIMPLEX -DGRIDDIM=2 -DWORLDDIM=2 -Wall -O0 -DDEBUG -g -fdiagnostics-show-option -std=c++0x
+GRIDDIM=2
+GRIDTYPE=ALBERTAGRID
+CUSTOM_CPPFLAGS = -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM) -Wall -O0 -DDEBUG -g -fdiagnostics-show-option -std=c++0x
 
 cube_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(DUNEMPICPPFLAGS) \
