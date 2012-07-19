@@ -56,11 +56,11 @@ int main(int argc, char** argv)
     Dune::ParameterTree paramTree = Dune::Stuff::Common::Parameter::Tree::init(argc, argv, filename);
 
     // logger
-    Dune::Stuff::Common::Logger().Create(Dune::Stuff::Common::Logging::LOG_INFO |
-                                         Dune::Stuff::Common::Logging::LOG_CONSOLE |
-                                         Dune::Stuff::Common::Logging::LOG_DEBUG);
-    Dune::Stuff::Common::Logging::LogStream& info = Dune::Stuff::Common::Logger().Info();
-    Dune::Stuff::Common::Logging::LogStream& debug = Dune::Stuff::Common::Logger().Dbg();
+    Dune::Stuff::Common::Logger().create(Dune::Stuff::Common::LOG_INFO |
+                                         Dune::Stuff::Common::LOG_CONSOLE |
+                                         Dune::Stuff::Common::LOG_DEBUG);
+    Dune::Stuff::Common::LogStream& info = Dune::Stuff::Common::Logger().info();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
 
     // timer
     Dune::Timer timer;

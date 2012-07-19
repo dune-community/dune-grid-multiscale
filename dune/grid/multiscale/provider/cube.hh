@@ -87,7 +87,7 @@ public:
   {
     // debug output
     const std::string prefix = paramTree.get("prefix", "");
-    Dune::Stuff::Common::Logging::LogStream& debug = Dune::Stuff::Common::Logger().Dbg();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
 
     const std::string filename = paramTree.get("visualize", id + ".msgrid");
 
@@ -122,7 +122,7 @@ private:
   {
     // preparations
     const std::string prefix = paramTree.get("prefix", "");
-    Dune::Stuff::Common::Logging::LogStream& debug = Dune::Stuff::Common::Logger().Dbg();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
     debug << prefix << id << ":" << std::endl;
     debug << prefix << "  creating " << BaseType::grid().levelView(0).size(0) << " local grids " << std::flush;
     const unsigned int refineLevel = paramTree.get("refineLevel", 1);
@@ -161,7 +161,7 @@ private:
 
     // debug output
     const std::string prefix = paramTree.get("prefix", "");
-    Dune::Stuff::Common::Logging::LogStream& debug = Dune::Stuff::Common::Logger().Dbg();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
     debug << prefix << id << ".buildMsGridFromFineGrid:" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
     debug << prefix << "  upperRight: " << upperRight << std::endl;
