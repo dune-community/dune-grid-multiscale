@@ -9,6 +9,7 @@
 #include <dune/common/exceptions.hh>
 
 // dune-fem
+#include <dune/fem/gridpart/gridpart.hh>
 #include <dune/fem/gridpart/filteredgrid.hh>
 
 namespace Dune {
@@ -17,96 +18,87 @@ namespace grid {
 
 namespace Multiscale {
 
-template< class GridImp >
+template< class GridImp, class FilterImp >
 class Filtered
 {
 public:
   typedef GridImp HostGridType;
 
-  typedef Filtered< HostGridType > ThisType;
+  typedef FilterImp FilterType;
+
+  typedef Filtered< HostGridType, FilterType > ThisType;
+
+  static const std::string id;
 
   static const unsigned int dim = HostGridType::dimension;
 
-//  typedef Dune::SubGrid< dim, HostGridType > LocalGridType;
-
-//private:
-//  typedef std::map< unsigned int, Dune::shared_ptr< LocalGridType > > LocalGridMapType;
-
-//public:
 //  typedef Dune::LeafGridPart< HostGridType > GlobalGridPartType;
 
-//  typedef typename GlobalGridPartType::template Codim< 0 >::IteratorType::Entity GlobalEntityType;
-
-//  typedef Dune::LeafGridPart< LocalGridType > LocalGridPartType;
-
-//  typedef typename LocalGridPartType::template Codim< 0 >::IteratorType::Entity LocalEntityType;
+  typedef Dune::FilteredGridPart< Dune::LeafGridPart< HostGridType >, FilterType > LocalGridPartType;
 
   Filtered(HostGridType& hostGrid)
-    : hostGrid_(hostGrid)/*,
+    : hostGrid_(hostGrid),
       finalized_(false),
-      numSubdomains_(0)*/
+      size_(0)
   {}
 
-//  bool localGridExists(const unsigned int subdomain) const
-//  {
-//    return localGridMap_.find(subdomain) != localGridMap_.end();
-//  }
+  const unsigned int size() const
+  {
+    return size_;
+  }
 
-//  void createLocalGrid(const unsigned int subdomain)
-//  {
-//    assert(!finalized_);
-//    if (localGridMap_.find(subdomain) == localGridMap_.end()) {
-//        localGridMap_[subdomain] = Dune::shared_ptr< LocalGridType >(new LocalGridType(hostGrid_));
-//        localGridMap_[subdomain]->createBegin();
-//        ++numSubdomains_;
-//    }
-//  } // void createLocalGrid(const unsigned int subdomain)
+  bool exists(const unsigned int subdomain) const
+  {
+    return localGridPartMap_.find(subdomain) != localGridPartMap_.end();
+  }
 
-//  unsigned int numSubdomains() const
-//  {
-//    return numSubdomains_;
-//  }
+  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
+  {
+    assert(finalized_);
+    if (!exists(subdomain)) {
+      std::stringstream msg;
+      msg << "Error in " << id << ": map broken!";
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    }
+    return localGridPartMap_.find(subdomain)->second;
+  }
 
-//  void finalize()
-//  {
-//    finalized_ = true;
-//  }
+  void create(Dune::shared_ptr< FilterType > filter, const unsigned int subdomain)
+  {
+    assert(!finalized_);
+    assert(!exists(subdomain));
+    filterMap_[subdomain] = filter;
+    localGridPartMap_[subdomain] = Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(hostGrid_, *(filterMap_[subdomain])));
+    ++size_;
+  }
 
-//  LocalGridType& localGrid(const unsigned int subdomain)
-//  {
-//    assert(localGridExists(subdomain));
-//    return *(localGridMap_[subdomain]);
-//  }
-
-//  const LocalGridType& localGrid(const unsigned int subdomain) const
-//  {
-//    assert(localGridExists(subdomain));
-//    return *(localGridMap_[subdomain]);
-//  }
-
-//  GlobalGridPartType globalGridPart()
-//  {
-//    return GlobalGridPartType(hostGrid_);
-//  }
-
-//  LocalGridPartType localGridPart(const unsigned int subdomain)
-//  {
-//    assert(localGridExists(subdomain));
-//    return LocalGridPartType(*(localGridMap_[subdomain]));
-//  }
-
-//  const GlobalEntityType& globalEntity(const unsigned int subdomain, const LocalEntityType& localEntity) const
-//  {
-//    assert(localGridExists(subdomain));
-//    return *(localGrid(subdomain).template getHostEntity< 0 >(localEntity));
-//  }
+  void finalize()
+  {
+    // test for consecutive numbering of subdomains and finalize subgrids
+    bool consecutive = true;
+    for (unsigned int subdomain = 0; subdomain < size_; ++subdomain) {
+      if (!exists(subdomain))
+        consecutive = false;
+    }
+    if (consecutive)
+      finalized_ = true;
+    else {
+      std::stringstream msg;
+      msg << "Error in " << id << ": numbering of subdomains has to be consecutive upon calling finalize!";
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    }
+  } // void finalize()
 
 private:
   HostGridType& hostGrid_;
-//  bool finalized_;
-//  unsigned int numSubdomains_;
-//  LocalGridMapType localGridMap_;
+  bool finalized_;
+  unsigned int size_;
+  std::map< unsigned int, Dune::shared_ptr< FilterType > > filterMap_;
+  std::map< unsigned int, Dune::shared_ptr< LocalGridPartType > > localGridPartMap_;
 }; // class Filtered
+
+template< class GridType, class FilterType >
+const std::string Filtered< GridType, FilterType >::id = "grid.multiscale.filtered";
 
 } // namespace Multiscale
 

@@ -62,27 +62,29 @@ int main(int argc, char** argv)
                                          Dune::Stuff::Common::LOG_CONSOLE |
                                          Dune::Stuff::Common::LOG_DEBUG);
     Dune::Stuff::Common::LogStream& info = Dune::Stuff::Common::Logger().info();
-    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
 
     // timer
     Dune::Timer timer;
 
     // grid
     info << "setting up grid:" << std::endl << std::flush;
-//    debug.Suspend();
+    debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::GridType GridType;
 //    GridType& grid = gridProvider.grid();
-//    debug.Resume();
+    debug.resume();
     info << " (took " << timer.elapsed() << " sec)" << std::endl;
 
-//    info << "visualizing... " << std::flush;
-//    timer.reset();
-//    paramTree.sub(GridProviderType::id)["visualize"] = id + "_msgrid";
-//    gridProvider.visualize(paramTree.sub(GridProviderType::id));
-//    info << "done (took " << timer.elapsed() << " sec)" << std::endl;
+    info << "visualizing... " << std::flush;
+    timer.reset();
+    debug.suspend();
+    paramTree.sub(GridProviderType::id)["visualize"] = id + "_msgrid";
+    gridProvider.visualize(paramTree.sub(GridProviderType::id));
+    debug.resume();
+    info << "done (took " << timer.elapsed() << " sec)" << std::endl;
 
     // if we came that far we can as well be happy about it
     return 0;

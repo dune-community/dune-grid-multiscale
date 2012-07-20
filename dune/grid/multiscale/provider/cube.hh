@@ -22,7 +22,8 @@
 #include <dune/stuff/grid/entity.hh>
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/factory/filtered.hh>
+#include <dune/grid/multiscale/filtered/cube.hh>
+#include <dune/grid/multiscale/filtered.hh>
 
 namespace Dune {
 
@@ -50,22 +51,22 @@ public:
   typedef typename BaseType::CoordinateType CoordinateType;
 
 private:
-  typedef Dune::grid::Multiscale::Factory::Filtered::FromFineGrid< GridType > MsGridFactoryType;
+  typedef Dune::grid::Multiscale::Filter::Cube< GridType > FilterType;
 
-  template< int dim >
-  struct P0Layout
-  {
-    template< class GeometryType >
-    bool contains(GeometryType& geometry)
-    {
-      if (geometry.dim() == dim)
-        return true;
-      return false;
-    }
-  }; // layout class for codim 0 mapper
+//  template< int dim >
+//  struct P0Layout
+//  {
+//    template< class GeometryType >
+//    bool contains(GeometryType& geometry)
+//    {
+//      if (geometry.dim() == dim)
+//        return true;
+//      return false;
+//    }
+//  }; // layout class for codim 0 mapper
 
 public:
-  typedef typename MsGridFactoryType::MsGridType MsGridType;
+  typedef typename Dune::grid::Multiscale::Filtered< GridType, FilterType > MsGridType;
 
   Cube(Dune::ParameterTree paramTree = Dune::ParameterTree())
     : BaseType(paramTree)
@@ -83,11 +84,11 @@ public:
     return *msGrid_;
   }
 
-//  void visualize(const Dune::ParameterTree& paramTree) const
-//  {
-//    // debug output
-//    const std::string prefix = paramTree.get("prefix", "");
-//    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
+  void visualize(const Dune::ParameterTree& paramTree) const
+  {
+    // debug output
+    const std::string prefix = paramTree.get("prefix", "");
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
 
 //    const std::string filename = paramTree.get("visualize", id + ".msgrid");
 
@@ -95,27 +96,27 @@ public:
 //    Dune::LeafMultipleCodimMultipleGeomTypeMapper< GridType, P0Layout > mapper(BaseType::grid());
 //    std::vector< double > data(mapper.size());
 
-//    // walk the subdomains
-//    for (unsigned int subdomain = 0; subdomain < msGrid_->numSubdomains(); ++subdomain) {
-//      // walk the local grid part
-//      typename MsGridType::LocalGridPartType::template Codim< 0 >::IteratorType itEnd = msGrid_->localGridPart(subdomain).template end< 0 >();
-//      for (typename MsGridType::LocalGridPartType::template Codim< 0 >::IteratorType it = msGrid_->localGridPart(subdomain).template begin< 0 >();
-//          it != itEnd;
-//          ++it) {
-//        // local entity
-//        typename MsGridType::LocalEntityType& localEntity = *it;
-//        Dune::Stuff::Grid::Entity::print(localEntity, debug, "  ");
-
-
-////        data[mapper.map(hostEntity)] = double(subdomain);
-//      } // walk the local grid
-//    } // walk the subdomains
+    // walk the subdomains
+    typedef typename MsGridType::LocalGridPartType LocalGridPartType;
+    for (unsigned int subdomain = 0; subdomain < msGrid_->size(); ++subdomain) {
+        debug << prefix << "subdomain " << subdomain << std::endl;
+      // walk the local grid part
+      typename LocalGridPartType::template Codim< 0 >::IteratorType itEnd = msGrid_->localGridPart(subdomain)->template end< 0 >();
+      for (typename LocalGridPartType::template Codim< 0 >::IteratorType it = msGrid_->localGridPart(subdomain)->template begin< 0 >();
+          it != itEnd;
+          ++it) {
+        // local entity
+        typename LocalGridPartType::template Codim< 0 >::IteratorType::Entity& entity = *it;
+        Dune::Stuff::Grid::Entity::print(entity, debug, "  ");
+//        data[mapper.map(hostEntity)] = double(subdomain);
+      } // walk the local grid
+    } // walk the subdomains
 //    // write to vtk
 //    Dune::VTKWriter< typename GridType::LeafGridView > vtkwriter(BaseType::grid().leafView());
 //    vtkwriter.addCellData(data, "subdomain");
 //    vtkwriter.write(filename, Dune::VTK::ascii);
-//    return;
-//  } // void visualize(const Dune::ParameterTree& paramTree) const
+    return;
+  } // void visualize(const Dune::ParameterTree& paramTree) const
 
 private:
 //  void buildMsGridFromCoarseGrid(const Dune::ParameterTree& paramTree)
@@ -158,11 +159,11 @@ private:
     // preparations
     const CoordinateType& lowerLeft = BaseType::lowerLeft();
     const CoordinateType& upperRight = BaseType::upperRight();
+    msGrid_ = Dune::shared_ptr< MsGridType >(new MsGridType(BaseType::grid()));
 
     // debug output
     const std::string prefix = paramTree.get("prefix", "");
-//    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().dbg();
-    std::ostream& debug = std::cout;
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
     debug << prefix << id << ":" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
     debug << prefix << "  upperRight: " << upperRight << std::endl;
@@ -227,6 +228,13 @@ private:
       debug << prefix << "  upperRight: " << upperRights[s] << std::endl;
     }
 
+    // create filter for each subdomain and register at the factory
+    for (unsigned int subdomain = 0; subdomain < totalSubdomains; ++subdomain) {
+      Dune::shared_ptr< FilterType > filter = Dune::shared_ptr< FilterType >(new FilterType(lowerLefts[subdomain], upperRights[subdomain]));
+      msGrid_->create(filter, subdomain);
+    }
+    msGrid_->finalize();
+
     return;
   } // void buildMsGridFromFineGrid(const Dune::ParameterTree& paramTree)
 
@@ -235,7 +243,6 @@ private:
 
 template< class GridType >
 const std::string Cube< GridType >::id = "grid.multiscale.provider.cube";
-
 
 } // namespace Provider
 
