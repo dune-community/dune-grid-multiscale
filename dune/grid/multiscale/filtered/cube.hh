@@ -97,7 +97,7 @@ public:
   template <class IntersectionIteratorType>
   inline int intersectionBoundaryId(const IntersectionIteratorType & it) const
   {
-    return 1;
+    return 2;
   }
 
   //! if has0Entity is true then we have an interior entity

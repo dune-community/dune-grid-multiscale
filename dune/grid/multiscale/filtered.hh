@@ -32,7 +32,7 @@ public:
 
   static const unsigned int dim = HostGridType::dimension;
 
-//  typedef Dune::LeafGridPart< HostGridType > GlobalGridPartType;
+  typedef Dune::LeafGridPart< HostGridType > GlobalGridPartType;
 
   typedef Dune::FilteredGridPart< Dune::LeafGridPart< HostGridType >, FilterType > LocalGridPartType;
 
@@ -40,7 +40,9 @@ public:
     : hostGrid_(hostGrid),
       finalized_(false),
       size_(0)
-  {}
+  {
+    globalGridPart_ = Dune::shared_ptr< GlobalGridPartType >(new GlobalGridPartType(hostGrid_));
+  }
 
   const unsigned int size() const
   {
@@ -50,6 +52,11 @@ public:
   bool exists(const unsigned int subdomain) const
   {
     return localGridPartMap_.find(subdomain) != localGridPartMap_.end();
+  }
+
+  const Dune::shared_ptr< const GlobalGridPartType > globalGridPart() const
+  {
+    return globalGridPart_;
   }
 
   const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
@@ -95,6 +102,7 @@ private:
   unsigned int size_;
   std::map< unsigned int, Dune::shared_ptr< FilterType > > filterMap_;
   std::map< unsigned int, Dune::shared_ptr< LocalGridPartType > > localGridPartMap_;
+  Dune::shared_ptr< GlobalGridPartType > globalGridPart_;
 }; // class Filtered
 
 template< class GridType, class FilterType >
