@@ -35,9 +35,9 @@ void ensureParamFile(std::string filename)
     std::ofstream file;
     file.open(filename);
     file << "[grid.multiscale.provider.cube]" << std::endl;
-    file << "numElements.0 = 2" << std::endl;
-    file << "numElements.1 = 2" << std::endl;
-    file << "numElements.2 = 2" << std::endl;
+    file << "numElements.0 = 4" << std::endl;
+    file << "numElements.1 = 4" << std::endl;
+    file << "numElements.2 = 4" << std::endl;
     file << "partitions.0 = 2" << std::endl;
     file << "partitions.1 = 2" << std::endl;
     file << "partitions.2 = 2" << std::endl;
@@ -69,13 +69,11 @@ int main(int argc, char** argv)
 
     // grid
     info << "setting up grid:" << std::endl << std::flush;
-//    debug.suspend();
+    debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
-    typedef GridProviderType::GridType GridType;
-//    GridType& grid = gridProvider.grid();
-//    debug.resume();
+    debug.resume();
     info << " (took " << timer.elapsed() << " sec)" << std::endl;
 
     // if we came that far we can as well be happy about it

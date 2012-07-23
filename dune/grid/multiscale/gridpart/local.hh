@@ -2,6 +2,12 @@
 #ifndef DUNE_GRID_MULTISCALE_GRIDPART_LOCAL_HH
 #define DUNE_GRID_MULTISCALE_GRIDPART_LOCAL_HH
 
+// system
+#include <set>
+
+// dune-common
+#include <dune/common/shared_ptr.hh>
+
 // dune-grid-multiscale
 #include <dune/grid/multiscale/gridpart/leaf.hh>
 
@@ -44,7 +50,7 @@ class Local
 public:
   typedef Local< GridImp > ThisType;
 
-  typedef Default< LeafTraits< GridImp > > BaseType;
+  typedef Dune::grid::Multiscale::GridPart::Default< LocalTraits< GridImp > > BaseType;
 
   typedef LocalTraits< GridImp > Traits;
 
@@ -62,9 +68,12 @@ public:
 
   typedef Dune::grid::Multiscale::GridPart::Leaf< GridType > GlobalGridPartType;
 
-  explicit Local(const GlobalGridPartType& globalGridPart)
+  typedef typename GlobalGridPartType::IndexSetType::IndexType GlobalIndexType;
+
+  explicit Local(GlobalGridPartType& globalGridPart, Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet)
     : BaseType(globalGridPart.grid()),
-      globalGridPart_(globalGridPart)
+      globalGridPart_(globalGridPart),
+      globalIndicesSet_(globalIndicesSet)
   {}
 
   const IndexSetType& indexSet() const
@@ -123,7 +132,8 @@ public:
   }
 
 private:
-  const GlobalGridPartType& globalGridPart_;
+  GlobalGridPartType& globalGridPart_;
+  Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet_;
 }; // class Local
 
 } // namespace GridPart
