@@ -6,7 +6,7 @@ noinst_PROGRAMS = cube
 cube_SOURCES = cube.cc
 
 GRIDDIM=2
-GRIDTYPE=ALBERTAGRID
+GRIDTYPE=SGRID
 CUSTOM_CPPFLAGS = -D$(GRIDTYPE) -DGRIDDIM=$(GRIDDIM) -Wall -O0 -DDEBUG -g -fdiagnostics-show-option -std=c++0x
 
 cube_CPPFLAGS = $(AM_CPPFLAGS) \
