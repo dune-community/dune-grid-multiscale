@@ -44,3 +44,7 @@ stamp-h1
 examples/provider/cube-cube.o
 examples/provider/cube
 examples/provider/cube.param
+doc/doxygen/html
+doc/doxygen/doxyerr.log
+doc/doxygen/doxygen-tag
+doc/doxygen/doxygen.log
