@@ -69,22 +69,14 @@ int main(int argc, char** argv)
 
     // grid
     info << "setting up grid:" << std::endl << std::flush;
-    debug.suspend();
+//    debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::GridType GridType;
 //    GridType& grid = gridProvider.grid();
-    debug.resume();
+//    debug.resume();
     info << " (took " << timer.elapsed() << " sec)" << std::endl;
-
-    info << "visualizing... " << std::flush;
-    timer.reset();
-    debug.suspend();
-    paramTree.sub(GridProviderType::id)["visualize"] = id + "_msgrid";
-    gridProvider.visualize(paramTree.sub(GridProviderType::id));
-    debug.resume();
-    info << "done (took " << timer.elapsed() << " sec)" << std::endl;
 
     // if we came that far we can as well be happy about it
     return 0;
