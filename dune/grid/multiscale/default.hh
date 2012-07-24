@@ -129,6 +129,13 @@ public:
     return;
   } // void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
 
+  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
+  {
+    assert(finalized_);
+    assert(subdomain < size());
+    return localGridPartVector_[subdomain];
+  }
+
 private:
   GridType& grid_;
   Dune::shared_ptr< GlobalGridPartType > globalGridPart_;
