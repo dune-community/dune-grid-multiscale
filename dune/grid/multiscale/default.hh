@@ -11,8 +11,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parametertree.hh>
 
-// dune-stuff
-#include <dune/stuff/common/logging.hh>
+//// dune-stuff
+//#include <dune/stuff/common/logging.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/gridpart/leaf.hh>
@@ -92,10 +92,10 @@ public:
 
   void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
   {
-    // debug output
-    const std::string prefix = paramTree.get("prefix", "");
-    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
-    debug << prefix << id << ".finalize: " << std::flush;
+    //// debug output
+    //const std::string prefix = paramTree.get("prefix", "");
+    //Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
+    //debug << prefix << id << ".finalize: " << std::flush;
 
     // test for consecutive numbering of subdomains and finalize subgrids
     bool consecutive = true;
@@ -110,24 +110,24 @@ public:
     }
 
     // create local grid parts and report
-    debug << "found " << size() << " subdomains" << std::endl;
+    //debug << "found " << size() << " subdomains" << std::endl;
     for (typename SubdomainToIndexPairMapType::iterator pairOfSubdomainAndIndexPair = subdomainToIndexPairMap_.begin();
          pairOfSubdomainAndIndexPair != subdomainToIndexPairMap_.end();
          ++pairOfSubdomainAndIndexPair) {
       const unsigned int subdomain = pairOfSubdomainAndIndexPair->first;
       const unsigned int subdomainSize = pairOfSubdomainAndIndexPair->second->size();
-      debug << prefix << "- subdomain " << subdomain << ", " << subdomainSize << " entities:" << std::endl;
-      debug << prefix << "  " << std::flush;
+      //debug << prefix << "- subdomain " << subdomain << ", " << subdomainSize << " entities:" << std::endl;
+      //debug << prefix << "  " << std::flush;
       unsigned int counter = 0;
       for (typename GlobalToLocalIndexMapType::iterator indexPair = pairOfSubdomainAndIndexPair->second->begin();
            indexPair != pairOfSubdomainAndIndexPair->second->end();
            ++indexPair) {
-        debug << indexPair->first;
-        if (counter < subdomainSize - 1)
-          debug << ", ";
+        //debug << indexPair->first;
+        //if (counter < subdomainSize - 1)
+          //debug << ", ";
         ++counter;
       }
-      debug << std::endl;
+      //debug << std::endl;
       localGridPartVector_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_, pairOfSubdomainAndIndexPair->second)));
     } // create local grid parts and report
 

@@ -18,7 +18,7 @@
 
 // dune-stuff
 #include <dune/stuff/grid/provider/cube.hh>
-#include <dune/stuff/common/logging.hh>
+//#include <dune/stuff/common/logging.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/default.hh>
@@ -84,15 +84,15 @@ private:
     msGrid_ = Dune::shared_ptr< MsGridType >(new MsGridType(BaseType::grid()));
     msGrid_->prepare();
 
-    // debug output
-    const std::string prefix = paramTree.get("prefix", "");
-    Dune::ParameterTree indentTree;
-    indentTree["prefix"] = prefix + "  ";
-    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
-    debug << prefix << id << ":" << std::endl;
-    debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
-    debug << prefix << "  upperRight: " << upperRight << std::endl;
-    debug << prefix << "  partitions per dim: ";
+    //// debug output
+    //const std::string prefix = paramTree.get("prefix", "");
+    //Dune::ParameterTree indentTree;
+    //indentTree["prefix"] = prefix + "  ";
+    //Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
+    //debug << prefix << id << ":" << std::endl;
+    //debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
+    //debug << prefix << "  upperRight: " << upperRight << std::endl;
+    //debug << prefix << "  partitions per dim: ";
 
     // get number of subdomains per direction
     std::vector< unsigned int > partitions(dim, 0);
@@ -102,9 +102,9 @@ private:
       key << "partitions." << d;
       partitions[d] = paramTree.get(key.str(), 1);
       totalSubdomains *= partitions[d];
-      debug << partitions[d] << " ";
+      //debug << partitions[d] << " ";
     }
-    debug << std::endl;
+    //debug << std::endl;
 
     // grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
@@ -117,7 +117,7 @@ private:
       // get center of entity
       typename GridType::LeafGridView::template Codim< 0 >::Iterator::Entity& entity = *it;
       const CoordinateType center = entity.geometry().global(entity.geometry().center());
-      debug << prefix << "  entity " << gridPart.indexSet().index(entity) << " (" << center << ")";
+      //debug << prefix << "  entity " << gridPart.indexSet().index(entity) << " (" << center << ")";
 
       // decide on the subdomain this entity shall belong to
       std::vector< unsigned int > whichPartition;
@@ -137,14 +137,14 @@ private:
         msg << "Error in " << id << ": not implemented for grid dimensions other than 1, 2 or 3!";
         DUNE_THROW(Dune::InvalidStateException, msg.str());
       } // decide on the subdomain this entity shall belong to
-      debug << ", subdomain " << subdomain << std::endl;
+      //debug << ", subdomain " << subdomain << std::endl;
 
       // add entity to subdomain
       msGrid_->add(entity, subdomain);
 
     } // walk the grid
 
-    msGrid_->finalize(indentTree);
+    msGrid_->finalize(/*indentTree*/);
     return;
   } // void buildMsGrid(const Dune::ParameterTree& paramTree)
 
