@@ -24,7 +24,7 @@ namespace Iterator {
 
 namespace Codim0 {
 
-template< class GridPartImp, class GlobalIndexImp, int PartitionIteratorImp >
+template< class GridPartImp, int PartitionIteratorImp >
 class IndexBased
 {
 public:
@@ -34,8 +34,8 @@ public:
   }
 }; // class IndexBased
 
-template< class GridPartImp, class GlobalIndexImp >
-class IndexBased< GridPartImp, GlobalIndexImp, InteriorBorder_Partition >
+template< class GridPartImp >
+class IndexBased< GridPartImp,  InteriorBorder_Partition >
 //  : public GridPartImp::GridType::template Codim< 0 >::template Partition< InteriorBorder_Partition >::LeafIterator
 {
 public:
@@ -43,9 +43,9 @@ public:
 
   typedef typename GridPartType::GridType GridType;
 
-  typedef GlobalIndexImp GlobalIndexType;
+  typedef typename GridPartType::IndexSetType::IndexType GlobalIndexType;
 
-  typedef IndexBased< GridPartType, GlobalIndexType, InteriorBorder_Partition > ThisType;
+  typedef IndexBased< GridPartType, InteriorBorder_Partition > ThisType;
 
   typedef typename GridType::template Codim< 0 >::template Partition< InteriorBorder_Partition >::LeafIterator HostIteratorType;
 
