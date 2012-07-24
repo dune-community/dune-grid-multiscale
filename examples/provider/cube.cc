@@ -68,13 +68,28 @@ int main(int argc, char** argv)
     Dune::Timer timer;
 
     // grid
-    info << "setting up grid:" << std::endl << std::flush;
+    info << "setting up grid:" << std::endl;
     debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     debug.resume();
     info << " (took " << timer.elapsed() << " sec)" << std::endl;
+
+    info << "walking local grid:" << std::endl;
+    timer.reset();
+//    debug.suspend();
+    typedef GridProviderType::MsGridType MsGridType;
+    const MsGridType& msGrid = gridProvider.msGrid();
+    const MsGridType::GlobalGridPartType::IndexSetType& indexSet = msGrid.globalGridPart().indexSet();
+    typedef MsGridType::LocalGridPartType LocalGridPartType;
+    const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(0);
+    typedef LocalGridPartType::LocalIteratorType IteratorType;
+    IteratorType itEnd = localGridPart->endLocal();
+    for (IteratorType it = localGridPart->beginLocal(); it != itEnd; ++it) {
+      const IteratorType::Entity& entity = *it;
+      debug << "  entity " << indexSet.index(entity) << std::endl;
+    }
 
     // if we came that far we can as well be happy about it
     return 0;

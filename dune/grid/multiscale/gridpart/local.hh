@@ -10,6 +10,7 @@
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/gridpart/leaf.hh>
+#include <dune/grid/multiscale/gridpart/iterator/codim0.hh>
 
 namespace Dune {
 
@@ -38,7 +39,16 @@ struct LocalTraits
 
   typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
 
-  using BaseType::Codim;
+  template< int codim >
+  struct Codim
+  {
+    template< PartitionIteratorType pitype >
+    struct Partition
+    {
+      typedef typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
+//      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridType, /*typename IndexSetType::IndexType,*/ pitype > IteratorType;
+    };
+  };
 
   static const bool conforming = BaseType::conforming;
 }; // class LocalTraits
@@ -70,6 +80,8 @@ public:
 
   typedef typename GlobalGridPartType::IndexSetType::IndexType GlobalIndexType;
 
+  typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, GlobalIndexType, InteriorBorder_Partition > LocalIteratorType;
+
   explicit Local(GlobalGridPartType& globalGridPart, Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet)
     : BaseType(globalGridPart.grid()),
       globalGridPart_(globalGridPart),
@@ -93,6 +105,11 @@ public:
     return globalGridPart_.template begin< codim, pitype >();
   }
 
+  LocalIteratorType beginLocal() const
+  {
+    return LocalIteratorType(*this);
+  }
+
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
@@ -103,6 +120,11 @@ public:
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
     return globalGridPart_.template end< codim, pitype >();
+  }
+
+  LocalIteratorType endLocal() const
+  {
+    return LocalIteratorType(*this, true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& en) const
@@ -132,6 +154,8 @@ public:
   }
 
 private:
+  friend class Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, GlobalIndexType, InteriorBorder_Partition >;
+
   GlobalGridPartType& globalGridPart_;
   Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet_;
 }; // class Local
