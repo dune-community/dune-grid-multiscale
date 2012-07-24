@@ -12,6 +12,7 @@
 // dune-grid-multiscale
 #include <dune/grid/multiscale/gridpart/leaf.hh>
 #include <dune/grid/multiscale/gridpart/iterator/codim0.hh>
+#include <dune/grid/multiscale/gridpart/indexset/local.hh>
 
 namespace Dune {
 
@@ -34,7 +35,9 @@ struct LocalTraits
 
   typedef Local< GridType > GridPartType;
 
-  typedef typename BaseType::IndexSetType IndexSetType;
+//  typedef typename BaseType::IndexSetType IndexSetType;
+
+  typedef Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
 
   static const PartitionIteratorType indexSetPartitionType = BaseType::indexSetPartitionType;
 
@@ -87,12 +90,13 @@ public:
   explicit Local(GlobalGridPartType& globalGridPart, Dune::shared_ptr< std::map< IndexType, IndexType > > globalToLocaIndexMap)
     : BaseType(globalGridPart.grid()),
       globalGridPart_(globalGridPart),
-      globalToLocaIndexMap_(globalToLocaIndexMap)
+      globalToLocaIndexMap_(globalToLocaIndexMap),
+      indexSet_(*this)
   {}
 
   const IndexSetType& indexSet() const
   {
-    return globalGridPart_.indexSet();
+    return indexSet_;
   }
 
   template< int codim >
@@ -155,9 +159,11 @@ public:
 
 private:
   friend class Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, InteriorBorder_Partition >;
+  friend class Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< ThisType >;
 
   GlobalGridPartType& globalGridPart_;
   Dune::shared_ptr< std::map< IndexType, IndexType > > globalToLocaIndexMap_;
+  const IndexSetType indexSet_;
 }; // class Local
 
 } // namespace GridPart
