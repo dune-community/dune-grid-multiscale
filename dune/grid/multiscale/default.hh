@@ -4,7 +4,6 @@
 
 // system
 #include <vector>
-#include <set>
 #include <map>
 
 // dune-common
@@ -42,13 +41,11 @@ public:
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
 private:
-  typedef typename GlobalGridPartType::IndexSetType GlobalIndexSetType;
+  typedef typename GlobalGridPartType::IndexSetType::IndexType IndexType;
 
-  typedef typename GlobalIndexSetType::IndexType GlobalIndexType;
+  typedef std::map< IndexType, IndexType > GlobalToLocalIndexMapType;
 
-  typedef std::set< GlobalIndexType > LocalIndicesSetType;
-
-  typedef std::map< unsigned int, Dune::shared_ptr< LocalIndicesSetType > > LocalIndicesSetMapType;
+  typedef std::map< unsigned int, Dune::shared_ptr< GlobalToLocalIndexMapType > > SubdomainToIndexPairMapType;
 
   typedef std::vector< Dune::shared_ptr< LocalGridPartType > > LocalGridPartVectorType;
 
@@ -75,17 +72,23 @@ public:
     return;
   }
 
-  void add(const EntityType& entity, unsigned int subdomain)
+  void add(const EntityType& entity, const unsigned int subdomain)
   {
     assert(!finalized_);
     // create subdomain map if needed
-    if (localIndicesSetMap_.find(subdomain) == localIndicesSetMap_.end()) {
-      localIndicesSetMap_.insert(std::pair< unsigned int, Dune::shared_ptr< LocalIndicesSetType > >(subdomain, Dune::shared_ptr< LocalIndicesSetType >(new LocalIndicesSetType())));
+    if (subdomainToIndexPairMap_.find(subdomain) == subdomainToIndexPairMap_.end()) {
+      subdomainToIndexPairMap_.insert(std::pair< unsigned int, Dune::shared_ptr< GlobalToLocalIndexMapType > >(subdomain, Dune::shared_ptr< GlobalToLocalIndexMapType >(new GlobalToLocalIndexMapType())));
       ++size_;
     }
-    // add index of entity
-    localIndicesSetMap_.find(subdomain)->second->insert(globalGridPart_->indexSet().index(entity));
-  }
+    // add global and local index of entity
+    typename SubdomainToIndexPairMapType::iterator subdomainToIndexPairIterator = subdomainToIndexPairMap_.find(subdomain);
+    subdomainToIndexPairIterator->second->insert(
+        std::pair< IndexType, IndexType >(
+            globalGridPart_->indexSet().index(entity),
+            subdomainToIndexPairIterator->second->size()
+        )
+    );
+  } // void add(const EntityType& entity, const unsigned int subdomain)
 
   void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
   {
@@ -97,7 +100,7 @@ public:
     // test for consecutive numbering of subdomains and finalize subgrids
     bool consecutive = true;
     for (unsigned int subdomain = 0; subdomain < size(); ++subdomain) {
-      if (localIndicesSetMap_.find(subdomain) == localIndicesSetMap_.end())
+      if (subdomainToIndexPairMap_.find(subdomain) == subdomainToIndexPairMap_.end())
         consecutive = false;
     }
     if (!consecutive) {
@@ -108,20 +111,24 @@ public:
 
     // create local grid parts and report
     debug << "found " << size() << " subdomains" << std::endl;
-    for (typename LocalIndicesSetMapType::iterator pair = localIndicesSetMap_.begin(); pair != localIndicesSetMap_.end(); ++pair) {
-      const unsigned int subdomain = pair->first;
-      const unsigned int subdomainSize = pair->second->size();
+    for (typename SubdomainToIndexPairMapType::iterator pairOfSubdomainAndIndexPair = subdomainToIndexPairMap_.begin();
+         pairOfSubdomainAndIndexPair != subdomainToIndexPairMap_.end();
+         ++pairOfSubdomainAndIndexPair) {
+      const unsigned int subdomain = pairOfSubdomainAndIndexPair->first;
+      const unsigned int subdomainSize = pairOfSubdomainAndIndexPair->second->size();
       debug << prefix << "- subdomain " << subdomain << ", " << subdomainSize << " entities:" << std::endl;
       debug << prefix << "  " << std::flush;
       unsigned int counter = 0;
-      for (typename LocalIndicesSetType::iterator localIndex = pair->second->begin(); localIndex != pair->second->end(); ++localIndex) {
-        debug << *localIndex;
+      for (typename GlobalToLocalIndexMapType::iterator indexPair = pairOfSubdomainAndIndexPair->second->begin();
+           indexPair != pairOfSubdomainAndIndexPair->second->end();
+           ++indexPair) {
+        debug << indexPair->first;
         if (counter < subdomainSize - 1)
           debug << ", ";
         ++counter;
       }
       debug << std::endl;
-      localGridPartVector_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_, pair->second)));
+      localGridPartVector_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_, pairOfSubdomainAndIndexPair->second)));
     } // create local grid parts and report
 
     // finalize
@@ -141,7 +148,7 @@ private:
   Dune::shared_ptr< GlobalGridPartType > globalGridPart_;
   bool finalized_;
   unsigned int size_;
-  LocalIndicesSetMapType localIndicesSetMap_;
+  SubdomainToIndexPairMapType subdomainToIndexPairMap_;
   LocalGridPartVectorType localGridPartVector_;
 }; // class Default
 

@@ -3,10 +3,9 @@
 #define DUNE_GRID_MULTISCALE_GRIDPART_ITERATOR_CODIM0_HH
 
 // system
-#include <set>
+#include <map>
 
 // dune-common
-#include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 
 // dune-grid
@@ -43,21 +42,23 @@ public:
 
   typedef typename GridPartType::GridType GridType;
 
-  typedef typename GridPartType::IndexSetType::IndexType GlobalIndexType;
-
   typedef IndexBased< GridPartType, InteriorBorder_Partition > ThisType;
 
+private:
   typedef typename GridType::template Codim< 0 >::template Partition< InteriorBorder_Partition >::LeafIterator HostIteratorType;
 
-  typedef typename std::set< GlobalIndexType >::iterator IndexIteratorType;
+  typedef typename GridPartType::IndexSetType::IndexType IndexType;
 
+  typedef typename std::map< IndexType, IndexType >::iterator IndexPairType;
+
+public:
   typedef typename GridType::template Codim< 0 >::Entity Entity;
 
   IndexBased(const GridPartType& gridPart, const bool end = false)
     : gridPart_(gridPart),
-      latest_(new IndexIteratorType(gridPart_.globalIndicesSet_->begin())),
-      last_(*(gridPart_.globalIndicesSet_->rbegin())),
-      end_(gridPart_.globalIndicesSet_->end()),
+//      latest_(new IndexPairType(gridPart_.globalToLocaIndexMap_->begin())),
+      last_(gridPart_.globalToLocaIndexMap_->rbegin()->first),
+      end_(gridPart_.globalToLocaIndexMap_->end()),
       workAtAll_(true)
   {
     if (end)
@@ -99,23 +100,22 @@ private:
     // iterate forward until we find the next entity that belongs to the local grid part
     bool found = false;
     while (!found && workAtAll_) {
-      GlobalIndexType index = gridPart_.indexSet().index(hostIterator_->operator*());
-      IndexIteratorType* result = new IndexIteratorType(std::find(*latest_, end_, index));
-      if ((*result != end_)) {
+      IndexType index = gridPart_.indexSet().index(hostIterator_->operator*());
+      IndexPairType result = gridPart_.globalToLocaIndexMap_->find(index);
+      if ((result != end_)) {
         found = true;
-        if (**result == last_)
+        if (result->first == last_)
           workAtAll_ = false;
-        else
-          latest_ = result;
+//          latest_ = result;
       } else
         hostIterator_->operator++();
     }
   } // void forward()
 
   const GridPartType& gridPart_;
-  IndexIteratorType* latest_;
-  const GlobalIndexType last_;
-  const IndexIteratorType end_;
+//  IndexPairType* latest_;
+  const IndexType last_;
+  const IndexPairType end_;
   bool workAtAll_;
   HostIteratorType* hostIterator_;
 }; // class IndexBased
