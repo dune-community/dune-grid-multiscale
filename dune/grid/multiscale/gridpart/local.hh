@@ -7,6 +7,7 @@
 
 // dune-common
 #include <dune/common/shared_ptr.hh>
+#include <dune/common/exceptions.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/gridpart/leaf.hh>
@@ -31,7 +32,7 @@ struct LocalTraits
 
   typedef typename BaseType::GridType GridType;
 
-  typedef typename BaseType::GridPartType GridPartType;
+  typedef Local< GridType > GridPartType;
 
   typedef typename BaseType::IndexSetType IndexSetType;
 
@@ -39,14 +40,15 @@ struct LocalTraits
 
   typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
 
+  //! rene fragen, wie das hier vernünftig geht (für codim = 0 spezialisieren, für rest boom)
   template< int codim >
   struct Codim
   {
     template< PartitionIteratorType pitype >
     struct Partition
     {
-      typedef typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-//      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridType, /*typename IndexSetType::IndexType,*/ pitype > IteratorType;
+//      typedef typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
+      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridPartType, pitype > IteratorType;
     };
   };
 
@@ -80,7 +82,7 @@ public:
 
   typedef typename GlobalGridPartType::IndexSetType::IndexType GlobalIndexType;
 
-  typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, GlobalIndexType, InteriorBorder_Partition > LocalIteratorType;
+//  typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, GlobalIndexType, InteriorBorder_Partition > LocalIteratorType;
 
   explicit Local(GlobalGridPartType& globalGridPart, Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet)
     : BaseType(globalGridPart.grid()),
@@ -96,49 +98,46 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType begin() const
   {
-    return globalGridPart_.template begin< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(*this);
+//    return globalGridPart_.template begin< codim >();
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     return globalGridPart_.template begin< codim, pitype >();
-  }
-
-  LocalIteratorType beginLocal() const
-  {
-    return LocalIteratorType(*this);
   }
 
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
-    return globalGridPart_.template end< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(*this, true);
+//    return globalGridPart_.template end< codim >();
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     return globalGridPart_.template end< codim, pitype >();
-  }
-
-  LocalIteratorType endLocal() const
-  {
-    return LocalIteratorType(*this, true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& en) const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     return en.ileafbegin();
   }
 
   IntersectionIteratorType iend(const EntityType& en) const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     return en.ileafend();
   }
 
   int boundaryId(const IntersectionType& intersection) const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     return intersection.boundaryId();
   }
 
@@ -150,11 +149,12 @@ public:
   template< class DataHandleImp ,class DataType >
   void communicate(CommDataHandleIF< DataHandleImp, DataType > & data, InterfaceType iftype, CommunicationDirection dir) const
   {
+    DUNE_THROW(Dune::NotImplemented, "");
     globalGridPart_.communicate(data,iftype,dir);
   }
 
 private:
-  friend class Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, GlobalIndexType, InteriorBorder_Partition >;
+  friend class Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, InteriorBorder_Partition >;
 
   GlobalGridPartType& globalGridPart_;
   Dune::shared_ptr< std::set< GlobalIndexType > > globalIndicesSet_;

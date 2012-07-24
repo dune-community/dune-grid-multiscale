@@ -84,9 +84,9 @@ int main(int argc, char** argv)
     const MsGridType::GlobalGridPartType::IndexSetType& indexSet = msGrid.globalGridPart().indexSet();
     typedef MsGridType::LocalGridPartType LocalGridPartType;
     const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(0);
-    typedef LocalGridPartType::LocalIteratorType IteratorType;
-    IteratorType itEnd = localGridPart->endLocal();
-    for (IteratorType it = localGridPart->beginLocal(); it != itEnd; ++it) {
+    typedef LocalGridPartType::Codim< 0 >::IteratorType IteratorType;
+    IteratorType itEnd = localGridPart->end< 0 >();
+    for (IteratorType it = localGridPart->begin< 0 >(); it != itEnd; ++it) {
       const IteratorType::Entity& entity = *it;
       debug << "  entity " << indexSet.index(entity) << std::endl;
     }
