@@ -100,7 +100,7 @@ private:
     // iterate forward until we find the next entity that belongs to the local grid part
     bool found = false;
     while (!found && workAtAll_) {
-      IndexType index = gridPart_.indexSet().index(hostIterator_->operator*());
+      IndexType index = gridPart_.globalGridPart_.indexSet().index(hostIterator_->operator*());
       IndexPairType result = gridPart_.globalToLocaIndexMap_->find(index);
       if ((result != end_)) {
         found = true;
