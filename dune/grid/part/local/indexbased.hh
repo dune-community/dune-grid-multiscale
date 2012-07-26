@@ -9,9 +9,12 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 
+// dune-geometry
+#include <dune/geometry/type.hh>
+
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
-//#include <dune/grid/part/iterator/codim0.hh>
+#include <dune/grid/part/iterator/local/codim0.hh>
 //#include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
@@ -23,6 +26,26 @@ namespace Part {
 namespace Local {
 
 namespace IndexBased {
+
+template< class GlobalGridPartType, class LocalGridPartType, int codim >
+struct ConstCodim
+{
+  template< PartitionIteratorType pitype >
+  struct Partition
+  {
+    typedef typename GlobalGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
+  };
+};
+
+template< class GlobalGridPartType, class LocalGridPartType >
+struct ConstCodim< GlobalGridPartType, LocalGridPartType, 0 >
+{
+  template< PartitionIteratorType pitype >
+  struct Partition
+  {
+      typedef typename Dune::grid::Part::Iterator::Local::Codim0::IndexBased< LocalGridPartType > IteratorType;
+  };
+};
 
 template< class GlobalGridPartImp >
 class Const;
@@ -39,33 +62,32 @@ struct ConstTraits
   typedef typename GlobalGridPartType::IndexSetType IndexSetType;
 //  typedef Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
 
-  static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
-
-  static const bool conforming = GlobalGridPartType::conforming;
-
-  typedef typename GlobalGridPartType::IntersectionIteratorType IntersectionIteratorType;
-
-  //! rene fragen, wie das hier vernünftig geht (für codim = 0 spezialisieren, für rest boom)
   template< int codim >
   struct Codim
   {
     template< PartitionIteratorType pitype >
     struct Partition
     {
-      typedef typename GlobalGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-//      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridPartType, pitype > IteratorType;
+      typedef typename ConstCodim< GlobalGridPartType, GridPartType, codim >::template Partition< pitype >::IteratorType IteratorType;
     };
   };
+
+  static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
+
+  static const bool conforming = GlobalGridPartType::conforming;
+
+  typedef typename GlobalGridPartType::IntersectionIteratorType IntersectionIteratorType;
+
 }; // class LocalTraits
 
 template< class GlobalGridPartImp >
 class Const
-  : public Dune::grid::Part::Interface< Dune::grid::Part::Local::IndexBased::ConstTraits< typename GlobalGridPartImp::Traits > >
+  : public Dune::grid::Part::Interface< Dune::grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > >
 {
 public:
   typedef Const< GlobalGridPartImp > ThisType;
 
-  typedef Dune::grid::Part::Local::IndexBased::ConstTraits< typename GlobalGridPartImp::Traits > Traits;
+  typedef Dune::grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > Traits;
 
   typedef Dune::grid::Part::Interface< Traits > BaseType;
 
@@ -81,13 +103,17 @@ public:
 
   typedef typename GridType::template Codim<0>::Entity EntityType;
 
-private:
   typedef typename IndexSetType::IndexType IndexType;
 
-public:
-  Const(const GlobalGridPartType& globalGridPart/*, Dune::shared_ptr< std::map< IndexType, IndexType > > globalToLocaIndexMap*/)
-    : globalGridPart_(globalGridPart)/*,
-      globalToLocaIndexMap_(globalToLocaIndexMap),
+  typedef std::map< IndexType, IndexType > IndexMapType;
+
+  typedef Dune::GeometryType GeometryType;
+
+  typedef std::map< GeometryType, IndexMapType > GeometryMapType;
+
+  Const(const GlobalGridPartType& globalGridPart, Dune::shared_ptr< const GeometryMapType > geometryMap)
+    : globalGridPart_(globalGridPart),
+      geometryMap_(geometryMap)/*,
       indexSet_(*this)*/
   {}
 
@@ -101,11 +127,16 @@ public:
     return globalGridPart_.grid();
   }
 
+  const GlobalGridPartType& globalGridPart() const
+  {
+    return globalGridPart_;
+  }
+
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType begin() const
   {
-//    return typename BaseType::template Codim< codim >::IteratorType(*this);
-    return globalGridPart_.template begin< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(*this);
+//    return globalGridPart_.template begin< codim >();
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -118,8 +149,8 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
-//    return typename BaseType::template Codim< codim >::IteratorType(*this, true);
-    return globalGridPart_.template end< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(*this, true);
+//    return globalGridPart_.template end< codim >();
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -160,11 +191,11 @@ public:
   }
 
 private:
-//  friend class Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< ThisType, InteriorBorder_Partition >;
+  friend class Dune::grid::Part::Iterator::Local::Codim0::IndexBased< ThisType >;
 //  friend class Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< ThisType >;
 
   const GlobalGridPartType& globalGridPart_;
-//  Dune::shared_ptr< std::map< IndexType, IndexType > > globalToLocaIndexMap_;
+  Dune::shared_ptr< const GeometryMapType > geometryMap_;
 //  const IndexSetType indexSet_;
 }; // class Const
 
