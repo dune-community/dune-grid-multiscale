@@ -18,8 +18,8 @@
 #include <dune/stuff/common/logging.hh>
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/gridpart/leaf.hh>
-//#include <dune/grid/multiscale/gridpart/local.hh>
+#include <dune/grid/part/leaf.hh>
+#include <dune/grid/part/local/indexbased.hh>
 
 namespace Dune {
 
@@ -39,9 +39,9 @@ public:
 
   static const unsigned int dim = GridType::dimension;
 
-  typedef Dune::grid::Multiscale::GridPart::Leaf< GridType > GlobalGridPartType;
+  typedef Dune::grid::Part::Leaf::Const< GridType > GlobalGridPartType;
 
-//  typedef Dune::grid::Multiscale::GridPart::Local< GridType > LocalGridPartType;
+  typedef Dune::grid::Part::Local::IndexBased::Const< GlobalGridPartType > LocalGridPartType;
 
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
@@ -56,7 +56,7 @@ private:
 
   typedef std::map< unsigned int, Dune::shared_ptr< GeometryMapType > > SubdomainMapType;
 
-//  typedef std::vector< Dune::shared_ptr< LocalGridPartType > > LocalGridPartVectorType;
+  typedef std::vector< Dune::shared_ptr< LocalGridPartType > > LocalGridPartVectorType;
 
   template< int c, int d >
   struct Add
@@ -123,7 +123,6 @@ public:
     Add< 1, dim >::subEntities(*this, entity, geometryMap, debug, prefix);
   } // void add(const EntityType& entity, const unsigned int subdomain, Dune::ParameterTree paramTree = Dune::ParameterTree())
 
-#if 0
   void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
   {
     //// debug output
@@ -134,7 +133,7 @@ public:
     // test for consecutive numbering of subdomains and finalize subgrids
     bool consecutive = true;
     for (unsigned int subdomain = 0; subdomain < size(); ++subdomain) {
-      if (subdomainToIndexPairMap_.find(subdomain) == subdomainToIndexPairMap_.end())
+      if (subdomainMap_.find(subdomain) == subdomainMap_.end())
         consecutive = false;
     }
     if (!consecutive) {
@@ -145,39 +144,38 @@ public:
 
     // create local grid parts and report
     //debug << "found " << size() << " subdomains" << std::endl;
-    for (typename SubdomainToIndexPairMapType::iterator pairOfSubdomainAndIndexPair = subdomainToIndexPairMap_.begin();
-         pairOfSubdomainAndIndexPair != subdomainToIndexPairMap_.end();
-         ++pairOfSubdomainAndIndexPair) {
+    for (typename SubdomainMapType::iterator iterator = subdomainMap_.begin();
+         iterator != subdomainMap_.end();
+         ++iterator) {
 //      const unsigned int subdomain = pairOfSubdomainAndIndexPair->first;
 //      const unsigned int subdomainSize = pairOfSubdomainAndIndexPair->second->size();
       //debug << prefix << "- subdomain " << subdomain << ", " << subdomainSize << " entities:" << std::endl;
       //debug << prefix << "  " << std::flush;
-      unsigned int counter = 0;
-      for (typename GlobalToLocalIndexMapType::iterator indexPair = pairOfSubdomainAndIndexPair->second->begin();
-           indexPair != pairOfSubdomainAndIndexPair->second->end();
-           ++indexPair) {
+//      unsigned int counter = 0;
+//      for (typename GlobalToLocalIndexMapType::iterator indexPair = pairOfSubdomainAndIndexPair->second->begin();
+//           indexPair != pairOfSubdomainAndIndexPair->second->end();
+//           ++indexPair) {
         //debug << indexPair->first;
         //if (counter < subdomainSize - 1)
           //debug << ", ";
-        ++counter;
-      }
+//        ++counter;
+//      }
 
       //debug << std::endl;
-      localGridParts_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_, pairOfSubdomainAndIndexPair->second)));
+      localGridParts_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_/*, pairOfSubdomainAndIndexPair->second*/)));
     } // create local grid parts and report
 
     // finalize
     finalized_ = true;
     return;
   } // void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
-#endif
 
-//  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    return localGridParts_[subdomain];
-//  }
+  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
+  {
+    assert(finalized_);
+    assert(subdomain < size());
+    return localGridParts_[subdomain];
+  }
 
 private:
   template< int, int >
@@ -208,7 +206,7 @@ private:
   bool finalized_;
   unsigned int size_;
   SubdomainMapType subdomainMap_;
-//  LocalGridPartVectorType localGridParts_;
+  LocalGridPartVectorType localGridParts_;
 }; // class Default
 
 template< class GridType >

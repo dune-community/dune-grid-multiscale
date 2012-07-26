@@ -9,7 +9,7 @@
 #include <dune/common/exceptions.hh>
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/gridpart/indexset/default.hh>
+#include <dune/grid/part/indexset/default.hh>
 
 namespace Dune {
 
