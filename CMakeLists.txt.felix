@@ -72,7 +72,7 @@ add_cxx_flags(-std=c++0x)
 
 add_cxx_flags(${CUSTOM_FLAGS})
 # the other dune modules
-ADD_DUNE_MODULES(common grid geometry stuff subgrid fem)
+ADD_DUNE_MODULES(common grid geometry stuff fem)
 
 # Source listing, relative to the position of this file
 FILE( GLOB_RECURSE common "../dune-common/*.hh" )
@@ -84,13 +84,11 @@ FILE( GLOB_RECURSE stuff_cc "../dune-stuff/*.cc" )
 FILE( GLOB_RECURSE grid-multiscale "../dune-grid-multiscale/*.hh" )
 FILE( GLOB_RECURSE subgrid "../dune-subgrid/*.hh" )
 FILE( GLOB_RECURSE subgrid_cc "../dune-subgrid/*.cc" )
-FILE( GLOB_RECURSE fem "../dune-fem/*.hh" )
-FILE( GLOB_RECURSE fem_cc  "../dune-fem/*.cc" )
 
-set_source_files_properties( ${common} ${grid} ${stuff} ${subgrid} ${grid-multiscale} ${fem}
-${common_cc} ${grid_cc} ${stuff_cc} ${subgrid_cc} ${fem_cc} PROPERTIES HEADER_FILE_ONLY 1 )
+set_source_files_properties( ${common} ${grid} ${stuff} ${subgrid} ${grid-multiscale}
+${common_cc} ${grid_cc} ${stuff_cc} ${subgrid_cc} PROPERTIES HEADER_FILE_ONLY 1 )
 
-set( LIST_LIBS ${common} ${grid} ${stuff} ${subgrid} ${grid-multiscale} ${fem})
+set( LIST_LIBS ${common} ${grid} ${stuff} ${subgrid} ${grid-multiscale})
 
 set( COMMON_LIBS "grid" "dunegeometry" "common" ${BLAS_LIB} "alugrid" "boost_filesystem" "boost_system" )
 
