@@ -46,37 +46,57 @@ public:
   IndexBased(const GridPartType& gridPart)
     : gridPart_(gridPart),
       hostIndexSetType_(gridPart_.globalGridPart_.indexSet())
-  {}
+  {
+    // the most stupid way of checking that we have only one geometry
+    assert(hostIndexSetType_.geomTypes(0).size() == 1);
+  }
 
   IndexType index(const EntityType& entity) const
   {
-    assert(contains(entity));
+//    assert(contains(entity));
     const IndexType globalIndex = hostIndexSetType_.index(entity);
-    return gridPart_.globalToLocaIndexMap_->find(globalIndex)->second;
+    return globalIndex;
+//    return gridPart_.globalToLocaIndexMap_->find(globalIndex)->second;
   }
 
-  IndexType subIndex(const EntityType& /*entity*/, int /*i*/, unsigned int /*codim*/) const
+  IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
   {
-    DUNE_THROW(Dune::NotImplemented, "Will be implemented, as soon as I know what it does.");
-    return -1;
+    const IndexType ret = hostIndexSetType_.subIndex(entity, i, codim);
+    std::cout << "    IndexBased::subIndex(entity, " << i << ", " << codim << "): " << ret << std::endl;
+    return ret;
   }
 
-  const std::vector< GeometryType >& geomTypes(int /*codim*/) const
+  //! \attention Not thought about this yet!
+  //! \todo Think about this!
+  const std::vector< GeometryType >& geomTypes(int codim) const
   {
-    DUNE_THROW(Dune::NotImplemented, "Will be implemented, as soon as I know what it does.");
-    return -1;
+    const std::vector< GeometryType >& ret = hostIndexSetType_.geomTypes(codim);
+    std::cout << "  IndexBased::geomTypes(" << codim << "): ";
+    for (unsigned int i = 0; i < ret.size(); ++i)
+      std::cout << ret[i] << " ";
+    std::cout << std::endl;
+    return ret;
   }
 
-  IndexType size(GeometryType /*type*/) const
+  //! \attention Not thought about this yet!
+  //! \todo Think about this!
+  IndexType size(GeometryType type) const
   {
-    DUNE_THROW(Dune::NotImplemented, "Will be implemented, as soon as I know what it does.");
-    return -1;
+    const IndexType ret = hostIndexSetType_.size(type);
+    std::cout << "    IndexBased::size(" << type << "): " << ret << std::endl;
+//    return gridPart_.globalToLocaIndexMap_->size();
+    return ret;
   }
 
-  IndexType size(int /*codim*/) const
+  //! \attention Not thought about this yet!
+  //! \todo Think about this!
+  IndexType size(int codim) const
   {
-    DUNE_THROW(Dune::NotImplemented, "Will be implemented, as soon as I know what it does.");
-    return -1;
+    const IndexType ret = hostIndexSetType_.size(codim);
+    std::cout << "  IndexBased::size(" << codim << "): " << ret << std::endl;
+//    assert(codim == 0);
+//    return gridPart_.globalToLocaIndexMap_->size();
+    return ret;
   }
 
   bool contains(const EntityType& entity) const

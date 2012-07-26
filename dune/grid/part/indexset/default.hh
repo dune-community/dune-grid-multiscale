@@ -1,5 +1,11 @@
-#ifndef DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_DEFAULT_HH
-#define DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_DEFAULT_HH
+
+/**
+ *  \attention  This file was copied from dune-fem, please observe the corresponding license.
+ *  \todo       Add licensing information.
+ **/
+
+#ifndef DUNE_GRID_PART_INDEXSET_DEFAULT_HH
+#define DUNE_GRID_PART_INDEXSET_DEFAULT_HH
 
 // system
 #include <vector>
@@ -15,7 +21,7 @@
 //#include <dune/grid/common/adaptcallback.hh> // for compatibility only
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/gridpart/indexset/empty.hh>
+#include <dune/grid/part/indexset/empty.hh>
 
 //#include <dune/fem/misc/capabilities.hh>
 //#include <dune/fem/misc/mpimanager.hh>
@@ -24,9 +30,7 @@ namespace Dune {
 
 namespace grid {
 
-namespace Multiscale {
-
-namespace GridPart {
+namespace Part {
 
 namespace IndexSet {
 
@@ -59,7 +63,7 @@ public:
 
   //! store const reference to set
   Wrapper(const Wrapper<IndexSetImp> & s)
-    : EmptyIndexSet(s.adaptive_), set_(s.set_) {}
+    : Empty(s.adaptive_), set_(s.set_) {}
 
   //! return persistent status
   bool persistent () const { return false; }
@@ -174,12 +178,10 @@ public:
 
 } // namespace IndexSet
 
-} // namespace GridPart
-
-} // namespace Multiscale
+} // namespace Part
 
 } // namespace grid
 
 } // namespace Dune
 
-#endif // DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_DEFAULT_HH
+#endif // DUNE_GRID_PART_INDEXSET_DEFAULT_HH

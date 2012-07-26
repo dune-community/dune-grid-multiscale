@@ -1,6 +1,6 @@
 
-#ifndef DUNE_GRID_MULTISCALE_GRIDPART_ITERATOR_CODIM0_HH
-#define DUNE_GRID_MULTISCALE_GRIDPART_ITERATOR_CODIM0_HH
+#ifndef DUNE_GRID_PART_ITERATOR_CODIM0_HH
+#define DUNE_GRID_PART_ITERATOR_CODIM0_HH
 
 // system
 #include <map>
@@ -15,9 +15,7 @@ namespace Dune {
 
 namespace grid {
 
-namespace Multiscale {
-
-namespace GridPart {
+namespace Part {
 
 namespace Iterator {
 
@@ -124,12 +122,10 @@ private:
 
 } // namespace Iterator
 
-} // namespace GridPart
-
-} // namespace Multiscale
+} // namespace Part
 
 } // namespace grid
 
 } // namespace Dune
 
-#endif // DUNE_GRID_MULTISCALE_GRIDPART_ITERATOR_CODIM0_HH
+#endif // DUNE_GRID_PART_ITERATOR_CODIM0_HH

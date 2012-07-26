@@ -1,5 +1,11 @@
-#ifndef DUNE_GRID_MULTISCALE_GRIDPART_VIEW_HH
-#define DUNE_GRID_MULTISCALE_GRIDPART_VIEW_HH
+
+/**
+ *  \attention  This file was copied from dune-fem, please observe the corresponding license.
+ *  \todo       Add licensing information.
+ **/
+
+#ifndef DUNE_GRID_PART_VIEW_HH
+#define DUNE_GRID_PART_VIEW_HH
 
 // dune-grid
 #include <dune/grid/common/gridview.hh>
@@ -8,9 +14,7 @@ namespace Dune {
 
 namespace grid {
 
-namespace Multiscale {
-
-namespace GridPart {
+namespace Part {
 
 template< class GridPart >
 class ViewImp;
@@ -174,8 +178,6 @@ public:
   }
 };
 
-
-
 template< class GridPart >
 class View
 : public GridView< ViewTraits< GridPart > >
@@ -195,12 +197,10 @@ public:
   {}
 };
 
-} // namespace GridPart
-
-} // namespace Multiscale
+} // namespace Part
 
 } // namespace grid
 
 } // namespace Dune
 
-#endif // DUNE_GRID_MULTISCALE_GRIDPART_VIEW_HH
+#endif // DUNE_GRID_PART_VIEW_HH

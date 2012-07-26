@@ -1,5 +1,11 @@
-#ifndef DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_EMPTY_HH
-#define DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_EMPTY_HH
+
+/**
+ *  \attention  This file was copied from dune-fem, please observe the corresponding license.
+ *  \todo       Add licensing information.
+ **/
+
+#ifndef DUNE_GRID_PART_INDEXSET_EMPTY_HH
+#define DUNE_GRID_PART_INDEXSET_EMPTY_HH
 
 // system
 #include <iostream>
@@ -15,9 +21,7 @@ namespace Dune {
 
 namespace grid {
 
-namespace Multiscale {
-
-namespace GridPart {
+namespace Part {
 
 namespace IndexSet {
 
@@ -157,16 +161,14 @@ protected:
     }
     return true;
   }
-};
+}; // class Empty
 
 } // namespace IndexSet
 
-} // namespace GridPart
-
-} // namespace Multiscale
+} // namespace Part
 
 } // namespace grid
 
 } // namespace Dune
 
-#endif // DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_EMPTY_HH
+#endif // DUNE_GRID_PART_INDEXSET_EMPTY_HH

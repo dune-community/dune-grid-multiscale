@@ -22,26 +22,28 @@ namespace Multiscale {
 
 namespace GridPart {
 
-template< class GridImp >
+template< class GlobalGridPartImp >
 class Local;
 
-template< class GridImp >
+template< class GlobalGridPartImp >
 struct LocalTraits
-  : public Dune::grid::Multiscale::GridPart::LeafTraits< GridImp >
+  : public Dune::grid::Multiscale::GridPart::LeafTraits< typename GlobalGridPartImp::GridType >
 {
-  typedef Dune::grid::Multiscale::GridPart::LeafTraits< GridImp > BaseType;
+  typedef GlobalGridPartImp GlobalGridPartType;
 
-  typedef typename BaseType::GridType GridType;
+  typedef Dune::grid::Multiscale::GridPart::Local< GlobalGridPartType > GridPartType;
 
-  typedef Local< GridType > GridPartType;
-
-//  typedef typename BaseType::IndexSetType IndexSetType;
+  typedef typename GlobalGridPartType::GridType GridType;
 
   typedef Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
 
-  static const PartitionIteratorType indexSetPartitionType = BaseType::indexSetPartitionType;
+  typedef GlobalGridPartType::GridViewType GridViewType;
 
-  typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
+  static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
+
+  static const bool conforming = GlobalGridPartType::conforming;
+
+  typedef typename GlobalGridPartType::IntersectionIteratorType IntersectionIteratorType;
 
   //! rene fragen, wie das hier vernünftig geht (für codim = 0 spezialisieren, für rest boom)
   template< int codim >
@@ -50,28 +52,27 @@ struct LocalTraits
     template< PartitionIteratorType pitype >
     struct Partition
     {
-//      typedef typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridPartType, pitype > IteratorType;
+      typedef typename GlobalGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
+//      typedef typename Dune::grid::Multiscale::GridPart::Iterator::Codim0::IndexBased< GridPartType, pitype > IteratorType;
     };
   };
-
-  static const bool conforming = BaseType::conforming;
 }; // class LocalTraits
 
-template< class GridImp >
+//! \attention Only grids with one GeometryType supported!
+template< class GlobalGridPartImp >
 class Local
-  : public Dune::grid::Multiscale::GridPart::Default< LocalTraits< GridImp > >
+  : public Dune::grid::Multiscale::GridPart::Default< LocalTraits< GlobalGridPartImp > >
 {
 public:
-  typedef Local< GridImp > ThisType;
+  typedef Local< GlobalGridPartImp > ThisType;
 
-  typedef Dune::grid::Multiscale::GridPart::Default< LocalTraits< GridImp > > BaseType;
+  typedef Dune::grid::Multiscale::GridPart::Default< LocalTraits< GlobalGridPartImp > > BaseType;
 
-  typedef LocalTraits< GridImp > Traits;
+  typedef Dune::grid::Multiscale::GridPart::LocalTraits< GlobalGridPartImp > Traits;
 
   typedef typename Traits::GridType GridType;
 
-  typedef Dune::grid::Multiscale::GridPart::Leaf< GridType > GlobalGridPartType;
+  typedef typename Traits::GlobalGridPartType GlobalGridPartType;
 
   typedef typename Traits::IndexSetType IndexSetType;
 
@@ -79,12 +80,12 @@ public:
 
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-  typedef typename GridType::template Partition< All_Partition >::LeafGridView LeafGridView;
+  typedef typename Traits::GridViewType GridViewType;
 
   typedef typename GridType::template Codim<0>::Entity EntityType;
 
 private:
-  typedef typename Traits::IndexSetType::IndexType IndexType;
+  typedef typename IndexSetType::IndexType IndexType;
 
 public:
   explicit Local(GlobalGridPartType& globalGridPart, Dune::shared_ptr< std::map< IndexType, IndexType > > globalToLocaIndexMap)
