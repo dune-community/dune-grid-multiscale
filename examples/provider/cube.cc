@@ -16,6 +16,7 @@
 #include <dune/stuff/common/parameter/tree.hh>
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/filesystem.hh>
+#include <dune/stuff/common/string.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/provider/cube.hh>
@@ -45,6 +46,20 @@ void ensureParamFile(std::string filename)
   } // only write param file if there is none
 } // void ensureParamFile()
 
+template< class GridPartType >
+void measureTiming(const GridPartType& gridPart, Dune::Stuff::Common::LogStream& out, const std::string name = "")
+{
+  out << "walking " << name << " grid part... " << std::flush;
+  Dune::Timer timer;
+  unsigned int elements = 0;
+  for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart.template begin< 0 >();
+       it != gridPart.template end< 0 >();
+       ++it)
+    ++elements;
+  out << " done (has " << elements << " elements, took " << timer.elapsed() << " sek)" << std::endl;
+  return;
+}
+
 int main(int argc, char** argv)
 {
   try {
@@ -69,41 +84,29 @@ int main(int argc, char** argv)
 
     // grid
     info << "setting up grid: " << std::endl;
-//    debug.suspend(1);
+    debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::MsGridType MsGridType;
     const MsGridType& msGrid = gridProvider.msGrid();
-//    debug.resume(1);
+    debug.resume();
     info << "took " << timer.elapsed()
          << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " entities, "
          << msGrid.size() << " subdomains)" << std::endl;
 
-//    typedef MsGridType::GlobalGridPartType GlobalGridPartType;
-//    const GlobalGridPartType& globalGridPart = msGrid.globalGridPart();
-//    const MsGridType::GlobalGridPartType::IndexSetType& globalIndexSet = globalGridPart.indexSet();
-//    typedef MsGridType::LocalGridPartType LocalGridPartType;
-//    const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(0);
-//    const LocalGridPartType::IndexSetType& localIndexSet = localGridPart->indexSet();
-
-//    debug << "geometries by codim:" << std::endl;
-//    for (unsigned int codim = 0; codim <= GridProviderType::dim; ++codim) {
-//      const std::vector< Dune::GeometryType >& geomTypes = localIndexSet.geomTypes(codim);
-//      debug << "  size by geometry:" << std::endl;
-//      for (unsigned int i = 0; i < geomTypes.size(); ++i)
-//        localIndexSet.size(geomTypes[i]);
-//    }
-
-//    info << "walking local grid:" << std::endl;
-//    timer.reset();
-////    debug.suspend();
-//    typedef GlobalGridPartType::Codim< 0 >::IteratorType IteratorType;
-//    IteratorType itEnd = globalGridPart.end< 0 >();
-//    for (IteratorType it = globalGridPart.begin< 0 >(); it != itEnd; ++it) {
-//      const IteratorType::Entity& entity = *it;
-//      debug << "  entity " << globalIndexSet.index(entity) << ", local index " << localIndexSet.index(entity) << std::endl;
-//    }
+    // time grid part and index set
+    info << "timing grid parts:" << std::endl;
+    typedef MsGridType::GlobalGridPartType GlobalGridPartType;
+    const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = msGrid.globalGridPart();
+    measureTiming(*globalGridPart, info, "global");
+    typedef MsGridType::LocalGridPartType LocalGridPartType;
+    const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = msGrid.localGridPart(0);
+    measureTiming(*firstLocalGridPart, info, "local (subdomain 0)");
+    for (unsigned int sd = 1; sd < msGrid.size(); ++sd) {
+      const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(sd);
+      measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(sd) + ")");
+    }
 
     // if we came that far we can as well be happy about it
     return 0;

@@ -56,12 +56,12 @@ private:
 
   typedef std::map< unsigned int, Dune::shared_ptr< GeometryMapType > > SubdomainMapType;
 
-  typedef std::vector< Dune::shared_ptr< LocalGridPartType > > LocalGridPartVectorType;
+  typedef std::vector< Dune::shared_ptr< const LocalGridPartType > > LocalGridPartVectorType;
 
   template< int c, int d >
   struct Add
   {
-    static void subEntities(ThisType& msGrid, const EntityType& entity, GeometryMapType& geometryMap, std::ostream& out, const std::string prefix)
+    static void subEntities(ThisType& msGrid, const EntityType& entity, GeometryMapType& geometryMap, Dune::Stuff::Common::LogStream& out, const std::string prefix)
     {
       typedef typename EntityType::template Codim< c >::EntityPointer CodimCentityPtrType;
       for (int i = 0; i < entity.template count< c >(); ++i)
@@ -105,7 +105,7 @@ public:
     const std::string prefix = paramTree.get("prefix", "");
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
     IndexType globalIndex = globalGridPart_->indexSet().index(entity);
-    debug << prefix << "adding entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
+    debug << prefix << id << ".add entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
 
     // create geometry map for this subdomain if needed (doing this explicitly instead of just using insert only to increment size)
     if (subdomainMap_.find(subdomain) == subdomainMap_.end()) {
@@ -125,12 +125,12 @@ public:
 
   void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
   {
-    //// debug output
-    //const std::string prefix = paramTree.get("prefix", "");
-    //Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
-    //debug << prefix << id << ".finalize: " << std::flush;
+    // debug output
+    const std::string prefix = paramTree.get("prefix", "");
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
+    debug << prefix << "finalizing " << std::flush;
 
-    // test for consecutive numbering of subdomains and finalize subgrids
+    // test for consecutive numbering of subdomains
     bool consecutive = true;
     for (unsigned int subdomain = 0; subdomain < size(); ++subdomain) {
       if (subdomainMap_.find(subdomain) == subdomainMap_.end())
@@ -143,26 +143,22 @@ public:
     }
 
     // create local grid parts and report
-    //debug << "found " << size() << " subdomains" << std::endl;
-    for (typename SubdomainMapType::iterator iterator = subdomainMap_.begin();
-         iterator != subdomainMap_.end();
-         ++iterator) {
-//      const unsigned int subdomain = pairOfSubdomainAndIndexPair->first;
-//      const unsigned int subdomainSize = pairOfSubdomainAndIndexPair->second->size();
-      //debug << prefix << "- subdomain " << subdomain << ", " << subdomainSize << " entities:" << std::endl;
-      //debug << prefix << "  " << std::flush;
-//      unsigned int counter = 0;
-//      for (typename GlobalToLocalIndexMapType::iterator indexPair = pairOfSubdomainAndIndexPair->second->begin();
-//           indexPair != pairOfSubdomainAndIndexPair->second->end();
-//           ++indexPair) {
-        //debug << indexPair->first;
-        //if (counter < subdomainSize - 1)
-          //debug << ", ";
-//        ++counter;
-//      }
-
-      //debug << std::endl;
-      localGridParts_.push_back(Dune::shared_ptr< LocalGridPartType >(new LocalGridPartType(*globalGridPart_/*, pairOfSubdomainAndIndexPair->second*/)));
+    debug << size() << " subdomains:" << std::endl;
+    for (typename SubdomainMapType::iterator subdomainIterator = subdomainMap_.begin();
+         subdomainIterator != subdomainMap_.end();
+         ++subdomainIterator) {
+      const unsigned int subdomain = subdomainIterator->first;
+      // compute number of codim 0 entities
+      unsigned int subdomainSize = 0;
+      for (typename GeometryMapType::iterator geometryIterator = subdomainIterator->second->begin();
+           geometryIterator != subdomainIterator->second->end();
+           ++geometryIterator) {
+        if (geometryIterator->first.dim() == dim)
+          subdomainSize += geometryIterator->second.size();
+      } // compute number of codim 0 entities
+      debug << prefix << "  subdomain " << subdomain << " of size " << subdomainSize << "... " << std::flush;
+      localGridParts_.push_back(Dune::shared_ptr< const LocalGridPartType >(new LocalGridPartType(*globalGridPart_, subdomainIterator->second)));
+      debug << "done" << std::endl;
     } // create local grid parts and report
 
     // finalize
@@ -184,7 +180,7 @@ private:
   void addGeometryAndIndex(GeometryMapType& geometryMap,
                            const GeometryType& geometryType,
                            const IndexType& globalIndex,
-                           std::ostream& out,
+                           Dune::Stuff::Common::LogStream& out,
                            const std::string prefix)
   {
     // make sure the map to this geometry type exists
@@ -219,7 +215,7 @@ struct Default< GridType >::Add< c, c >
   static void subEntities(Default< GridType >& msGrid,
                           const typename Default< GridType >::EntityType& entity,
                           typename Default< GridType >::GeometryMapType& geometryMap,
-                          std::ostream& out,
+                          Dune::Stuff::Common::LogStream& out,
                           const std::string prefix)
   {
     typedef typename Default< GridType >::EntityType::template Codim< c >::EntityPointer CodimCentityPtrType;

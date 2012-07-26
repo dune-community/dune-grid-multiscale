@@ -86,7 +86,6 @@ private:
 
     // debug output
     const std::string prefix = paramTree.get("prefix", "");
-    const int max = paramTree.get("displayMaxEntities", 20);
     Dune::ParameterTree indentTree;
     indentTree["prefix"] = prefix + "    ";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
@@ -106,10 +105,6 @@ private:
       debug << partitions[d] << " ";
     }
     debug << std::endl;
-
-    // disable output for many entities
-    if (BaseType::grid().size(0) > max)
-      debug.suspend();
 
     // grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
@@ -140,18 +135,16 @@ private:
       else {
         std::stringstream msg;
         msg << "Error in " << id << ": not implemented for grid dimensions other than 1, 2 or 3!";
-        DUNE_THROW(Dune::InvalidStateException, msg.str());
+        DUNE_THROW(Dune::NotImplemented, msg.str());
       } // decide on the subdomain this entity shall belong to
-//      debug << ", subdomain " << subdomain << std::endl;
 
       // add entity to subdomain
       msGrid_->add(entity, subdomain, indentTree);
-
     } // walk the grid
 
-//    // finalize
-//    indentTree["prefix"] = prefix + "  ";
-//    msGrid_->finalize(indentTree);
+    // finalize
+    indentTree["prefix"] = prefix + "  ";
+    msGrid_->finalize(indentTree);
     debug << std::flush;
     return;
   } // void buildMsGrid(const Dune::ParameterTree& paramTree)
