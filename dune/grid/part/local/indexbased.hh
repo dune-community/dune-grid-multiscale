@@ -15,7 +15,7 @@
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
 #include <dune/grid/part/iterator/local/codim0.hh>
-//#include <dune/grid/part/indexset/local.hh>
+#include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
 
@@ -27,7 +27,7 @@ namespace Local {
 
 namespace IndexBased {
 
-template< class GlobalGridPartType, class LocalGridPartType, int codim >
+template< class GlobalGridPartType, int codim >
 struct ConstCodim
 {
   template< PartitionIteratorType pitype >
@@ -37,13 +37,13 @@ struct ConstCodim
   };
 };
 
-template< class GlobalGridPartType, class LocalGridPartType >
-struct ConstCodim< GlobalGridPartType, LocalGridPartType, 0 >
+template< class GlobalGridPartType >
+struct ConstCodim< GlobalGridPartType,  0 >
 {
   template< PartitionIteratorType pitype >
   struct Partition
   {
-      typedef typename Dune::grid::Part::Iterator::Local::Codim0::IndexBased< LocalGridPartType > IteratorType;
+      typedef typename Dune::grid::Part::Iterator::Local::Codim0::IndexBased< GlobalGridPartType > IteratorType;
   };
 };
 
@@ -59,8 +59,7 @@ struct ConstTraits
 
   typedef typename GlobalGridPartType::GridType GridType;
 
-  typedef typename GlobalGridPartType::IndexSetType IndexSetType;
-//  typedef Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
+  typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
 
   template< int codim >
   struct Codim
@@ -68,7 +67,7 @@ struct ConstTraits
     template< PartitionIteratorType pitype >
     struct Partition
     {
-      typedef typename ConstCodim< GlobalGridPartType, GridPartType, codim >::template Partition< pitype >::IteratorType IteratorType;
+      typedef typename ConstCodim< GlobalGridPartType, codim >::template Partition< pitype >::IteratorType IteratorType;
     };
   };
 
@@ -109,17 +108,19 @@ public:
 
   typedef Dune::GeometryType GeometryType;
 
-  typedef std::map< GeometryType, IndexMapType > GeometryMapType;
+  //! container type for the indices
+  typedef std::map< GeometryType, std::map< IndexType, IndexType > > IndexContainerType;
 
-  Const(const GlobalGridPartType& globalGridPart, Dune::shared_ptr< const GeometryMapType > geometryMap)
+  Const(const GlobalGridPartType& globalGridPart,
+        const Dune::shared_ptr< const IndexContainerType > indexContainer)
     : globalGridPart_(globalGridPart),
-      geometryMap_(geometryMap)/*,
-      indexSet_(*this)*/
+      indexContainer_(indexContainer),
+      indexSet_(*this)
   {}
 
   const IndexSetType& indexSet() const
   {
-    return globalGridPart_.indexSet();
+    return indexSet_;
   }
 
   const GridType& grid() const
@@ -135,8 +136,7 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*this);
-//    return globalGridPart_.template begin< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_);
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -149,8 +149,7 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*this, true);
-//    return globalGridPart_.template end< codim >();
+    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_, true);
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -192,11 +191,11 @@ public:
 
 private:
   friend class Dune::grid::Part::Iterator::Local::Codim0::IndexBased< ThisType >;
-//  friend class Dune::grid::Multiscale::GridPart::IndexSet::Local::IndexBased< ThisType >;
+  friend class Dune::grid::Part::IndexSet::Local::IndexBased< ThisType >;
 
   const GlobalGridPartType& globalGridPart_;
-  Dune::shared_ptr< const GeometryMapType > geometryMap_;
-//  const IndexSetType indexSet_;
+  const Dune::shared_ptr< const IndexContainerType > indexContainer_;
+  const IndexSetType indexSet_;
 }; // class Const
 
 } // namespace IndexBased
