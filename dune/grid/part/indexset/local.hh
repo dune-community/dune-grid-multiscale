@@ -1,12 +1,17 @@
 
-#ifndef DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_LOCAL_HH
-#define DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_LOCAL_HH
+#ifndef DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH
+#define DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH
 
 // system
+#include <map>
 #include <vector>
 
 // dune-common
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
+
+// dune-geometry
+#include <dune/geometry/type.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/part/indexset/default.hh>
@@ -15,111 +20,170 @@ namespace Dune {
 
 namespace grid {
 
-namespace Multiscale {
-
-namespace GridPart {
+namespace Part {
 
 namespace IndexSet {
 
 namespace Local {
 
-template< class GridPartImp >
+/**
+ *  \brief  Given a Dune::IndexSet and a set of entity indices, provides an index set on those entities only.
+ *  \todo   Replace GlobalIndexSetImp by Interface!
+ *  \todo   Document!
+ */
+template< class GridImp, class GlobalIndexSetImp >
 class IndexBased
 {
 public:
-  typedef GridPartImp GridPartType;
+  typedef GridImp GridType;
 
-  typedef IndexBased< GridPartType > ThisType;
+  typedef GlobalIndexSetImp GlobalIndexSetType;
 
-  typedef typename GridPartType::GridType GridType;
+  typedef IndexBased< GridType, GlobalIndexSetType > ThisType;
 
-  typedef typename GridPartType::EntityType EntityType;
+  typedef Dune::GeometryType GeometryType;
+
+  typedef typename GlobalIndexSetType::IndexType IndexType;
+
+  static const unsigned int dimension = GridType::dimension;
+
+  typedef std::map< GeometryType, std::map< IndexType, IndexType > > IndexContainerType;
 
 private:
-  typedef Dune::grid::Multiscale::GridPart::IndexSet::Default::Leaf< GridType > HostIndexSetType;
+  typedef std::map< IndexType, IndexType > Indices_MapType;
 
 public:
-  static const unsigned int dimension = HostIndexSetType::dimension;
-
-  typedef typename HostIndexSetType::IndexType IndexType;
-
-  IndexBased(const GridPartType& gridPart)
-    : gridPart_(gridPart),
-      hostIndexSetType_(gridPart_.globalGridPart_.indexSet())
+  IndexBased(const GlobalIndexSetType& globalIndexSet, const Dune::shared_ptr< const IndexContainerType > indexContainer)
+    : globalIndexSet_(globalIndexSet),
+      indexContainer_(indexContainer),
+      sizeByCodim_(dimension + 1)
   {
-    // the most stupid way of checking that we have only one geometry
-    assert(hostIndexSetType_.geomTypes(0).size() == 1);
+    // get geometry types and compute sizes
+    for (typename IndexContainerType::const_iterator iterator = indexContainer_->begin();
+         iterator != indexContainer_->end();
+         ++iterator) {
+      const GeometryType& geometryType = iterator->first;
+      const IndexType size = iterator->second.size();
+      geometryTypes_.push_back(geometryType);
+      sizeByGeometryType_.insert(std::pair< GeometryType, IndexType >(geometryType, size));
+      const unsigned int codim = dimension - geometryType.dim();
+      assert(0 <= codim);
+      assert(codim <= dimension);
+      sizeByCodim_[codim] += size;
+    }
+  } // IndexBased(const GridPartType& localGridPart)
+
+  template< int cc >
+  IndexType index(const typename GridType::template Codim< cc >::Entity& entity) const
+  {
+    return getIndex(entity);
   }
 
+  template< class EntityType >
   IndexType index(const EntityType& entity) const
   {
-//    assert(contains(entity));
-    const IndexType globalIndex = hostIndexSetType_.index(entity);
-    return globalIndex;
-//    return gridPart_.globalToLocaIndexMap_->find(globalIndex)->second;
+    return getIndex(entity);
   }
 
+  template< int cc >
+  IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
+  {
+    const IndexType& globalIndex = globalIndexSet_.template subIndex< cc >(entity, i, codim);
+    return findLocalIndex(globalIndex);
+  }
+
+  template< class EntityType >
   IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
   {
-    const IndexType ret = hostIndexSetType_.subIndex(entity, i, codim);
-    std::cout << "    IndexBased::subIndex(entity, " << i << ", " << codim << "): " << ret << std::endl;
-    return ret;
+    const IndexType& globalIndex = globalIndexSet_.subIndex(entity, i, codim);
+    return findLocalIndex(globalIndex);
   }
 
-  //! \attention Not thought about this yet!
-  //! \todo Think about this!
   const std::vector< GeometryType >& geomTypes(int codim) const
   {
-    const std::vector< GeometryType >& ret = hostIndexSetType_.geomTypes(codim);
-    std::cout << "  IndexBased::geomTypes(" << codim << "): ";
-    for (unsigned int i = 0; i < ret.size(); ++i)
-      std::cout << ret[i] << " ";
-    std::cout << std::endl;
-    return ret;
+    return geometryTypes_;
   }
 
-  //! \attention Not thought about this yet!
-  //! \todo Think about this!
   IndexType size(GeometryType type) const
   {
-    const IndexType ret = hostIndexSetType_.size(type);
-    std::cout << "    IndexBased::size(" << type << "): " << ret << std::endl;
-//    return gridPart_.globalToLocaIndexMap_->size();
-    return ret;
+    assert(sizeByGeometryType_.find(type) != sizeByGeometryType_.end());
+    return sizeByGeometryType_.find(type)->second;
   }
 
-  //! \attention Not thought about this yet!
-  //! \todo Think about this!
   IndexType size(int codim) const
   {
-    const IndexType ret = hostIndexSetType_.size(codim);
-    std::cout << "  IndexBased::size(" << codim << "): " << ret << std::endl;
-//    assert(codim == 0);
-//    return gridPart_.globalToLocaIndexMap_->size();
-    return ret;
+    assert(0 <= codim);
+    assert(codim <= dimension);
+    return sizeByCodim_[codim];
   }
 
+  template< class EntityType >
   bool contains(const EntityType& entity) const
   {
-    const IndexType globalIndex = hostIndexSetType_.index(entity);
-    return gridPart_.globalToLocaIndexMap_->find(globalIndex) != gridPart_.globalToLocaIndexMap_->end();
-  }
+    // check if we have an index map for this GeometryType
+    const GeometryType& geometryType = entity.type();
+    const typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
+    if (indexMap != indexContainer_->end()) {
+      // check if this entity is listen in the map
+      const IndexType globalIndex = globalIndexSet_.index(entity);
+      if (indexMap->second.find(globalIndex) != indexMap->second.end())
+        return true;
+      else
+        return false;
+    } else
+      return false;
+  } // bool contains(const EntityType& entity) const
 
 private:
-  const GridPartType& gridPart_;
-  const HostIndexSetType& hostIndexSetType_;
+  //! \todo This method can be optimized by the use of assert()s instead of if()s and throw()s!
+  template< class EntityType >
+  IndexType getIndex(const EntityType& entity) const
+  {
+    // check if we have an index map for this GeometryType
+    const GeometryType& geometryType = entity.type();
+    const typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
+    if (indexMap != indexContainer_->end()) {
+      // check if this entity is listen in the map
+      const IndexType globalIndex = globalIndexSet_.index(entity);
+      const typename Indices_MapType::const_iterator indexPair = indexMap->second.find(globalIndex);
+      if (indexPair != indexMap->second.end())
+        return indexPair->second;
+      else
+        DUNE_THROW(Dune::InvalidStateException, "Given entity not contained in index set!");
+    } else
+      DUNE_THROW(Dune::InvalidStateException, "Given geometry not contained in index set!");
+  } // IndexType getIndex(const EntityType& entity) const
+
+  IndexType findLocalIndex(const IndexType& globalIndex) const
+  {
+    // find the map with this global index and return the local one
+    for (typename IndexContainerType::const_iterator it = indexContainer_->begin();
+         it != indexContainer_->end();
+         ++it) {
+      const Indices_MapType& indicesMap = it->second;
+      const typename Indices_MapType::const_iterator indexPair = indicesMap.find(globalIndex);
+      if (indexPair != indicesMap.end())
+        return indexPair->second;
+    } // find the map with this global index and return the local one
+    // we should not come this far
+    DUNE_THROW(Dune::InvalidStateException, "Given entity not contained in index set!");
+  } // IndexType findLocalIndex(const IndexType& globalIndex) const
+
+  const GlobalIndexSetType& globalIndexSet_;
+  const Dune::shared_ptr< const IndexContainerType > indexContainer_;
+  std::vector< IndexType > sizeByCodim_;
+  std::vector< GeometryType > geometryTypes_;
+  std::map< GeometryType, IndexType > sizeByGeometryType_;
 }; // class IndexBased
 
 } // namespace IndexSet
 
 } // namespace IndexSet
 
-} // namespace GridPart
-
-} // namespace Multiscale
+} // namespace Part
 
 } // namespace grid
 
 } // namespace Dune
 
-#endif // DUNE_GRID_MULTISCALE_GRIDPART_INDEXSET_LOCAL_HH
+#endif // DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH

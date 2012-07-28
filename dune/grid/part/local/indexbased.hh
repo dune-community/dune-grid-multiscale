@@ -59,7 +59,7 @@ struct ConstTraits
 
   typedef typename GlobalGridPartType::GridType GridType;
 
-  typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GridPartType > IndexSetType;
+  typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GridType, typename GlobalGridPartType::IndexSetType > IndexSetType;
 
   template< int codim >
   struct Codim
@@ -115,7 +115,7 @@ public:
         const Dune::shared_ptr< const IndexContainerType > indexContainer)
     : globalGridPart_(globalGridPart),
       indexContainer_(indexContainer),
-      indexSet_(*this)
+      indexSet_(globalGridPart_.indexSet(), indexContainer_)
   {}
 
   const IndexSetType& indexSet() const
@@ -191,7 +191,7 @@ public:
 
 private:
   friend class Dune::grid::Part::Iterator::Local::Codim0::IndexBased< ThisType >;
-  friend class Dune::grid::Part::IndexSet::Local::IndexBased< ThisType >;
+  friend class Dune::grid::Part::IndexSet::Local::IndexBased< GridType, typename GlobalGridPartType::IndexSetType >;
 
   const GlobalGridPartType& globalGridPart_;
   const Dune::shared_ptr< const IndexContainerType > indexContainer_;
