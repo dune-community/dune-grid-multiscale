@@ -77,7 +77,7 @@ int main(int argc, char** argv)
                                          Dune::Stuff::Common::LOG_CONSOLE |
                                          Dune::Stuff::Common::LOG_DEBUG);
     Dune::Stuff::Common::LogStream& info = Dune::Stuff::Common::Logger().info();
-    Dune::Stuff::Common::LogStream& DUNE_UNUSED(debug) = Dune::Stuff::Common::Logger().debug();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
 
     // timer
     Dune::Timer timer;
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
          << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " entities, "
          << msGrid.size() << " subdomains)" << std::endl;
 
-    // time grid part and index set
+    // time grid parts
     info << "timing grid parts:" << std::endl;
     typedef MsGridType::GlobalGridPartType GlobalGridPartType;
     const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = msGrid.globalGridPart();
