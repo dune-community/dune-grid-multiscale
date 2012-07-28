@@ -26,46 +26,53 @@ namespace Local {
 
 namespace Codim0 {
 
-template< class LocalGridPartImp >
+/**
+ *  \brief  Iterates over those entities of a grid part, the indices of which match predefined ones.
+ *  \todo   Replace GridPartImp with Interface< GridPartTraitsImp >!
+ *  \todo   Document!
+ */
+template< class GridPartImp >
 class IndexBased
 {
 public:
-  typedef LocalGridPartImp LocalGridPartType;
+  typedef GridPartImp GridPartType;
 
-  typedef IndexBased< LocalGridPartType > ThisType;
+  typedef IndexBased< GridPartType > ThisType;
+
+  typedef typename GridPartType::IndexSetType::IndexType IndexType;
 
 private:
-  typedef typename LocalGridPartType::GlobalGridPartType::template Codim< 0 >::IteratorType HostIteratorType;
+  typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
 
   typedef Dune::GeometryType GeometryType;
 
-  typedef typename LocalGridPartType::IndexSetType::IndexType IndexType;
-
   typedef std::map< IndexType, IndexType > IndexMapType;
 
-  typedef typename IndexMapType::iterator IndexPairType;
-
-  typedef std::map< GeometryType, IndexMapType > GeometryMapType;
 public:
-  typedef typename LocalGridPartType::template Codim< 0 >::EntityType EntityType;
+  typedef std::map< GeometryType, std::map< IndexType, IndexType > > IndexContainerType;
 
-  IndexBased(const LocalGridPartType& localGridPart, const bool end = false)
-    : localGridPart_(localGridPart),
+  typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+
+  IndexBased(const GridPartType& globalGridPart,
+             const Dune::shared_ptr< const IndexContainerType > indexContainer,
+             const bool end = false)
+    : globalGridPart_(globalGridPart),
+      indexContainer_(indexContainer),
       workAtAll_(0)
   {
     if (end)
-      hostIterator_ = new HostIteratorType(localGridPart_.globalGridPart_.template end< 0 >());
+      iterator_ = new IteratorType(globalGridPart_.template end< 0 >());
     else {
-      for (typename GeometryMapType::const_iterator iterator = localGridPart_.geometryMap_->begin();
-           iterator != localGridPart_.geometryMap_->end();
+      for (typename IndexContainerType::const_iterator iterator = indexContainer_->begin();
+           iterator != indexContainer_->end();
            ++iterator) {
-        if (iterator->first.dim() == LocalGridPartType::GridType::dimension) {
+        if (iterator->first.dim() == GridPartType::GridType::dimension) {
           ++workAtAll_;
           last_.insert(std::pair< GeometryType, IndexType >(iterator->first, iterator->second.rbegin()->first));
           end_.insert(std::pair< GeometryType, typename IndexMapType::const_iterator >(iterator->first, iterator->second.end()));
         }
       }
-      hostIterator_ = new HostIteratorType(localGridPart_.globalGridPart_.template begin< 0 >());
+      iterator_ = new IteratorType(globalGridPart_.template begin< 0 >());
       forward();
     }
   }
@@ -73,56 +80,57 @@ public:
   ThisType& operator++()
   {
     if (workAtAll_ > 0) {
-      hostIterator_->operator++();
+      iterator_->operator++();
       forward();
     } else
-      hostIterator_ = new HostIteratorType(localGridPart_.globalGridPart_.template end< 0 >());
+      iterator_ = new IteratorType(globalGridPart_.template end< 0 >());
     return *this;
   }
 
   bool operator==(const ThisType& other) const
   {
-    return *hostIterator_ == *(other.hostIterator_);
+    return *iterator_ == *(other.iterator_);
   }
 
   bool operator!=(const ThisType& other) const
   {
-    return *hostIterator_ != *(other.hostIterator_);
+    return *iterator_ != *(other.iterator_);
   }
 
   EntityType& operator*() const
   {
-    return hostIterator_->operator*();
+    return iterator_->operator*();
   }
 
 private:
+  //! iterates forward until we find the next entity that belongs to the local grid part
   void forward()
   {
-    // iterate forward until we find the next entity that belongs to the local grid part
     bool found = false;
     while (!found && (workAtAll_ > 0)) {
-      const EntityType& entity = hostIterator_->operator*();
-      const IndexType index = localGridPart_.globalGridPart_.indexSet().index(entity);
+      const EntityType& entity = iterator_->operator*();
+      const IndexType index = globalGridPart_.indexSet().index(entity);
       const GeometryType geometryType = entity.type();
-      typename GeometryMapType::const_iterator indexMap = localGridPart_.geometryMap_->find(geometryType);
-      if (indexMap != localGridPart_.geometryMap_->end()) {
+      typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
+      if (indexMap != indexContainer_->end()) {
         const typename IndexMapType::const_iterator result = indexMap->second.find(index);
         if ((result != end_.find(geometryType)->second)) {
           found = true;
           if (result->first == last_.find(geometryType)->second)
             --workAtAll_;
         } else
-          hostIterator_->operator++();
+          iterator_->operator++();
       } else
-        hostIterator_->operator++();
+        iterator_->operator++();
     }
   } // void forward()
 
-  const LocalGridPartType& localGridPart_;
+  const GridPartType& globalGridPart_;
+  const Dune::shared_ptr< const IndexContainerType > indexContainer_;
   unsigned int workAtAll_;
   std::map< GeometryType, IndexType > last_;
   std::map< GeometryType, typename IndexMapType::const_iterator > end_;
-  HostIteratorType* hostIterator_;
+  IteratorType* iterator_;
 }; // class IndexBased
 
 } // namespace Codim0
