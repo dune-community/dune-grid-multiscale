@@ -48,3 +48,4 @@ doc/doxygen/html
 doc/doxygen/doxyerr.log
 doc/doxygen/doxygen-tag
 doc/doxygen/doxygen.log
+*.m
