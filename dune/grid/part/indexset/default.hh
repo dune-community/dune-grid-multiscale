@@ -63,7 +63,9 @@ public:
 
   //! store const reference to set
   Wrapper(const Wrapper<IndexSetImp> & s)
-    : Empty(s.adaptive_), set_(s.set_) {}
+    : Empty(/*s.adaptive_*/),
+      set_(s.set_)
+  {}
 
   //! return persistent status
   bool persistent () const { return false; }
