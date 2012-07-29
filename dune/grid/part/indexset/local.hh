@@ -56,7 +56,8 @@ public:
   IndexBased(const GlobalIndexSetType& globalIndexSet, const Dune::shared_ptr< const IndexContainerType > indexContainer)
     : globalIndexSet_(globalIndexSet),
       indexContainer_(indexContainer),
-      sizeByCodim_(dimension + 1)
+      sizeByCodim_(dimension + 1),
+      geometryTypesByCodim_(dimension + 1)
   {
     // get geometry types and compute sizes
     for (typename IndexContainerType::const_iterator iterator = indexContainer_->begin();
@@ -64,9 +65,9 @@ public:
          ++iterator) {
       const GeometryType& geometryType = iterator->first;
       const IndexType size = iterator->second.size();
-      geometryTypes_.push_back(geometryType);
-      sizeByGeometryType_.insert(std::pair< GeometryType, IndexType >(geometryType, size));
       const unsigned int codim = dimension - geometryType.dim();
+      geometryTypesByCodim_[codim].push_back(geometryType);
+      sizeByGeometryType_.insert(std::pair< GeometryType, IndexType >(geometryType, size));
       assert(0 <= codim);
       assert(codim <= dimension);
       sizeByCodim_[codim] += size;
@@ -101,7 +102,7 @@ public:
 
   const std::vector< GeometryType >& geomTypes(int codim) const
   {
-    return geometryTypes_;
+    return geometryTypesByCodim_[codim];
   }
 
   IndexType size(GeometryType type) const
@@ -172,7 +173,7 @@ private:
   const GlobalIndexSetType& globalIndexSet_;
   const Dune::shared_ptr< const IndexContainerType > indexContainer_;
   std::vector< IndexType > sizeByCodim_;
-  std::vector< GeometryType > geometryTypes_;
+  std::vector< std::vector< GeometryType > > geometryTypesByCodim_;
   std::map< GeometryType, IndexType > sizeByGeometryType_;
 }; // class IndexBased
 
