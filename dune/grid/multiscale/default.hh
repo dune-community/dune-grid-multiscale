@@ -27,6 +27,11 @@ namespace grid {
 
 namespace Multiscale {
 
+
+/**
+ *  \attention  Works only for one GeometryType per Codim (I think)! Problem is, that indices are unique per GeometryType, not per Codim.
+ *  \todo       Resolve the above Issue (should be easy, compute the size as a sum over all GeometryTypes for a given codim)!
+ */
 template< class GridImp >
 class Default
 {
