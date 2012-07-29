@@ -14,7 +14,7 @@
 
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
-#include <dune/grid/part/iterator/local/codim0.hh>
+#include <dune/grid/part/iterator/local/indexbased.hh>
 #include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
@@ -26,26 +26,6 @@ namespace Part {
 namespace Local {
 
 namespace IndexBased {
-
-template< class GlobalGridPartType, int codim >
-struct ConstCodim
-{
-  template< PartitionIteratorType pitype >
-  struct Partition
-  {
-    typedef typename GlobalGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-  };
-};
-
-template< class GlobalGridPartType >
-struct ConstCodim< GlobalGridPartType,  0 >
-{
-  template< PartitionIteratorType pitype >
-  struct Partition
-  {
-      typedef typename Dune::grid::Part::Iterator::Local::Codim0::IndexBased< GlobalGridPartType > IteratorType;
-  };
-};
 
 template< class GlobalGridPartImp >
 class Const;
@@ -67,7 +47,7 @@ struct ConstTraits
     template< PartitionIteratorType pitype >
     struct Partition
     {
-      typedef typename ConstCodim< GlobalGridPartType, codim >::template Partition< pitype >::IteratorType IteratorType;
+      typedef typename Dune::grid::Part::Iterator::Local::IndexBased< GlobalGridPartType, codim, pitype > IteratorType;
     };
   };
 
@@ -77,7 +57,7 @@ struct ConstTraits
 
   typedef typename GlobalGridPartType::IntersectionIteratorType IntersectionIteratorType;
 
-}; // class LocalTraits
+}; // class ConstTraits
 
 template< class GlobalGridPartImp >
 class Const
@@ -142,8 +122,7 @@ public:
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    return globalGridPart_.template begin< codim, pitype >();
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_);
   }
 
   template< int codim >
@@ -155,19 +134,20 @@ public:
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    return globalGridPart_.template end< codim, pitype >();
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_, true);
   }
 
+  //! \todo Think about this, is obviously needed!
   IntersectionIteratorType ibegin(const EntityType& en) const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
+//    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
     return en.ileafbegin();
   }
 
+  //! \todo Think about this, is obviously needed!
   IntersectionIteratorType iend(const EntityType& en) const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
+//    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
     return en.ileafend();
   }
 
@@ -190,9 +170,6 @@ public:
   }
 
 private:
-  friend class Dune::grid::Part::Iterator::Local::Codim0::IndexBased< ThisType >;
-  friend class Dune::grid::Part::IndexSet::Local::IndexBased< GridType, typename GlobalGridPartType::IndexSetType >;
-
   const GlobalGridPartType& globalGridPart_;
   const Dune::shared_ptr< const IndexContainerType > indexContainer_;
   const IndexSetType indexSet_;
