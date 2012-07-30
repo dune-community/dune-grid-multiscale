@@ -36,9 +36,11 @@ void ensureParamFile(std::string filename)
     std::ofstream file;
     file.open(filename);
     file << "[grid.multiscale.provider.cube]" << std::endl;
-    file << "numElements.0 = 4" << std::endl;
-    file << "numElements.1 = 4" << std::endl;
-    file << "numElements.2 = 4" << std::endl;
+    file << "numElements.0 = 6" << std::endl;
+    file << "numElements.1 = 6" << std::endl;
+    file << "numElements.2 = 6" << std::endl;
+    file << "boundaryId = 5" << std::endl;                  // a cube from the factory gets the boundary ids 1 to 4
+    file << "filename = msGrid_visualization" << std::endl;
     file << "partitions.0 = 2" << std::endl;
     file << "partitions.1 = 2" << std::endl;
     file << "partitions.2 = 2" << std::endl;
@@ -49,7 +51,7 @@ void ensureParamFile(std::string filename)
 template< class GridPartType >
 void measureTiming(const GridPartType& gridPart, Dune::Stuff::Common::LogStream& out, const std::string name = "")
 {
-  out << "walking " << name << " grid part... " << std::flush;
+  out << "  walking " << name << " grid part... " << std::flush;
   Dune::Timer timer;
   unsigned int elements = 0;
   for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart.template begin< 0 >();
@@ -91,9 +93,17 @@ int main(int argc, char** argv)
     typedef GridProviderType::MsGridType MsGridType;
     const MsGridType& msGrid = gridProvider.msGrid();
     debug.resume();
-    info << "took " << timer.elapsed()
+    info << "  took " << timer.elapsed()
          << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " entities, "
          << msGrid.size() << " subdomains)" << std::endl;
+
+    info << "visualizing... " << std::flush;
+    debug.suspend();
+    timer.reset();
+    msGrid.visualize();
+    debug.resume();
+    info << " done (took " << timer.elapsed() << " sek)" << std::endl;
+
 
     // time grid parts
     info << "timing grid parts:" << std::endl;
