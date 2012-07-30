@@ -15,6 +15,7 @@
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
 #include <dune/grid/part/iterator/local/indexbased.hh>
+#include <dune/grid/part/iterator/intersection/local.hh>
 #include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
@@ -55,10 +56,13 @@ struct ConstTraits
 
   static const bool conforming = GlobalGridPartType::conforming;
 
-  typedef typename GlobalGridPartType::IntersectionIteratorType IntersectionIteratorType;
+  typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
 
 }; // class ConstTraits
 
+/**
+ *  \todo Wrap entity, so that entity.ileaf{begin,end}()returns i{begin,end}(entity)
+ */
 template< class GlobalGridPartImp >
 class Const
   : public Dune::grid::Part::Interface< Dune::grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > >
@@ -91,10 +95,15 @@ public:
   //! container type for the indices
   typedef std::map< GeometryType, std::map< IndexType, IndexType > > IndexContainerType;
 
+  //! container type for the boundary information
+  typedef std::map< IndexType, std::map< int, int > > BoundaryInfoContainerType;
+
   Const(const GlobalGridPartType& globalGridPart,
-        const Dune::shared_ptr< const IndexContainerType > indexContainer)
+        const Dune::shared_ptr< const IndexContainerType > indexContainer,
+        const Dune::shared_ptr< const BoundaryInfoContainerType > boundaryInfoContainer)
     : globalGridPart_(globalGridPart),
       indexContainer_(indexContainer),
+      boundaryInfoContainer_(boundaryInfoContainer),
       indexSet_(globalGridPart_, indexContainer_)
   {}
 
@@ -137,18 +146,36 @@ public:
     return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_, true);
   }
 
-  //! \todo Think about this, is obviously needed!
-  IntersectionIteratorType ibegin(const EntityType& en) const
+  IntersectionIteratorType ibegin(const EntityType& entity) const
   {
-//    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    return en.ileafbegin();
-  }
+    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
+    // if this is an entity at the boundary
+    if (result != boundaryInfoContainer_->end()) {
+      // get the information for this entity
+      const std::map< int, int >& info = result->second;
+      // return wrapped iterator
+      return IntersectionIteratorType(globalGridPart_, entity, info);
+    } else {
+      // return iterator which just passes everything thrugh
+      return IntersectionIteratorType(globalGridPart_, entity);
+    } // if this is an entity at the boundary
+  } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
-  //! \todo Think about this, is obviously needed!
-  IntersectionIteratorType iend(const EntityType& en) const
+  IntersectionIteratorType iend(const EntityType& entity) const
   {
-//    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    return en.ileafend();
+    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
+    // if this is an entity at the boundary
+    if (result != boundaryInfoContainer_->end()) {
+      // get the information for this entity
+      const std::map< int, int >& info = result->second;
+      // return wrapped iterator
+      return IntersectionIteratorType(globalGridPart_, entity, info, true);
+    } else {
+      // return iterator which just passes everything thrugh
+      return IntersectionIteratorType(globalGridPart_, entity, true);
+    } // if this is an entity at the boundary
   }
 
   int boundaryId(const IntersectionType& intersection) const
@@ -172,6 +199,7 @@ public:
 private:
   const GlobalGridPartType& globalGridPart_;
   const Dune::shared_ptr< const IndexContainerType > indexContainer_;
+  const Dune::shared_ptr< const BoundaryInfoContainerType > boundaryInfoContainer_;
   const IndexSetType indexSet_;
 }; // class Const
 
