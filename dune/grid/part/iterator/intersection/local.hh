@@ -62,13 +62,15 @@ public:
 
   const Intersection& operator*() const
   {
-    // if we are not on an entity of interest
-//    if (passThrough_) {
-      return intersection_;
-//    }
-  } // const Intersection& operator*() const
+    setIntersectionState();
+    return intersection_;
+  }
 
-//  const Intersection* operator->() const;
+  const Intersection* operator->() const
+  {
+    setIntersectionState();
+    return &intersection_;
+  }
 
 private:
   friend class Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType >;
@@ -77,6 +79,24 @@ private:
   {
     return BaseType::operator*();
   }
+
+  void setIntersectionState() const
+  {
+    // if we are on an entity of interest
+    if (passThrough_) {
+      intersection_.setPassThrough(true);
+    } else {
+      const int intersectionIndex = getBaseIntersection().indexInInside();
+      // if this intersection is special
+      typename InfoContainerType::const_iterator result = infoContainer_.find(intersectionIndex);
+      if (result != infoContainer_.end()) {
+        intersection_.setPassThrough(false);
+        intersection_.setBoundaryId(result->second);
+      } else {
+        intersection_.setPassThrough(true);
+      } // if this intersection is special
+    } // if we are not on an entity of interest
+  } // void setIntersectionState() const
 
   bool passThrough_;
   mutable Intersection intersection_;
