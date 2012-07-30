@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     const MsGridType& msGrid = gridProvider.msGrid();
     debug.resume();
     info << "  took " << timer.elapsed()
-         << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " entities, "
+         << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " elements, "
          << msGrid.size() << " subdomains)" << std::endl;
 
     info << "visualizing... " << std::flush;
@@ -104,7 +104,6 @@ int main(int argc, char** argv)
     debug.resume();
     info << " done (took " << timer.elapsed() << " sek)" << std::endl;
 
-
     // time grid parts
     info << "timing grid parts:" << std::endl;
     typedef MsGridType::GlobalGridPartType GlobalGridPartType;
@@ -113,9 +112,9 @@ int main(int argc, char** argv)
     typedef MsGridType::LocalGridPartType LocalGridPartType;
     const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = msGrid.localGridPart(0);
     measureTiming(*firstLocalGridPart, info, "local (subdomain 0)");
-    for (unsigned int sd = 1; sd < msGrid.size(); ++sd) {
-      const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(sd);
-      measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(sd) + ")");
+    for (unsigned int subdomain = 1; subdomain < msGrid.size(); ++subdomain) {
+      const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(subdomain);
+      measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(subdomain) + ")");
     }
 
     // if we came that far we can as well be happy about it
@@ -124,7 +123,7 @@ int main(int argc, char** argv)
     std::cerr << "Dune reported error: " << e.what() << std::endl;
   } catch(std::exception& e) {
     std::cerr << e.what() << std::endl;
-  } catch( ... ) {
+  } catch(...) {
     std::cerr << "Unknown exception thrown!" << std::endl;
   } // try
 } // main
