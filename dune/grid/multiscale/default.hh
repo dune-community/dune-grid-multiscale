@@ -62,19 +62,26 @@ private:
 
   typedef Dune::GeometryType GeometryType;
 
-  // for the indices and subindices
+  // for the indices per subdomain
   typedef std::map< IndexType, IndexType > IndexMapType;
 
   typedef std::map< GeometryType, IndexMapType > GeometryMapType;
 
   typedef std::map< unsigned int, Dune::shared_ptr< GeometryMapType > > SubdomainMapType;
 
+  // for entity index -> subdomain map
+  typedef std::map< IndexType, std::set< unsigned int > > IndexToSubdomainMapType;
+
+  // for the neighbor information
+  typedef std::map< int, int > NeighborInfoContainerType;
+
+  typedef std::map< IndexType, NeighborInfoContainerType > IndexToNeighborInfoMapType;
+
+  typedef std::vector< Dune::shared_ptr< IndexToNeighborInfoMapType > > SubdomainNeighborInfoVectorType;
+
   typedef std::vector< Dune::shared_ptr< const LocalGridPartType > > LocalGridPartVectorType;
 
   typedef std::vector< Dune::shared_ptr< const LocalGridViewType > > LocalGridViewVectorType;
-
-  // for entity index -> subdomain map
-  typedef std::map< IndexType, std::set< unsigned int > > IndexToSubdomainMapType;
 
   template< int c, int d >
   struct Add
@@ -157,16 +164,15 @@ public:
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
     const unsigned int boundaryId = paramTree.get("boundaryId", 5);
     debug << prefix << "finalizing " << std::flush;
-    // test for consecutive numbering of subdomains
-    bool consecutive = true;
+    // test for consecutive numbering of subdomains and create map for the neighbor informatio
     for (unsigned int subdomain = 0; subdomain < size(); ++subdomain) {
-      if (subdomainMap_.find(subdomain) == subdomainMap_.end())
-        consecutive = false;
-    }
-    if (!consecutive) {
-      std::stringstream msg;
-      msg << "Error in " << id << ": numbering of subdomains has to be consecutive upon calling finalize!";
-      DUNE_THROW(Dune::InvalidStateException, msg.str());
+      if (subdomainMap_.find(subdomain) == subdomainMap_.end()) {
+        std::stringstream msg;
+        msg << "Error in " << id << ": numbering of subdomains has to be consecutive upon calling finalize!";
+        DUNE_THROW(Dune::InvalidStateException, msg.str());
+      } else {
+        subdomainNeighborInfoVector_.push_back(Dune::shared_ptr< IndexToNeighborInfoMapType >(new IndexToNeighborInfoMapType()));
+      }
     }
     debug << size() << " subdomains:" << std::endl;
     // walk the global grid part to collect information about the subdomain boundaries
@@ -199,12 +205,20 @@ public:
             if (neighborSubdomains.find(entitySubdomain) == neighborSubdomains.end()) {
               // guess neighbor subdomain as the first this one belongs to (not good for big overlapping)
               unsigned int neighborSubdomain = *(neighborSubdomains.begin());
+              // get local index of intersection
+              const int localIntersectionIndex = intersection.indexInInside();
               // then this entity is at the boundary
               debug << prefix << "    entity " << globalEntityIndex
-                    << " lies at the boundary of subdomain " << entitySubdomain
+                    << " lies at the boundary of subdomain " << entitySubdomain << std::endl;
+              debug << prefix << "      at intersection " << localIntersectionIndex
                     << " with neighbor " << globalNeighborIndex
                     << ", (probably) of subdomain " << neighborSubdomain << std::endl;
-
+              // get the correct map
+              IndexToNeighborInfoMapType& indexToNeighborMap = *(subdomainNeighborInfoVector_[entitySubdomain]);
+              // get the entry for this entity
+              NeighborInfoContainerType& neighborInfoContainer = indexToNeighborMap[globalEntityIndex];
+              // add the local intersection id and the boundary id this intersection shall have
+              neighborInfoContainer.insert(std::pair< int, int >(localIntersectionIndex, boundaryId));
             } // if neighbor is not contained in this subdomain
           } // treat each subdomain of the entity seperately
         } // if (intersection.neighbor())
@@ -226,8 +240,10 @@ public:
           subdomainSize += geometryIterator->second.size();
       } // compute number of codim 0 entities
       debug << prefix << "    subdomain " << subdomain << " of size " << subdomainSize << "... " << std::flush;
-      localGridParts_.push_back(Dune::shared_ptr< const LocalGridPartType >(new LocalGridPartType(*globalGridPart_, subdomainIterator->second)));
-      localGridViews_.push_back(Dune::shared_ptr< const LocalGridViewType >(new LocalGridViewType(localGridParts_[subdomain]->gridView())));
+      localGridParts_.push_back(Dune::shared_ptr< const LocalGridPartType >(
+        new LocalGridPartType(*globalGridPart_, subdomainIterator->second, subdomainNeighborInfoVector_[subdomain])));
+      localGridViews_.push_back(Dune::shared_ptr< const LocalGridViewType >(
+        new LocalGridViewType(localGridParts_[subdomain]->gridView())));
       debug << "done" << std::endl;
     } // create local grid parts and report
 
@@ -370,6 +386,7 @@ private:
   unsigned int size_;
   SubdomainMapType subdomainMap_;
   IndexToSubdomainMapType indexToSubdomainMap_;
+  SubdomainNeighborInfoVectorType subdomainNeighborInfoVector_;
   LocalGridPartVectorType localGridParts_;
   LocalGridViewVectorType localGridViews_;
 }; // class Default
