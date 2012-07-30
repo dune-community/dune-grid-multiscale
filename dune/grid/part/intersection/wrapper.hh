@@ -18,13 +18,15 @@ namespace Intersection {
 
 namespace Wrapper {
 
-template< class WrappedIntersectionImp >
+template< class IntersectionIteratorImp, class WrappedIntersectionImp >
 class FakeDomainBoundary
 {
 public:
+  typedef IntersectionIteratorImp IntersectionIteratorType;
+
   typedef WrappedIntersectionImp WrappedIntersectionType;
 
-  typedef FakeDomainBoundary< WrappedIntersectionType > ThisType;
+  typedef FakeDomainBoundary< IntersectionIteratorType, WrappedIntersectionType > ThisType;
 
   static const int dimension = WrappedIntersectionType::dimension;
 
@@ -46,124 +48,122 @@ public:
 
   typedef typename WrappedIntersectionType::ctype ctype;
 
-  FakeDomainBoundary()
-    : bound_(false),
+  FakeDomainBoundary(const IntersectionIteratorType& intersectionIterator)
+    : intersectionIterator_(intersectionIterator),
       passThrough_(true)
   {
   }
 
-  void bind(Dune::shared_ptr< const WrappedIntersectionType > wrappedIntersection)
-  {
-    wrappedIntersection_ = wrappedIntersection;
-    bound_ = true;
-  }
+//  void bind(Dune::shared_ptr< const WrappedIntersectionType > wrappedIntersection)
+//  {
+//    wrappedIntersection_ = wrappedIntersection;
+//    bound_ = true;
+//  }
 
   bool boundary() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->boundary();
+      return intersectionIterator_.getBaseIntersection().boundary();
   }
 
   int boundaryId() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->boundaryId();
+      return intersectionIterator_.getBaseIntersection().boundaryId();
   }
 
   size_t boundarySegmentIndex() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->boundarySegmentIndex();
+      return intersectionIterator_.getBaseIntersection().boundarySegmentIndex();
   }
 
   bool neighbor() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->neighbor();
+      return intersectionIterator_.getBaseIntersection().neighbor();
   }
 
   EntityPointer inside() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->inside();
+      return intersectionIterator_.getBaseIntersection().inside();
   }
 
   EntityPointer outside() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->outside();
+      return intersectionIterator_.getBaseIntersection().outside();
   }
 
   bool conforming() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->conforming();
+      return intersectionIterator_.getBaseIntersection().conforming();
   }
 
   LocalGeometry geometryInInside() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->geometryInInside();
+      return intersectionIterator_.getBaseIntersection().geometryInInside();
   }
 
   LocalGeometry geometryInOutside() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->geometryInOutside();
+      return intersectionIterator_.getBaseIntersection().geometryInOutside();
   }
 
   Geometry geometry() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->geometry();
+      return intersectionIterator_.getBaseIntersection().geometry();
   }
 
   Dune::GeometryType type() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->type();
+      return intersectionIterator_.getBaseIntersection().type();
   }
 
   int indexInInside() const
   {
-    std::cout << "=====================" << std::endl;
     //if (passThrough_)
-      return wrappedIntersection_->indexInInside();
+      return intersectionIterator_.getBaseIntersection().indexInInside();
   }
 
   int indexInOutside() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->indexInOutside();
+      return intersectionIterator_.getBaseIntersection().indexInOutside();
   }
 
   GlobalCoordinate outerNormal(const LocalCoordinate& local) const
   {
     //if (passThrough_)
-      return wrappedIntersection_->outerNormal(local);
+      return intersectionIterator_.getBaseIntersection().outerNormal(local);
   }
 
   GlobalCoordinate integrationOuterNormal(const LocalCoordinate& local) const
   {
     //if (passThrough_)
-      return wrappedIntersection_->integrationOuterNormal(local);
+      return intersectionIterator_.getBaseIntersection().integrationOuterNormal(local);
   }
 
   GlobalCoordinate unitOuterNormal(const LocalCoordinate& local) const
   {
     //if (passThrough_)
-      return wrappedIntersection_->unitOuterNormal(local);
+      return intersectionIterator_.getBaseIntersection().unitOuterNormal(local);
   }
 
   GlobalCoordinate centerUnitOuterNormal() const
   {
     //if (passThrough_)
-      return wrappedIntersection_->centerUnitOuterNormal();
+      return intersectionIterator_.getBaseIntersection().centerUnitOuterNormal();
   }
 
 private:
-  mutable Dune::shared_ptr< const WrappedIntersectionType > wrappedIntersection_;
-  bool bound_;
+  const IntersectionIteratorType& intersectionIterator_;
   bool passThrough_;
 }; // class FakeDomainBoundary
 

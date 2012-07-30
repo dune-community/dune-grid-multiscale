@@ -40,13 +40,14 @@ private:
   typedef typename BaseType::Intersection BaseIntersectionType;
 
 public:
-  typedef Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< BaseIntersectionType > Intersection;
+  typedef Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType > Intersection;
 
   Local(const GlobalGridPartType& globalGridPart,
         const EntityType& entity,
         bool end = false)
     : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity)),
-      passThrough_(true)
+      passThrough_(true),
+      intersection_(*this)
   {}
 
   Local(const GlobalGridPartType& globalGridPart,
@@ -55,30 +56,29 @@ public:
         bool end = false)
     : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity)),
       passThrough_(false),
+      intersection_(*this),
       infoContainer_(infoContainer)
   {}
-
-//  ~Local()
-//  {
-//    delete intersection_;
-//  }
 
   const Intersection& operator*() const
   {
     // if we are not on an entity of interest
-    if (passThrough_) {
-      // create wrapper
-      baseIntersection_ = Dune::shared_ptr< const BaseIntersectionType >(BaseType::operator->());
-      intersection_.bind(baseIntersection_);
+//    if (passThrough_) {
       return intersection_;
-    }
+//    }
   } // const Intersection& operator*() const
 
 //  const Intersection* operator->() const;
 
 private:
+  friend class Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType >;
+
+  const BaseIntersectionType& getBaseIntersection() const
+  {
+    return BaseType::operator*();
+  }
+
   bool passThrough_;
-  mutable Dune::shared_ptr< const BaseIntersectionType > baseIntersection_;
   mutable Intersection intersection_;
   const InfoContainerType infoContainer_;
 }; // class Local
