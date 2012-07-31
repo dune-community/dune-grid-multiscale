@@ -28,8 +28,10 @@ AC_CONFIG_FILES([
   dune/grid/multiscale/provider/Makefile
   dune/grid/part/Makefile
   dune/grid/part/indexset/Makefile
+  dune/grid/part/intersection/Makefile
   dune/grid/part/iterator/Makefile
   dune/grid/part/iterator/local/Makefile
+  dune/grid/part/iterator/intersection/Makefile
   dune/grid/part/local/Makefile
   examples/Makefile
   examples/provider/Makefile

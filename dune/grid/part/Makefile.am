@@ -1,4 +1,4 @@
-SUBDIRS = indexset iterator local
+SUBDIRS = indexset intersection iterator local
 
 grid_part_includedir = $(includedir)/dune/grid/part
 grid_part_include_HEADERS = interface.hh leaf.hh view.hh

@@ -62,6 +62,7 @@ struct ConstTraits
 
 /**
  *  \todo Wrap entity, so that entity.ileaf{begin,end}()returns i{begin,end}(entity)
+ *  \todo Implement boundaryId(intersection) by adding a std::map< intersectionIndex, boundaryId >!
  */
 template< class GlobalGridPartImp >
 class Const
