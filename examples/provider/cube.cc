@@ -39,7 +39,7 @@ void ensureParamFile(std::string filename)
     file << "numElements.0 = 6" << std::endl;
     file << "numElements.1 = 6" << std::endl;
     file << "numElements.2 = 6" << std::endl;
-    file << "boundaryId = 5" << std::endl;                  // a cube from the factory gets the boundary ids 1 to 4
+    file << "boundaryId = 7" << std::endl;                  // a cube from the factory gets the boundary ids 1 to 4 ind 2d and 1 to 6 ? in 3d
     file << "filename = msGrid_visualization" << std::endl;
     file << "partitions.0 = 2" << std::endl;
     file << "partitions.1 = 2" << std::endl;
