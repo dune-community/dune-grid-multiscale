@@ -83,12 +83,12 @@ public:
     return asImp().grid();
   }
 
-  //! \brief Returns reference to the underlying grid
-  GridType& grid()
-  {
-    CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
-    return asImp().grid();
-  }
+//  //! \brief Returns reference to the underlying grid
+//  GridType& grid()
+//  {
+//    CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
+//    return asImp().grid();
+//  }
 
   GridViewType gridView() const
   {
