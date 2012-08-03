@@ -117,7 +117,7 @@ public:
   IndexType size(int codim) const
   {
     assert(0 <= codim);
-    assert(codim <= dimension);
+    assert(codim <= int(dimension));
     return sizeByCodim_[codim];
   }
 
