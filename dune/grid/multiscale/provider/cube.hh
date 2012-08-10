@@ -131,7 +131,7 @@ private:
       else if (dim == 2)
         subdomain = whichPartition[0] + whichPartition[1]*partitions[0];
       else if (dim == 3)
-        subdomain = whichPartition[0] + whichPartition[1]*partitions[0] + whichPartition[2]*partitions[1];
+        subdomain = whichPartition[0] + whichPartition[1]*partitions[0] + whichPartition[2]*partitions[1]*partitions[0];
       else {
         std::stringstream msg;
         msg << "Error in " << id << ": not implemented for grid dimensions other than 1, 2 or 3!";
