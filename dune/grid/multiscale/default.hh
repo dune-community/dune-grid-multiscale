@@ -186,7 +186,7 @@ public:
       Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
       const unsigned int boundaryId = paramTree.get("boundaryId", 5);
       debug << prefix << "finalizing " << std::flush;
-      // test for consecutive numbering of subdomains and create map for the neighbor informatio
+      // test for consecutive numbering of subdomains and create map for the neighbor information
       for (unsigned int subdomain = 0; subdomain < size_; ++subdomain) {
         if (subdomainMap_.find(subdomain) == subdomainMap_.end()) {
           std::stringstream msg;
@@ -197,58 +197,9 @@ public:
         }
       }
       debug << size_ << " subdomains:" << std::endl;
-      // walk the global grid part to collect information about the subdomain boundaries
-      debug << prefix << "  generating neighbor information:" << std::endl;
-      for (typename GlobalGridPartType::template Codim< 0 >::IteratorType entityIt = globalGridPart_->template begin< 0 >();
-           entityIt != globalGridPart_->template end< 0 >();
-           ++entityIt) {
-        // find the subdomains this entity lives in
-        const EntityType& entity = *entityIt;
-        const IndexType& globalEntityIndex = globalGridPart_->indexSet().index(entity);
-        const unsigned int entitySubdomain = getSubdomainsOf(globalEntityIndex);
-        // walk the neighbors
-        for (typename GlobalGridPartType::IntersectionIteratorType intersectionIt = globalGridPart_->ibegin(entity);
-             intersectionIt != globalGridPart_->iend(entity);
-             ++intersectionIt) {
-          typedef typename GlobalGridPartType::IntersectionIteratorType::Intersection IntersectionType;
-          const IntersectionType& intersection = *intersectionIt;
-          if (intersection.neighbor()) {
-            typedef typename IntersectionType::EntityPointer EntityPtrType;
-            const EntityPtrType neighborPtr = intersection.outside();
-            const EntityType& neighbor = *neighborPtr;
-            const IndexType& globalNeighborIndex = globalGridPart_->indexSet().index(neighbor);
-            const unsigned int neighborSubdomain = getSubdomainsOf(globalNeighborIndex);
-  //          // treat each subdomain of the entity seperately
-  //          for (std::set< unsigned int >::const_iterator subdomainIt = entitySubdomains.begin();
-  //               subdomainIt != entitySubdomains.end();
-  //               ++subdomainIt) {
-  //            const unsigned int entitySubdomain = *subdomainIt;
-              // if neighbor is not contained in this subdomain
-              if (neighborSubdomain != entitySubdomain) {
-  //              // guess neighbor subdomain as the first this one belongs to (not good for big overlapping)
-  //              unsigned int neighborSubdomain = *(neighborSubdomains.begin());
-                // get local index of intersection
-                const int localIntersectionIndex = intersection.indexInInside();
-                // then this entity is at the boundary
-                debug << prefix << "    entity " << globalEntityIndex
-                      << " lies at the boundary of subdomain " << entitySubdomain << std::endl;
-                debug << prefix << "      at intersection " << localIntersectionIndex
-                      << " with neighbor " << globalNeighborIndex
-                      << ", (probably) of subdomain " << neighborSubdomain << std::endl;
-                // get the correct map
-                IndexToNeighborInfoMapType& indexToNeighborMap = *(subdomainNeighborInfoVector_[entitySubdomain]);
-                // get the entry for this entity
-                NeighborInfoContainerType& neighborInfoContainer = indexToNeighborMap[globalEntityIndex];
-                // add the local intersection id and the boundary id this intersection shall have
-                neighborInfoContainer.insert(std::pair< int, int >(localIntersectionIndex, boundaryId));
-              } // if neighbor is not contained in this subdomain
-  //          } // treat each subdomain of the entity seperately
-          } // if (intersection.neighbor())
-        } // walk the neighbors
-      } // walk the global grid part to collect information about the subdomain boundaries
 
-      // create local grid parts and report
-      debug << prefix << "  creating local grid parts:" << std::endl;
+      // compute number of codim 0 entities per subdomain
+      std::map< unsigned int, unsigned int > localSizes;
       for (typename SubdomainMapType::iterator subdomainIterator = subdomainMap_.begin();
            subdomainIterator != subdomainMap_.end();
            ++subdomainIterator) {
@@ -261,6 +212,64 @@ public:
           if (geometryIterator->first.dim() == dim)
             subdomainSize += geometryIterator->second.size();
         } // compute number of codim 0 entities
+        localSizes.insert(std::pair< unsigned int, unsigned int >(subdomain, subdomainSize));
+      } // compute number of codim 0 entities per subdomain
+
+      // walk the global grid part to collect information about the subdomain boundaries
+      debug << prefix << "  generating neighbor information:" << std::endl;
+      for (typename GlobalGridPartType::template Codim< 0 >::IteratorType entityIt = globalGridPart_->template begin< 0 >();
+           entityIt != globalGridPart_->template end< 0 >();
+           ++entityIt) {
+        // find the subdomains this entity lives in
+        const EntityType& entity = *entityIt;
+        const IndexType& globalEntityIndex = globalGridPart_->indexSet().index(entity);
+        const unsigned int entitySubdomain = getSubdomainsOf(globalEntityIndex);
+        bool isConnected = false;
+        // walk the neighbors
+        for (typename GlobalGridPartType::IntersectionIteratorType intersectionIt = globalGridPart_->ibegin(entity);
+             intersectionIt != globalGridPart_->iend(entity);
+             ++intersectionIt) {
+          typedef typename GlobalGridPartType::IntersectionIteratorType::Intersection IntersectionType;
+          const IntersectionType& intersection = *intersectionIt;
+          if (intersection.neighbor()) {
+            typedef typename IntersectionType::EntityPointer EntityPtrType;
+            const EntityPtrType neighborPtr = intersection.outside();
+            const EntityType& neighbor = *neighborPtr;
+            const IndexType& globalNeighborIndex = globalGridPart_->indexSet().index(neighbor);
+            const unsigned int neighborSubdomain = getSubdomainsOf(globalNeighborIndex);
+            // if neighbor is not contained in this subdomain
+            if (neighborSubdomain != entitySubdomain) {
+              // get local index of intersection
+              const int localIntersectionIndex = intersection.indexInInside();
+              // then this entity is at the boundary
+              debug << prefix << "    entity " << globalEntityIndex
+                    << " lies at the boundary of subdomain " << entitySubdomain << std::endl;
+              debug << prefix << "      at intersection " << localIntersectionIndex
+                    << " with neighbor " << globalNeighborIndex
+                    << ", (probably) of subdomain " << neighborSubdomain << std::endl;
+              // get the correct map
+              IndexToNeighborInfoMapType& indexToNeighborMap = *(subdomainNeighborInfoVector_[entitySubdomain]);
+              // get the entry for this entity
+              NeighborInfoContainerType& neighborInfoContainer = indexToNeighborMap[globalEntityIndex];
+              // add the local intersection id and the boundary id this intersection shall have
+              neighborInfoContainer.insert(std::pair< int, int >(localIntersectionIndex, boundaryId));
+            } else { // if neighbor is contained in this subdomain
+              isConnected = true;
+            } // if neighbor is contained in this subdomain
+          } // if (intersection.neighbor())
+        } // walk the neighbors
+        // ensure that this entity is connected to the other entities of this subdomain
+        if (localSizes[entitySubdomain] != 1)
+          assert(isConnected);
+      } // walk the global grid part to collect information about the subdomain boundaries
+
+      // create local grid parts and report
+      debug << prefix << "  creating local grid parts:" << std::endl;
+      for (typename SubdomainMapType::iterator subdomainIterator = subdomainMap_.begin();
+           subdomainIterator != subdomainMap_.end();
+           ++subdomainIterator) {
+        const unsigned int subdomain = subdomainIterator->first;
+        unsigned int subdomainSize  = localSizes[subdomain];
         debug << prefix << "    subdomain " << subdomain << " of size " << subdomainSize << "... " << std::flush;
         localGridParts_.push_back(Dune::shared_ptr< const LocalGridPartType >(
           new LocalGridPartType(*globalGridPart_, subdomainIterator->second, subdomainNeighborInfoVector_[subdomain])));
@@ -271,7 +280,7 @@ public:
 
       // finalize
       finalized_ = true;
-    }
+    } // if (!finalized_)
   } // void finalize(Dune::ParameterTree paramTree = Dune::ParameterTree())
 
   Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
