@@ -356,8 +356,8 @@ private:
     {
       const EntityType& entity = *it;
       const IndexType& index = globalGridView_->indexSet().index(entity);
-      const std::set< unsigned int >& subdomains = getSubdomainsOf(index);
-      data[index] = *(subdomains.begin());
+      const unsigned int subdomain = getSubdomainsOf(index);
+      data[index] = subdomain;
     } // walk the grid
     return data;
   } // std::vector< double > generateSubdomainVisualization() const
