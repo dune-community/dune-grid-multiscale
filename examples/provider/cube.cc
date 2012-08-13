@@ -59,8 +59,31 @@ void measureTiming(const GridPartType& gridPart, Dune::Stuff::Common::LogStream&
        ++it)
     ++elements;
   out << " done (has " << elements << " elements, took " << timer.elapsed() << " sek)" << std::endl;
-  return;
-}
+} // void measureTiming()
+
+template< class GlobalGridPartType, class CouplingGridPartType >
+void testCoupling(const GlobalGridPartType& globalGridPart, const CouplingGridPartType& couplingGridPart, Dune::Stuff::Common::LogStream& out)
+{
+  // walk the grid part
+  for (typename CouplingGridPartType::template Codim< 0 >::IteratorType entityIterator = couplingGridPart.template begin< 0 >();
+       entityIterator != couplingGridPart.template end< 0 >();
+       ++entityIterator) {
+    const typename CouplingGridPartType::template Codim< 0 >::EntityType& entity = *entityIterator;
+    const unsigned int entityIndex = globalGridPart.indexSet().index(entity);
+    out << "entity " << entityIndex << ", neighbors " << std::flush;
+    // walk the intersections
+    for (typename CouplingGridPartType::IntersectionIteratorType intersectionIterator = couplingGridPart.ibegin(entity);
+         intersectionIterator != couplingGridPart.iend(entity);
+         ++intersectionIterator) {
+      const typename CouplingGridPartType::IntersectionIteratorType::Intersection& intersection = *intersectionIterator;
+      const typename CouplingGridPartType::IntersectionIteratorType::Intersection::EntityPointer neighborPtr = intersection.outside();
+      const typename CouplingGridPartType::template Codim< 0 >::EntityType& neighbor = *neighborPtr;
+      const unsigned int neighborIndex = globalGridPart.indexSet().index(neighbor);
+      out << neighborIndex << " ";
+    } // walk the intersections
+    out << std::endl;
+  } // walk the grid part
+} // void testCoupling()
 
 int main(int argc, char** argv)
 {
@@ -109,6 +132,10 @@ int main(int argc, char** argv)
     typedef MsGridType::GlobalGridPartType GlobalGridPartType;
     const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = msGrid.globalGridPart();
     measureTiming(*globalGridPart, info, "global");
+    typedef MsGridType::CouplingGridPartType CouplingGridPartType;
+    const unsigned int neighbor = *(msGrid.neighborsOf(0)->begin());
+    const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart = msGrid.couplingGridPart(0, neighbor);
+    measureTiming(*couplingGridPart, info, "coupling (subdomain 0 with " + Dune::Stuff::Common::String::convertTo(neighbor) + ")");
     typedef MsGridType::LocalGridPartType LocalGridPartType;
     const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = msGrid.localGridPart(0);
     measureTiming(*firstLocalGridPart, info, "local (subdomain 0)");
@@ -116,6 +143,10 @@ int main(int argc, char** argv)
       const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(subdomain);
       measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(subdomain) + ")");
     }
+
+//    // test coupling grid part
+//    info << "testing coupling grid part:" << std::endl;
+//    testCoupling(*globalGridPart, *couplingGridPart, info);
 
     // if we came that far we can as well be happy about it
     return 0;
