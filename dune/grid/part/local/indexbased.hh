@@ -16,6 +16,7 @@
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
 #include <dune/grid/part/iterator/local/indexbased.hh>
+#include <dune/grid/part/iterator/intersection/local.hh>
 #include <dune/grid/part/iterator/intersection/wrapper.hh>
 #include <dune/grid/part/indexset/local.hh>
 
@@ -211,12 +212,12 @@ template< class GlobalGridPartImp >
 struct ConstCouplingTraits
   : public ConstTraits< GlobalGridPartImp >
 {
-//  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
+  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
 
-//  typedef Dune::grid::Part::Local::IndexBased::ConstCoupling< GlobalGridPartImp > GridPartType;
+  typedef Dune::grid::Part::Local::IndexBased::ConstCoupling< GlobalGridPartImp > GridPartType;
 
   //! localized intersection iterator
-//  typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
+  typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
 }; // class ConstCouplingTraits
 
 template< class GlobalGridPartImp >
@@ -230,9 +231,11 @@ public:
 
   typedef Const< GlobalGridPartImp > BaseType;
 
-//  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+  typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
 
-//  typedef typename GridType::template Codim<0>::Entity EntityType;
+  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
+  typedef typename BaseType::EntityType EntityType;
 
   typedef typename BaseType::GlobalGridPartType GlobalGridPartType;
 
@@ -252,37 +255,27 @@ public:
       intersectionContainer_(intersectionContainer)
   {}
 
-//  IntersectionIteratorType ibegin(const EntityType& entity) const
-//  {
-//    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
-//    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
-//    // if this is an entity at the boundary
-//    if (result != boundaryInfoContainer_->end()) {
-//      // get the information for this entity
-//      const std::map< int, int >& info = result->second;
-//      // return wrapped iterator
-//      return IntersectionIteratorType(globalGridPart_, entity, info);
-//    } else {
-//      // return iterator which just passes everything thrugh
-//      return IntersectionIteratorType(globalGridPart_, entity);
-//    } // if this is an entity at the boundary
-//  } // IntersectionIteratorType ibegin(const EntityType& entity) const
+  IntersectionIteratorType ibegin(const EntityType& entity) const
+  {
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
+    assert(result != intersectionContainer_->end());
+    // get the information for this entity
+    const std::set< int >& info = result->second;
+    // return localized iterator
+    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info);
+  } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
-//  IntersectionIteratorType iend(const EntityType& entity) const
-//  {
-//    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
-//    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
-//    // if this is an entity at the boundary
-//    if (result != boundaryInfoContainer_->end()) {
-//      // get the information for this entity
-//      const std::map< int, int >& info = result->second;
-//      // return wrapped iterator
-//      return IntersectionIteratorType(globalGridPart_, entity, info, true);
-//    } else {
-//      // return iterator which just passes everything thrugh
-//      return IntersectionIteratorType(globalGridPart_, entity, true);
-//    } // if this is an entity at the boundary
-//  }
+  IntersectionIteratorType iend(const EntityType& entity) const
+  {
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
+    assert(result != intersectionContainer_->end());
+    // get the information for this entity
+    const std::set< int >& info = result->second;
+    // return localized iterator
+    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
+  } // IntersectionIteratorType iend(const EntityType& entity) const
 
 private:
   const Dune::shared_ptr< const IntersectionInfoContainerType > intersectionContainer_;
