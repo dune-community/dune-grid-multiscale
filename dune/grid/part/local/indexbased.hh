@@ -4,6 +4,7 @@
 
 // system
 #include <map>
+#include <set>
 
 // dune-common
 #include <dune/common/shared_ptr.hh>
@@ -202,6 +203,90 @@ private:
   const Dune::shared_ptr< const BoundaryInfoContainerType > boundaryInfoContainer_;
   const IndexSetType indexSet_;
 }; // class Const
+
+template< class GlobalGridPartImp >
+class ConstCoupling;
+
+template< class GlobalGridPartImp >
+struct ConstCouplingTraits
+  : public ConstTraits< GlobalGridPartImp >
+{
+//  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
+
+//  typedef Dune::grid::Part::Local::IndexBased::ConstCoupling< GlobalGridPartImp > GridPartType;
+
+  //! localized intersection iterator
+//  typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
+}; // class ConstCouplingTraits
+
+template< class GlobalGridPartImp >
+class ConstCoupling
+  : public Const< GlobalGridPartImp >
+{
+public:
+  typedef ConstCoupling< GlobalGridPartImp > ThisType;
+
+  typedef Dune::grid::Part::Local::IndexBased::ConstCouplingTraits< GlobalGridPartImp > Traits;
+
+  typedef Const< GlobalGridPartImp > BaseType;
+
+//  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
+//  typedef typename GridType::template Codim<0>::Entity EntityType;
+
+  typedef typename BaseType::GlobalGridPartType GlobalGridPartType;
+
+  typedef typename BaseType::IndexType IndexType;
+
+  typedef typename BaseType::IndexContainerType IndexContainerType;
+
+  typedef typename BaseType::BoundaryInfoContainerType BoundaryInfoContainerType;
+
+  //! container type for the intersection information
+  typedef std::map< IndexType, std::set< int > > IntersectionInfoContainerType;
+
+  ConstCoupling(const GlobalGridPartType& globalGridPart,
+                const Dune::shared_ptr< const IndexContainerType > indexContainer,
+                const Dune::shared_ptr< const IntersectionInfoContainerType > intersectionContainer)
+    : BaseType(globalGridPart, indexContainer, Dune::shared_ptr< const BoundaryInfoContainerType >(new BoundaryInfoContainerType())),
+      intersectionContainer_(intersectionContainer)
+  {}
+
+//  IntersectionIteratorType ibegin(const EntityType& entity) const
+//  {
+//    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+//    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
+//    // if this is an entity at the boundary
+//    if (result != boundaryInfoContainer_->end()) {
+//      // get the information for this entity
+//      const std::map< int, int >& info = result->second;
+//      // return wrapped iterator
+//      return IntersectionIteratorType(globalGridPart_, entity, info);
+//    } else {
+//      // return iterator which just passes everything thrugh
+//      return IntersectionIteratorType(globalGridPart_, entity);
+//    } // if this is an entity at the boundary
+//  } // IntersectionIteratorType ibegin(const EntityType& entity) const
+
+//  IntersectionIteratorType iend(const EntityType& entity) const
+//  {
+//    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+//    const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
+//    // if this is an entity at the boundary
+//    if (result != boundaryInfoContainer_->end()) {
+//      // get the information for this entity
+//      const std::map< int, int >& info = result->second;
+//      // return wrapped iterator
+//      return IntersectionIteratorType(globalGridPart_, entity, info, true);
+//    } else {
+//      // return iterator which just passes everything thrugh
+//      return IntersectionIteratorType(globalGridPart_, entity, true);
+//    } // if this is an entity at the boundary
+//  }
+
+private:
+  const Dune::shared_ptr< const IntersectionInfoContainerType > intersectionContainer_;
+}; // class ConstCoupling
 
 } // namespace IndexBased
 
