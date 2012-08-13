@@ -42,9 +42,9 @@ public:
 
   typedef typename GlobalGridPartType::IndexSetType::IndexType IndexType;
 
-private:
   typedef Dune::GeometryType GeometryType;
 
+private:
   typedef std::map< IndexType, IndexType > IndexMapType;
 
 public:
