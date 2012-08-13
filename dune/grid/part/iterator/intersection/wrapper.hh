@@ -21,14 +21,16 @@ namespace Iterator {
 
 namespace Intersection {
 
+namespace Wrapper {
+
 template< class GlobalGridPartImp >
-class Local
+class FakeDomainBoundary
   : public GlobalGridPartImp::IntersectionIteratorType
 {
 public:
   typedef GlobalGridPartImp GlobalGridPartType;
 
-  typedef Local< GlobalGridPartType > ThisType;
+  typedef FakeDomainBoundary< GlobalGridPartType > ThisType;
 
   typedef typename GlobalGridPartType::IntersectionIteratorType BaseType;
 
@@ -42,7 +44,7 @@ private:
 public:
   typedef Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType > Intersection;
 
-  Local(const GlobalGridPartType& globalGridPart,
+  FakeDomainBoundary(const GlobalGridPartType& globalGridPart,
         const EntityType& entity,
         bool end = false)
     : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity)),
@@ -50,7 +52,7 @@ public:
       intersection_(*this)
   {}
 
-  Local(const GlobalGridPartType& globalGridPart,
+  FakeDomainBoundary(const GlobalGridPartType& globalGridPart,
         const EntityType& entity,
         const InfoContainerType infoContainer,
         bool end = false)
@@ -101,7 +103,9 @@ private:
   bool passThrough_;
   mutable Intersection intersection_;
   const InfoContainerType infoContainer_;
-}; // class Local
+}; // class FakeDomainBoundary
+
+} // namespace Wrapper
 
 } // namespace Intersection
 
