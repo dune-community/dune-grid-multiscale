@@ -15,7 +15,7 @@
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
 #include <dune/grid/part/iterator/local/indexbased.hh>
-#include <dune/grid/part/iterator/intersection/local.hh>
+#include <dune/grid/part/iterator/intersection/wrapper.hh>
 #include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
@@ -56,12 +56,11 @@ struct ConstTraits
 
   static const bool conforming = GlobalGridPartType::conforming;
 
-  typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
-
+  typedef Dune::grid::Part::Iterator::Intersection::Wrapper::FakeDomainBoundary< GlobalGridPartType > IntersectionIteratorType;
 }; // class ConstTraits
 
 /**
- *  \todo Wrap entity, so that entity.ileaf{begin,end}()returns i{begin,end}(entity)
+ *  \todo Wrap entity, so that entity.ileaf{begin,end}() returns i{begin,end}(entity)
  *  \todo Implement boundaryId(intersection) by adding a std::map< intersectionIndex, boundaryId >!
  */
 template< class GlobalGridPartImp >
