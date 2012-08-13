@@ -107,6 +107,14 @@ public:
   //! map type which maps from an entity index (of the global grid parts index set) to a subdomain
   typedef std::map< IndexType, unsigned int > EntityToSubdomainMapType;
 
+  //! set type which contains all neighbors of a aubdomain
+  typedef std::set< unsigned int > NeighboringSubdomainsInfoType;
+
+private:
+  // for the coupling neighbor information
+  typedef std::vector< Dune::shared_ptr< NeighboringSubdomainsInfoType > > NeighboringSubdomainsInfoVectorType;
+
+public:
   Default(GridType& grid)
     : grid_(grid),
       globalGridPart_(Dune::shared_ptr< GlobalGridPartType >(new GlobalGridPartType(grid_))),
@@ -130,7 +138,7 @@ public:
   {
     assert(finalized_);
     return size_;
-  }
+  } // unsigned int size() const
 
   void prepare()
   {
@@ -138,8 +146,8 @@ public:
     if (!prepared_) {
       entityToSubdomainMap_ = Dune::shared_ptr< EntityToSubdomainMapType >(new EntityToSubdomainMapType());
       prepared_ = true;
-    }
-  }
+    } // if (!prepared_)
+  } // void prepare()
 
   void add(const EntityType& entity, const unsigned int subdomain, Dune::ParameterTree paramTree = Dune::ParameterTree())
   {
@@ -186,6 +194,7 @@ public:
       Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
       const unsigned int boundaryId = paramTree.get("boundaryId", 5);
       debug << prefix << "finalizing " << std::flush;
+
       // test for consecutive numbering of subdomains and create map for the neighbor information
       for (unsigned int subdomain = 0; subdomain < size_; ++subdomain) {
         if (subdomainMap_.find(subdomain) == subdomainMap_.end()) {
@@ -194,8 +203,9 @@ public:
           DUNE_THROW(Dune::InvalidStateException, msg.str());
         } else {
           subdomainNeighborInfoVector_.push_back(Dune::shared_ptr< IndexToNeighborInfoMapType >(new IndexToNeighborInfoMapType()));
+          neighboringSubdomainsInfoVector_.push_back(Dune::shared_ptr< std::set< unsigned int > >(new std::set< unsigned int >()));
         }
-      }
+      } // test for consecutive numbering of subdomains and create map for the neighbor information
       debug << size_ << " subdomains:" << std::endl;
 
       // compute number of codim 0 entities per subdomain
@@ -223,7 +233,13 @@ public:
         // find the subdomains this entity lives in
         const EntityType& entity = *entityIt;
         const IndexType& globalEntityIndex = globalGridPart_->indexSet().index(entity);
-        const unsigned int entitySubdomain = getSubdomainsOf(globalEntityIndex);
+        const unsigned int entitySubdomain = getSubdomainOf(globalEntityIndex);
+        // get the correct map for the boundary information
+        IndexToNeighborInfoMapType& indexToNeighborMap = *(subdomainNeighborInfoVector_[entitySubdomain]);
+        // get the entry for this entity
+        NeighborInfoContainerType& neighborInfoContainer = indexToNeighborMap[globalEntityIndex];
+        // get the correct set for the neighbor information
+        NeighboringSubdomainsInfoType& neighborsOfSubdomain = *(neighboringSubdomainsInfoVector_[entitySubdomain]);
         bool isConnected = false;
         // walk the neighbors
         for (typename GlobalGridPartType::IntersectionIteratorType intersectionIt = globalGridPart_->ibegin(entity);
@@ -236,7 +252,7 @@ public:
             const EntityPtrType neighborPtr = intersection.outside();
             const EntityType& neighbor = *neighborPtr;
             const IndexType& globalNeighborIndex = globalGridPart_->indexSet().index(neighbor);
-            const unsigned int neighborSubdomain = getSubdomainsOf(globalNeighborIndex);
+            const unsigned int neighborSubdomain = getSubdomainOf(globalNeighborIndex);
             // if neighbor is not contained in this subdomain
             if (neighborSubdomain != entitySubdomain) {
               // get local index of intersection
@@ -246,13 +262,11 @@ public:
                     << " lies at the boundary of subdomain " << entitySubdomain << std::endl;
               debug << prefix << "      at intersection " << localIntersectionIndex
                     << " with neighbor " << globalNeighborIndex
-                    << ", (probably) of subdomain " << neighborSubdomain << std::endl;
-              // get the correct map
-              IndexToNeighborInfoMapType& indexToNeighborMap = *(subdomainNeighborInfoVector_[entitySubdomain]);
-              // get the entry for this entity
-              NeighborInfoContainerType& neighborInfoContainer = indexToNeighborMap[globalEntityIndex];
+                    << " of subdomain " << neighborSubdomain << std::endl;
               // add the local intersection id and the boundary id this intersection shall have
               neighborInfoContainer.insert(std::pair< int, int >(localIntersectionIndex, boundaryId));
+              // add the neighboring subdomain
+              neighborsOfSubdomain.insert(neighborSubdomain);
             } else { // if neighbor is contained in this subdomain
               isConnected = true;
             } // if neighbor is contained in this subdomain
@@ -293,6 +307,13 @@ public:
   Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap() const
   {
     return entityToSubdomainMap_;
+  }
+
+  Dune::shared_ptr< const NeighboringSubdomainsInfoType > neighborsOf(const unsigned int subdomain) const
+  {
+    assert(finalized_);
+    assert(subdomain < size());
+    return neighboringSubdomainsInfoVector_[subdomain];
   }
 
   void visualize(Dune::ParameterTree paramTree = Dune::ParameterTree()) const
@@ -344,7 +365,7 @@ private:
     return;
   } // void addGeometryAndIndex
 
-  unsigned int getSubdomainsOf(const IndexType& globalIndex) const
+  unsigned int getSubdomainOf(const IndexType& globalIndex) const
   {
     const typename EntityToSubdomainMapType::const_iterator result = entityToSubdomainMap_->find(globalIndex);
     if (result == entityToSubdomainMap_->end()) {
@@ -365,7 +386,7 @@ private:
     {
       const EntityType& entity = *it;
       const IndexType& index = globalGridView_->indexSet().index(entity);
-      const unsigned int subdomain = getSubdomainsOf(index);
+      const unsigned int subdomain = getSubdomainOf(index);
       data[index] = subdomain;
     } // walk the grid
     return data;
@@ -424,6 +445,7 @@ private:
   SubdomainMapType subdomainMap_;
   Dune::shared_ptr< EntityToSubdomainMapType > entityToSubdomainMap_;
   SubdomainNeighborInfoVectorType subdomainNeighborInfoVector_;
+  NeighboringSubdomainsInfoVectorType neighboringSubdomainsInfoVector_;
   LocalGridPartVectorType localGridParts_;
   LocalGridViewVectorType localGridViews_;
 }; // class Default
