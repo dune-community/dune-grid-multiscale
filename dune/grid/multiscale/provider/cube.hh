@@ -31,7 +31,11 @@ namespace Multiscale {
 
 namespace Provider {
 
+#ifdef HAVE_CONFIG_H
+template< class GridImp = Dune::GridSelector::GridType >
+#else
 template< class GridImp >
+#endif
 class Cube
   : public Dune::Stuff::Grid::Provider::Cube< GridImp >
 {
