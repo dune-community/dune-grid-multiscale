@@ -448,11 +448,10 @@ public:
     return neighboringSubdomainsInfoVector_[subdomain];
   } //  Dune::shared_ptr< const NeighboringSubdomainsSetType > neighborsOf(const unsigned int subdomain) const
 
-  void visualize(Dune::ParameterTree paramTree = Dune::ParameterTree()) const
+  void visualize(const std::string filename = "msGrid_visualization") const
   {
     // preparations
     assert(finalized_);
-    const std::string filename = paramTree.get("filename", "msGrid_visualization");
 
     // vtk writer
     Dune::VTKWriter< GlobalGridViewType > vtkwriter(*globalGridView_);
@@ -471,7 +470,7 @@ public:
 
     // write
     vtkwriter.write(filename, Dune::VTK::ascii);
-  } // void visualize(Dune::ParameterTree paramTree = Dune::ParameterTree()) const
+  } // visualize()
 
 private:
   template< int, int >
