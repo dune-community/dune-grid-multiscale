@@ -373,7 +373,12 @@ public:
           // get intersection map for this neighbor
           const typename CouplingIntersectionMapType::const_iterator intersectionIndicesMap = couplingIntersectionMap.find(neighbor);
           assert(intersectionIndicesMap != couplingIntersectionMap.end());
-          const Dune::shared_ptr< const CouplingGridPartType > couplingGridPartPtr(new CouplingGridPartType(*globalGridPart_, indicesMap->second, intersectionIndicesMap->second));
+          const Dune::shared_ptr< const CouplingGridPartType > couplingGridPartPtr(new CouplingGridPartType(
+            *globalGridPart_,
+            indicesMap->second,
+            intersectionIndicesMap->second,
+            localGridParts_[subdomain],
+            localGridParts_[neighbor]));
           couplingGridPartMap.insert(std::pair< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >(
             neighbor, couplingGridPartPtr));
           couplingGridViewMap.insert(std::pair< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >(
