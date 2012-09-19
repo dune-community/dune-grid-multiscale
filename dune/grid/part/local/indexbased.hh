@@ -100,13 +100,13 @@ public:
   //! container type for the boundary information
   typedef std::map< IndexType, std::map< int, int > > BoundaryInfoContainerType;
 
-  Const(const GlobalGridPartType& globalGridPart,
+  Const(const Dune::shared_ptr< const GlobalGridPartType > globalGridPart,
         const Dune::shared_ptr< const IndexContainerType > indexContainer,
         const Dune::shared_ptr< const BoundaryInfoContainerType > boundaryInfoContainer)
     : globalGridPart_(globalGridPart),
       indexContainer_(indexContainer),
       boundaryInfoContainer_(boundaryInfoContainer),
-      indexSet_(globalGridPart_, indexContainer_)
+      indexSet_(*globalGridPart_, indexContainer_)
   {}
 
   const IndexSetType& indexSet() const
@@ -116,7 +116,7 @@ public:
 
   const GridType& grid() const
   {
-    return globalGridPart_.grid();
+    return globalGridPart_->grid();
   }
 
   const GlobalGridPartType& globalGridPart() const
@@ -150,7 +150,7 @@ public:
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
-    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
@@ -166,7 +166,7 @@ public:
 
   IntersectionIteratorType iend(const EntityType& entity) const
   {
-    const IndexType& globalIndex = globalGridPart_.indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
@@ -188,18 +188,18 @@ public:
 
   int level() const
   {
-    return globalGridPart_.level();
+    return globalGridPart_->level();
   }
 
   template< class DataHandleImp ,class DataType >
   void communicate(CommDataHandleIF< DataHandleImp, DataType > & data, InterfaceType iftype, CommunicationDirection dir) const
   {
     DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    globalGridPart_.communicate(data,iftype,dir);
+    globalGridPart_->communicate(data,iftype,dir);
   }
 
 private:
-  const GlobalGridPartType& globalGridPart_;
+  const Dune::shared_ptr< const GlobalGridPartType > globalGridPart_;
   const Dune::shared_ptr< const IndexContainerType > indexContainer_;
   const Dune::shared_ptr< const BoundaryInfoContainerType > boundaryInfoContainer_;
   const IndexSetType indexSet_;
@@ -252,7 +252,7 @@ public:
   //! container type for the intersection information
   typedef std::map< IndexType, std::set< int > > IntersectionInfoContainerType;
 
-  ConstCoupling(const GlobalGridPartType& globalGridPart,
+  ConstCoupling(const Dune::shared_ptr< const GlobalGridPartType > globalGridPart,
                 const Dune::shared_ptr< const IndexContainerType > indexContainer,
                 const Dune::shared_ptr< const IntersectionInfoContainerType > intersectionContainer,
                 const Dune::shared_ptr< const InsideType > inside,
