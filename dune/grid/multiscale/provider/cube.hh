@@ -21,7 +21,7 @@
 //#include <dune/stuff/common/logging.hh>
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/default.hh>
+#include <dune/grid/multiscale/factory/default.hh>
 
 namespace Dune {
 
@@ -52,21 +52,11 @@ public:
 
   typedef typename BaseType::CoordinateType CoordinateType;
 
-  typedef Dune::grid::Multiscale::Default< GridType > MsGridType;
+  typedef Dune::grid::Multiscale::Factory::Default< GridType > MsGridFactoryType;
+
+  typedef typename MsGridFactoryType::MsGridType MsGridType;
 
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
-
-//  template< int dim >
-//  struct P0Layout
-//  {
-//    template< class GeometryType >
-//    bool contains(GeometryType& geometry)
-//    {
-//      if (geometry.dim() == dim)
-//        return true;
-//      return false;
-//    }
-//  }; // layout class for codim 0 mapper
 
   Cube(Dune::ParameterTree paramTree = Dune::ParameterTree())
     : BaseType(paramTree)
@@ -79,19 +69,22 @@ public:
     return *msGrid_;
   }
 
+  const Dune::shared_ptr< const MsGridType > msGridPtr() const
+  {
+    return msGrid_;
+  }
+
 private:
   void buildMsGrid(const Dune::ParameterTree& paramTree)
   {
-    // preparations
+    // prepare
     const CoordinateType& lowerLeft = BaseType::lowerLeft();
     const CoordinateType& upperRight = BaseType::upperRight();
-    msGrid_ = Dune::shared_ptr< MsGridType >(new MsGridType(BaseType::grid()));
-    msGrid_->prepare();
+    MsGridFactoryType factory(BaseType::gridPtr());
+    factory.prepare();
 
     // debug output
     const std::string prefix = paramTree.get("prefix", "");
-    Dune::ParameterTree indentTree;
-    indentTree["prefix"] = prefix + "    ";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
     debug << prefix << id << ":" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
@@ -110,9 +103,9 @@ private:
     }
     debug << std::endl;
 
-    // grid part
+    // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
-    Dune::shared_ptr< const GridPartType> gridPart = msGrid_->globalGridPart();
+    const Dune::shared_ptr< const GridPartType> gridPart = factory.globalGridPart();
 
     // walk the grid
     for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart->template begin< 0 >();
@@ -127,7 +120,6 @@ private:
       std::vector< unsigned int > whichPartition;
       for (unsigned int d = 0; d < dim; ++d) {
         whichPartition.push_back(std::floor(partitions[d]*((center[d] - lowerLeft[d])/(upperRight[d] - lowerLeft[d]))));
-        //debug << prefix << "    partition[" << d  << "]: " << whichPartition[d] << std::endl;
       }
       unsigned int subdomain = 0;
       if (dim == 1)
@@ -143,17 +135,17 @@ private:
       } // decide on the subdomain this entity shall belong to
 
       // add entity to subdomain
-      msGrid_->add(entity, subdomain, indentTree);
+      factory.add(entity, subdomain, prefix + "    ", debug);
     } // walk the grid
 
     // finalize
-    indentTree["prefix"] = prefix + "  ";
-    msGrid_->finalize(indentTree);
+    factory.finalize(prefix + "  ", debug);
     debug << std::flush;
-    return;
+
+    msGrid_ = factory.createMsGrid();
   } // void buildMsGrid(const Dune::ParameterTree& paramTree)
 
-  Dune::shared_ptr< MsGridType > msGrid_;
+  Dune::shared_ptr< const MsGridType > msGrid_;
 }; // class Cube
 
 template< class GridType >
