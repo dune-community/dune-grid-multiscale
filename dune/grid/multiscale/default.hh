@@ -112,112 +112,119 @@ public:
     createGridViews();
   } // Default()
 
-//  Dune::shared_ptr< const GlobalGridPartType > globalGridPart() const
-//  {
-//    return globalGridPart_;
-//  }
+  const Dune::shared_ptr< const GlobalGridPartType > globalGridPart() const
+  {
+    return globalGridPart_;
+  }
 
-//  Dune::shared_ptr< const GlobalGridViewType > globalGridView() const
-//  {
-//    return globalGridView_;
-//  }
+  const Dune::shared_ptr< const GlobalGridViewType > globalGridView() const
+  {
+    return globalGridView_;
+  }
 
-//  unsigned int size() const
-//  {
-//    assert(finalized_);
-//    return size_;
-//  } // unsigned int size() const
+  unsigned int size() const
+  {
+    return size_;
+  } // unsigned int size() const
 
-//  Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    return localGridParts_[subdomain];
-//  }
+  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
+  {
+    assert(subdomain < size_);
+    return localGridParts_[subdomain];
+  }
 
-//  Dune::shared_ptr< const LocalGridViewType > localGridView(const unsigned int subdomain) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    return localGridViews_[subdomain];
-//  }
+  const Dune::shared_ptr< const LocalGridViewType > localGridView(const unsigned int subdomain) const
+  {
+    assert(subdomain < size_);
+    return localGridViews_[subdomain];
+  }
 
-//  Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    assert(neighbor < size());
-//    const CouplingGridPartMapType& couplingGridPartMap = couplingGridPartMaps_[subdomain];
-//    const typename CouplingGridPartMapType::const_iterator result = couplingGridPartMap.find(neighbor);
-//    if (result == couplingGridPartMap.end()) {
-//      std::stringstream msg;
-//      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
-//      DUNE_THROW(Dune::InvalidStateException, msg.str());
-//    }
-//    return result->second;
-//  } // Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
+  const Dune::shared_ptr< const BoundaryGridPartType > boundaryGridPart(const unsigned int subdomain) const
+  {
+    assert(subdomain < size_);
+    return boundaryGridParts_[subdomain];
+  }
 
-//  Dune::shared_ptr< const CouplingGridViewType > couplingGridView(const unsigned int subdomain, const unsigned int neighbor) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    assert(neighbor < size());
-//    const CouplingGridViewMapType& couplingGridViewMap = couplingGridViewMaps_[subdomain];
-//    const typename CouplingGridViewMapType::const_iterator result = couplingGridViewMap.find(neighbor);
-//    if (result == couplingGridViewMap.end()) {
-//      std::stringstream msg;
-//      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
-//      DUNE_THROW(Dune::InvalidStateException, msg.str());
-//    }
-//    return result->second;
-//  } // Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
+  const Dune::shared_ptr< const BoundaryGridViewType > boundaryGridView(const unsigned int subdomain) const
+  {
+    assert(subdomain < size_);
+    return boundaryGridViews_[subdomain];
+  }
 
-//  Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap() const
-//  {
-//    return entityToSubdomainMap_;
-//  }
+  const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
+  {
+    assert(subdomain < size_);
+    assert(neighbor < size_);
+    const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > >& couplingGridPartsMaps = *couplingGridPartsMaps_;
+    const std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >& couplingGridPartsMap = couplingGridPartsMaps[subdomain];
+    const typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >::const_iterator result = couplingGridPartsMap.find(neighbor);
+    if (result == couplingGridPartsMap.end()) {
+      std::stringstream msg;
+      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    }
+    return result->second;
+  } // const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
 
-//  const std::set< unsigned int >& neighborsOf(const unsigned int subdomain) const
-//  {
-//    assert(finalized_);
-//    assert(subdomain < size());
-//    return neighboringSubdomainsInfoVector_[subdomain];
-//  } //  Dune::shared_ptr< const NeighboringSubdomainsSetType > neighborsOf(const unsigned int subdomain) const
+  const Dune::shared_ptr< const CouplingGridViewType > couplingGridView(const unsigned int subdomain, const unsigned int neighbor) const
+  {
+    assert(subdomain < size_);
+    assert(neighbor < size_);
+    const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > >& couplingGridViewsMaps = *couplingGridViewsMaps_;
+    const std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >& couplingGridViewsMap = couplingGridViewsMaps[subdomain];
+    const typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >::const_iterator result = couplingGridViewsMap.find(neighbor);
+    if (result == couplingGridViewsMap.end()) {
+      std::stringstream msg;
+      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    }
+    return result->second;
+  } // const Dune::shared_ptr< const CouplingGridViewType > couplingGridView(const unsigned int subdomain, const unsigned int neighbor) const
 
-//  unsigned int getSubdomainOf(const IndexType& globalIndex) const
-//  {
-//    const typename EntityToSubdomainMapType::const_iterator result = entityToSubdomainMap_->find(globalIndex);
-//    if (result == entityToSubdomainMap_->end()) {
-//      std::stringstream msg;
-//      msg << "Error in " << id << ": missing information for entity " << globalIndex << "in entityToSubdomainMap_!";
-//      DUNE_THROW(Dune::InvalidStateException, msg.str());
-//    }
-//    return result->second;
-//  } // unsigned int getSubdomainOf(const IndexType& globalIndex) const
+  const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap() const
+  {
+    return entityToSubdomainMap_;
+  }
 
-//  void visualize(const std::string filename = "msGrid_visualization") const
-//  {
-//    // preparations
-//    assert(finalized_);
+  const NeighborSetType& neighborsOf(const unsigned int subdomain) const
+  {
+    assert(subdomain < size_);
+    const std::vector< NeighborSetType >& neighboringSets = *neighboringSetsPtr_;
+    return neighboringSets[subdomain];
+  } // const NeighborSetType& neighborsOf(const unsigned int subdomain) const
 
-//    // vtk writer
-//    Dune::VTKWriter< GlobalGridViewType > vtkwriter(*globalGridView_);
+  unsigned int subdomainOf(const IndexType& globalIndex) const
+  {
+    const typename EntityToSubdomainMapType::const_iterator result = entityToSubdomainMap_->find(globalIndex);
+    if (result == entityToSubdomainMap_->end()) {
+      std::stringstream msg;
+      msg << "Error in " << id << ": missing information for entity " << globalIndex << "in entityToSubdomainMap_!";
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    }
+    return result->second;
+  } // unsigned int getSubdomainOf(const IndexType& globalIndex) const
 
-//    // subdomain id
-//    std::vector< double > subdomainId = generateSubdomainVisualization();
-//    vtkwriter.addCellData(subdomainId, "subdomainId");
+  unsigned int subdomainOf(const EntityType& entity) const
+  {
+    return subdomainOf(globalGridPart_->indexSet().index(entity));
+  } // unsigned int subdomainOf(const EntityType& entity) const
 
-//    // boundary id
-//    std::vector< double > boundaryId = generateBoundaryIdVisualization();
-//    vtkwriter.addCellData(boundaryId, "boundaryId");
-
-//    // codim 0 entity id
-//    std::vector< double > entityId = generateEntityVisualization();
-//    vtkwriter.addCellData(entityId, "entityId");
-
-//    // write
-//    vtkwriter.write(filename, Dune::VTK::ascii);
-//  } // visualize()
+  void visualize(const std::string filename = id + ".visualization") const
+  {
+    // vtk writer
+    Dune::VTKWriter< GlobalGridViewType > vtkwriter(*globalGridView_);
+    // subdomain id
+    std::vector< double > subdomainId = generateSubdomainVisualization();
+    vtkwriter.addCellData(subdomainId, "subdomainId");
+    // boundary id
+    std::vector< double > boundaryId = generateBoundaryIdVisualization();
+    vtkwriter.addCellData(boundaryId, "boundaryId");
+    // codim 0 entity id
+    std::vector< double > entityId = generateEntityVisualization();
+    vtkwriter.addCellData(entityId, "entityId");
+    // write
+    vtkwriter.write(filename, Dune::VTK::ascii);
+  } // visualize()
 
 private:
   void createGridViews()
@@ -273,65 +280,65 @@ private:
     } // walk the subdomains
   } // void createGridViews()
 
-//  std::vector< double > generateSubdomainVisualization() const
-//  {
-//    std::vector< double > data(globalGridView_->indexSet().size(0));
-//    // walk the grid
-//    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-//         it != globalGridView_->template end< 0 >();
-//         ++it)
-//    {
-//      const EntityType& entity = *it;
-//      const IndexType& index = globalGridView_->indexSet().index(entity);
-//      const unsigned int subdomain = getSubdomainOf(index);
-//      data[index] = subdomain;
-//    } // walk the grid
-//    return data;
-//  } // std::vector< double > generateSubdomainVisualization() const
+  std::vector< double > generateSubdomainVisualization() const
+  {
+    std::vector< double > data(globalGridView_->indexSet().size(0));
+    // walk the grid
+    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
+         it != globalGridView_->template end< 0 >();
+         ++it)
+    {
+      const EntityType& entity = *it;
+      const IndexType index = globalGridView_->indexSet().index(entity);
+      const unsigned int subdomain = getSubdomainOf(index);
+      data[index] = subdomain;
+    } // walk the grid
+    return data;
+  } // std::vector< double > generateSubdomainVisualization() const
 
-//  std::vector< double > generateEntityVisualization() const
-//  {
-//    std::vector< double > data(globalGridView_->indexSet().size(0));
-//    // walk the grid
-//    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-//         it != globalGridView_->template end< 0 >();
-//         ++it)
-//    {
-//      const EntityType& entity = *it;
-//      const IndexType& index = globalGridView_->indexSet().index(entity);
-//      data[index] = double(index);
-//    } // walk the grid
-//    return data;
-//  } // std::vector< double > generateEntityVisualization() const
+  std::vector< double > generateEntityVisualization() const
+  {
+    std::vector< double > data(globalGridView_->indexSet().size(0));
+    // walk the grid
+    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
+         it != globalGridView_->template end< 0 >();
+         ++it)
+    {
+      const EntityType& entity = *it;
+      const IndexType& index = globalGridView_->indexSet().index(entity);
+      data[index] = double(index);
+    } // walk the grid
+    return data;
+  } // std::vector< double > generateEntityVisualization() const
 
-//  std::vector< double > generateBoundaryIdVisualization() const
-//  {
-//    std::vector< double > data(globalGridView_->indexSet().size(0));
-//    // walk the grid
-//    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-//         it != globalGridView_->template end< 0 >();
-//         ++it)
-//    {
-//      const EntityType& entity = *it;
-//      const IndexType& index = globalGridView_->indexSet().index(entity);
-//      data[index] = 0.0;
-//      int numberOfBoundarySegments = 0;
-//      bool isOnBoundary = false;
-//      for (typename GlobalGridViewType::IntersectionIterator intersectionIt = globalGridView_->ibegin(entity);
-//           intersectionIt != globalGridView_->iend(entity);
-//           ++intersectionIt) {
-//        if (!intersectionIt->neighbor() && intersectionIt->boundary()){
-//          isOnBoundary = true;
-//          numberOfBoundarySegments += 1;
-//          data[index] += double(intersectionIt->boundaryId());
-//        }
-//      }
-//      if (isOnBoundary) {
-//        data[index] /= double(numberOfBoundarySegments);
-//      }
-//    } // walk the grid
-//    return data;
-//  } // std::vector< double > generateBoundaryIdVisualization() const
+  std::vector< double > generateBoundaryIdVisualization() const
+  {
+    std::vector< double > data(globalGridView_->indexSet().size(0));
+    // walk the grid
+    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
+         it != globalGridView_->template end< 0 >();
+         ++it)
+    {
+      const EntityType& entity = *it;
+      const IndexType& index = globalGridView_->indexSet().index(entity);
+      data[index] = 0.0;
+      int numberOfBoundarySegments = 0;
+      bool isOnBoundary = false;
+      for (typename GlobalGridViewType::IntersectionIterator intersectionIt = globalGridView_->ibegin(entity);
+           intersectionIt != globalGridView_->iend(entity);
+           ++intersectionIt) {
+        if (!intersectionIt->neighbor() && intersectionIt->boundary()){
+          isOnBoundary = true;
+          numberOfBoundarySegments += 1;
+          data[index] += double(intersectionIt->boundaryId());
+        }
+      }
+      if (isOnBoundary) {
+        data[index] /= double(numberOfBoundarySegments);
+      }
+    } // walk the grid
+    return data;
+  } // std::vector< double > generateBoundaryIdVisualization() const
 
   const Dune::shared_ptr< const GridType > grid_;
   const Dune::shared_ptr< const GlobalGridPartType > globalGridPart_;
