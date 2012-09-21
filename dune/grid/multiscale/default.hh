@@ -229,7 +229,6 @@ private:
     //   * to create the boundary grid views
     //   * to create the coupling grid views
     for (unsigned int subdomain = 0; subdomain < size_; ++subdomain) {
-std::cout << "subdomain: " << subdomain << std::endl;
       // for the local grid view
       //   * get the local grid part
       const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
@@ -260,24 +259,17 @@ std::cout << "subdomain: " << subdomain << std::endl;
            neighborIt != neighbors.end();
            ++neighborIt) {
         const unsigned int neighbor = *neighborIt;
-std::cout << "  neighbor " << neighbor << std::endl;
-//        // * get the coupling grid part
-//        typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >::const_iterator
-//            couplingGridPartsMapIt = couplingGridPartsMap.find(neighbor);
-//        assert(couplingGridPartsMapIt != couplingGridPartsMap.end() && "Error: missing coupling grid part in given 'couplingGridPartsMaps'!");
-//        const Dune::shared_ptr< const CouplingGridPartType >& couplingGridPartPtr = couplingGridPartsMapIt->second;
-//        const CouplingGridPartType& couplingGridPart = *couplingGridPartPtr;
-//        // * and create the coupling grid view
-//        couplingGridViewsMap.insert(std::pair< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >(
-//                                      neighbor,
-//                                      Dune::shared_ptr< const CouplingGridViewType >(new CouplingGridViewType(couplingGridPart.gridView()))));
+        // * get the coupling grid part
+        typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >::const_iterator
+            couplingGridPartsMapIt = couplingGridPartsMap.find(neighbor);
+        assert(couplingGridPartsMapIt != couplingGridPartsMap.end() && "Error: missing coupling grid part in given 'couplingGridPartsMaps'!");
+        const Dune::shared_ptr< const CouplingGridPartType >& couplingGridPartPtr = couplingGridPartsMapIt->second;
+        const CouplingGridPartType& couplingGridPart = *couplingGridPartPtr;
+        // * and create the coupling grid view
+        couplingGridViewsMap.insert(std::pair< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >(
+                                      neighbor,
+                                      Dune::shared_ptr< const CouplingGridViewType >(new CouplingGridViewType(couplingGridPart.gridView()))));
       } // walk the neighbors
-      for (typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >::const_iterator it = couplingGridPartsMap.begin();
-           it != couplingGridPartsMap.end();
-           ++it) {
-        This map is empty!!!
-        std::cout << "  coupling " << it->first << std::endl;
-      }
     } // walk the subdomains
   } // void createGridViews()
 
