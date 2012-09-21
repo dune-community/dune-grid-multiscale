@@ -382,14 +382,14 @@ public:
       boundaryGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const BoundaryGridPartType > > >(
             new std::vector< Dune::shared_ptr< const BoundaryGridPartType > >(size_));
       std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-      out << "  creating local and boundary grid parts:" << std::endl;
+      out << prefix << "creating local and boundary grid parts:" << std::endl;
       for (typename SubdomainMapType::const_iterator subdomainIterator = subdomainToEntityMap_.begin();
            subdomainIterator != subdomainToEntityMap_.end();
            ++subdomainIterator) {
         // report
         const unsigned int subdomain = subdomainIterator->first;
         const unsigned int subdomainSize  = subdomainSizes[subdomain];
-        out << prefix << "    subdomain " << subdomain << " (of size " << subdomainSize << ")... " << std::flush;
+        out << prefix << "  subdomain " << subdomain << " (of size " << subdomainSize << ")... " << std::flush;
         // for the local grid part
         //   * get the geometry map
         const Dune::shared_ptr< const GeometryMapType > localGeometryMap = subdomainIterator->second;
@@ -418,21 +418,21 @@ public:
       //   * to create the coupling grid parts
       couplingGridPartsMaps_ = Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > >(
             new std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > >(size_));
-      std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > couplingGridPartsMaps = *couplingGridPartsMaps_;
-      out << prefix << "  creating coupling grid parts:" << std::endl;
+      std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > >& couplingGridPartsMaps = *couplingGridPartsMaps_;
+      out << prefix << "creating coupling grid parts:" << std::endl;
       for (unsigned int subdomain = 0; subdomain < couplingMaps.size(); ++subdomain) {
         // get the coupling map for this subdomain
         const SubdomainMapType& couplingMap = couplingMaps[subdomain];
         // get the intersection information map for this subdomain
         const CouplingIntersectionMapType& couplingBoundaryInfo = couplingBoundaryInfos[subdomain];
         // get the target map for this subdomain
-        std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > couplingGridPartsMap = couplingGridPartsMaps[subdomain];
+        std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >& couplingGridPartsMap = couplingGridPartsMaps[subdomain];
         // loop over all neighbors
         for (typename SubdomainMapType::const_iterator neighborIt = couplingMap.begin();
              neighborIt != couplingMap.end();
              ++neighborIt) {
           const unsigned int neighbor = neighborIt->first;
-          out << prefix << "    subdomain " << subdomain << ", neighbor " << neighbor <<  "... " << std::flush;
+          out << prefix << "  subdomain " << subdomain << ", neighbor " << neighbor <<  "... " << std::flush;
           // get the geometry map
           const Dune::shared_ptr< const GeometryMapType > couplingGeometryMap = neighborIt->second;
           // get the boundary info map
@@ -457,7 +457,7 @@ public:
     } // if (!finalized_)
   } // void finalize()
 
-  const Dune::shared_ptr< const MsGridType > createMsGrid() /*const*/
+  const Dune::shared_ptr< const MsGridType > createMsGrid() const
   {
     assert(finalized_ && "Please call finalize() before calling createMsGrid()!");
     const Dune::shared_ptr< const MsGridType > msGrid(new MsGridType(grid_,
@@ -469,7 +469,7 @@ public:
                                                                      boundaryGridParts_,
                                                                      couplingGridPartsMaps_));
     return msGrid;
-  }
+  } // const Dune::shared_ptr< const MsGridType > createMsGrid() const
 
 private:
   void addGeometryAndIndex(GeometryMapType& geometryMap,
