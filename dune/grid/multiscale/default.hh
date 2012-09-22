@@ -130,25 +130,29 @@ public:
   const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    return localGridParts_[subdomain];
+    const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
+    return localGridParts[subdomain];
   }
 
   const Dune::shared_ptr< const LocalGridViewType > localGridView(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    return localGridViews_[subdomain];
+    const std::vector< Dune::shared_ptr< const LocalGridViewType > >& localGridViews = *localGridViews_;
+    return localGridViews[subdomain];
   }
 
   const Dune::shared_ptr< const BoundaryGridPartType > boundaryGridPart(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    return boundaryGridParts_[subdomain];
+    const std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
+    return boundaryGridParts[subdomain];
   }
 
   const Dune::shared_ptr< const BoundaryGridViewType > boundaryGridView(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    return boundaryGridViews_[subdomain];
+    const std::vector< Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
+    return boundaryGridViews[subdomain];
   }
 
   const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
@@ -290,7 +294,7 @@ private:
     {
       const EntityType& entity = *it;
       const IndexType index = globalGridView_->indexSet().index(entity);
-      const unsigned int subdomain = getSubdomainOf(index);
+      const unsigned int subdomain = subdomainOf(index);
       data[index] = subdomain;
     } // walk the grid
     return data;
