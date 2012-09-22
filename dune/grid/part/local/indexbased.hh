@@ -121,13 +121,13 @@ public:
 
   const GlobalGridPartType& globalGridPart() const
   {
-    return globalGridPart_;
+    return *globalGridPart_;
   }
 
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_);
+    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -139,7 +139,7 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_, true);
+    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
   }
 
   template< int codim, PartitionIteratorType pitype >
@@ -157,10 +157,10 @@ public:
       // get the information for this entity
       const std::map< int, int >& info = result->second;
       // return wrapped iterator
-      return IntersectionIteratorType(globalGridPart_, entity, info);
+      return IntersectionIteratorType(*globalGridPart_, entity, info);
     } else {
       // return iterator which just passes everything thrugh
-      return IntersectionIteratorType(globalGridPart_, entity);
+      return IntersectionIteratorType(*globalGridPart_, entity);
     } // if this is an entity at the boundary
   } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
@@ -173,10 +173,10 @@ public:
       // get the information for this entity
       const std::map< int, int >& info = result->second;
       // return wrapped iterator
-      return IntersectionIteratorType(globalGridPart_, entity, info, true);
+      return IntersectionIteratorType(*globalGridPart_, entity, info, true);
     } else {
       // return iterator which just passes everything thrugh
-      return IntersectionIteratorType(globalGridPart_, entity, true);
+      return IntersectionIteratorType(*globalGridPart_, entity, true);
     } // if this is an entity at the boundary
   }
 
