@@ -59,7 +59,7 @@ public:
   IndexBased(const GlobalGridPartType& globalGridPart, const Dune::shared_ptr< const IndexContainerType > indexContainer)
     : BaseType(globalGridPart.indexSet()),
       indexContainer_(indexContainer),
-      sizeByCodim_(dimension + 1),
+      sizeByCodim_(dimension + 1, IndexType(0)),
       geometryTypesByCodim_(dimension + 1)
   {
     // get geometry types and compute sizes
@@ -89,19 +89,19 @@ public:
     return getIndex(entity);
   }
 
-  template< int cc >
-  IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
-  {
-    const IndexType& globalIndex = BaseType::template subIndex< cc >(entity, i, codim);
-    return findLocalIndex(globalIndex);
-  }
+//  template< int cc >
+//  IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
+//  {
+//    const IndexType& globalIndex = BaseType::template subIndex< cc >(entity, i, codim);
+//    return findLocalIndex(globalIndex);
+//  }
 
-  template< class EntityType >
-  IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
-  {
-    const IndexType& globalIndex = BaseType::subIndex(entity, i, codim);
-    return findLocalIndex(globalIndex);
-  }
+//  template< class EntityType >
+//  IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
+//  {
+//    const IndexType& globalIndex = BaseType::subIndex(entity, i, codim);
+//    return findLocalIndex(globalIndex);
+//  }
 
   const std::vector< GeometryType >& geomTypes(int codim) const
   {
@@ -168,6 +168,16 @@ private:
       const typename Indices_MapType::const_iterator indexPair = indicesMap.find(globalIndex);
       if (indexPair != indicesMap.end())
         return indexPair->second;
+      else {
+        std::cerr << std::endl << "Error in indexContainer_[" << it->first << "]: globalIndex " << globalIndex << " not found!" << std::endl;
+        std::cerr << "  ";
+        for (typename Indices_MapType::const_iterator indexIt = indicesMap.begin();
+             indexIt != indicesMap.end();
+             ++indexIt)  {
+          std::cerr << "(" << indexIt->first << "/" << indexIt->second << "), ";
+        }
+        std::cerr << std::endl;
+      }
     } // find the map with this global index and return the local one
     // we should not come this far
     DUNE_THROW(Dune::InvalidStateException, "Given entity not contained in index set!");
