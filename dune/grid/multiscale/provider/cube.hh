@@ -18,7 +18,7 @@
 
 // dune-stuff
 #include <dune/stuff/grid/provider/cube.hh>
-//#include <dune/stuff/common/logging.hh>
+#include <dune/stuff/common/logging.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/factory/default.hh>
@@ -84,7 +84,7 @@ private:
     factory.prepare();
 
     // debug output
-    const std::string prefix = paramTree.get("prefix", "");
+    const std::string prefix = "";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
     debug << prefix << id << ":" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
@@ -114,7 +114,7 @@ private:
       // get center of entity
       typename GridType::LeafGridView::template Codim< 0 >::Iterator::Entity& entity = *it;
       const CoordinateType center = entity.geometry().global(entity.geometry().center());
-      debug << prefix << "  entity (" << center << "):" << std::endl;
+//      debug << prefix << "  entity (" << center << "):" << std::endl;
 
       // decide on the subdomain this entity shall belong to
       std::vector< unsigned int > whichPartition;
@@ -135,7 +135,7 @@ private:
       } // decide on the subdomain this entity shall belong to
 
       // add entity to subdomain
-      factory.add(entity, subdomain, prefix + "    ", debug);
+      factory.add(entity, subdomain, prefix + "  ", debug);
     } // walk the grid
 
     // finalize
