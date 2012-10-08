@@ -44,8 +44,8 @@ struct ConstTraits
 
   static const PartitionIteratorType indexSetPartitionType = All_Partition;
 
-  //! the leaf grid view from the grid
-  typedef typename GridType::template Partition< All_Partition >::LeafGridView GridViewType;
+//  //! the leaf grid view from the grid
+//  typedef typename GridType::template Partition< All_Partition >::LeafGridView GridViewType;
 
 
   /** \brief The appropriate intersection iterator */
