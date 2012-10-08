@@ -71,7 +71,7 @@ private:
   // map type which maps from an entity index (of the global grid parts index set) to a subdomain
   typedef std::map< IndexType, unsigned int > EntityToSubdomainMapType;
 
-  typedef Dune::FieldVector< unsigned int, dim > CodimSizesType;
+  typedef Dune::FieldVector< unsigned int, dim + 1 > CodimSizesType;
 
   // for the neighbor information between the subdomains
   typedef std::set< unsigned int > NeighboringSubdomainsSetType;
@@ -82,20 +82,22 @@ private:
     static void subEntities(ThisType& factory,
                             const EntityType& entity,
                             GeometryMapType& geometryMap,
-                            CodimSizesType& localCodimSizes)
+                            CodimSizesType& localCodimSizes,
+                            const std::string prefix = "",
+                            std::ostream& out = Dune::Stuff::Common::Logger().devnull())
     {
-      // suppress output, since we are not codim 0
-      Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
+//      // suppress output, since we are not codim 0
+//      Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
       // loop over all codim c subentities of the entity
       typedef typename EntityType::template Codim< c >::EntityPointer CodimCentityPtrType;
       for (int i = 0; i < entity.template count< c >(); ++i) {
         const CodimCentityPtrType codimCentityPtr = entity.template subEntity< c >(i);
         const GeometryType& geometryType = codimCentityPtr->type();
         const IndexType globalIndex = factory.globalGridPart_->indexSet().index(*codimCentityPtr);
-        factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, "", devnull);
+        factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, prefix, out);
       } // loop over all codim c subentities of the entity
       // add all codim c + 1 subentities
-      Add< c + 1, d >::subEntities(factory, entity, geometryMap, localCodimSizes);
+      Add< c + 1, d >::subEntities(factory, entity, geometryMap, localCodimSizes, prefix, out);
     } // static void subEntities()
   }; // struct Add
 
@@ -174,7 +176,7 @@ public:
     CodimSizesType& localCodimSizes = localCodimSizes_.find(subdomain)->second;
     addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, prefix, out);
     // add all remaining codims
-    Add< 1, dim >::subEntities(*this, entity, geometryMap, localCodimSizes);
+    Add< 1, dim >::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, out);
   } // void add()
 
   void finalize(const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug())
@@ -489,7 +491,7 @@ private:
       // increase count for this codim
       ++(localCodimSizes[codim]);
       // report
-      out << prefix << "- added " << geometryType << " with global index " << globalIndex << " and local index " << localIndex << std::endl;
+      out << prefix << "- " << geometryType << ", global index " << globalIndex << ", local index " << localIndex << std::endl;
     } // add if needed
   } // void addGeometryAndIndex()
 
@@ -540,17 +542,19 @@ struct Default< GridType >::Add< c, c >
   static void subEntities(Default< GridType >& factory,
                           const typename Default< GridType >::EntityType& entity,
                           typename Default< GridType >::GeometryMapType& geometryMap,
-                          typename Default< GridType >::CodimSizesType& localCodimSizes)
+                          typename Default< GridType >::CodimSizesType& localCodimSizes,
+                          const std::string prefix = "",
+                          std::ostream& out = Dune::Stuff::Common::Logger().devnull())
   {
-    // suppress output, since we are not codim 0
-    Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
+//    // suppress output, since we are not codim 0
+//    Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
     // loop over all codim c subentities of this entity
     typedef typename Default< GridType >::EntityType::template Codim< c >::EntityPointer CodimCentityPtrType;
     for (int i = 0; i < entity.template count< c >(); ++i) {
       const CodimCentityPtrType codimCentityPtr = entity.template subEntity< c >(i);
       const Default< GridType >::GeometryType& geometryType = codimCentityPtr->type();
       const typename Default< GridType >::IndexType globalIndex = factory.globalGridPart_->indexSet().index(*codimCentityPtr);
-      factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, "", devnull);
+      factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, prefix, out);
     } // loop over all codim c subentities of this entity
   } // static void subEntities()
 }; // struct Default< GridType >::Add< c, c >
