@@ -36,10 +36,10 @@ void ensureParamFile(std::string filename)
     std::ofstream file;
     file.open(filename);
     file << "[grid.multiscale.provider.cube]" << std::endl;
-    file << "numElements.0 = 6" << std::endl;
-    file << "numElements.1 = 6" << std::endl;
-    file << "numElements.2 = 6" << std::endl;
-    file << "boundaryId = 7" << std::endl;                  // a cube from the factory gets the boundary ids 1 to 4 ind 2d and 1 to 6 ? in 3d
+    file << "numElements.0 = 2" << std::endl;
+    file << "numElements.1 = 2" << std::endl;
+    file << "numElements.2 = 2" << std::endl;
+    file << "boundaryId = 7" << std::endl;                  // a cube from the factory gets the boundary ids 1 to 4 ind 2d and 1 to 6 in 3d?
     file << "filename = msGrid_visualization" << std::endl;
     file << "partitions.0 = 2" << std::endl;
     file << "partitions.1 = 2" << std::endl;
@@ -85,6 +85,51 @@ void testCoupling(const GlobalGridPartType& globalGridPart, const CouplingGridPa
   } // walk the grid part
 } // void testCoupling()
 
+template< class GlobalGridPartType, class LocalGridPartType, class OutStreamType >
+struct Inspect
+{
+  template< int dim, int codim >
+  struct Codim
+  {
+    static void entities(const GlobalGridPartType& globalGridPart, const LocalGridPartType& localGridPart, const std::string prefix, OutStreamType& out)
+    {
+      // walk all codim entitites
+      for (auto entityIt = localGridPart.template begin< codim >(); entityIt != localGridPart.template end< codim >(); ++entityIt) {
+        const auto& entity = *entityIt;
+        const auto& geometryType = entity.type();
+        const auto globalIndex = globalGridPart.indexSet().index(entity);
+        const auto localIndex = localGridPart.indexSet().index(entity);
+        out << prefix << geometryType << ", global index " << globalIndex << ", local index " << localIndex << std::endl;
+        out << prefix << "  corners: ";
+        auto geometry = entity.geometry();
+        for (int i = 0; i < (geometry.corners() - 1); ++i)
+          out << "(" << geometry.corner(i) << "), ";
+        out << "(" << geometry.corner(geometry.corners() - 1) << ")" << std::endl;
+      } // walk all codim entitites
+      // increase Codim
+      Inspect< GlobalGridPartType, LocalGridPartType, OutStreamType >::Codim< dim, codim + 1 >::entities(globalGridPart, localGridPart, prefix, out);
+    }
+  }; // struct Codim
+}; // struct Inspect
+
+template< class GlobalGridPartType, class LocalGridPartType, class OutStreamType >
+template< int codim >
+struct Inspect< GlobalGridPartType, LocalGridPartType, OutStreamType >::Codim< codim, codim >
+{
+  static void entities(const GlobalGridPartType& globalGridPart, const LocalGridPartType& localGridPart, const std::string prefix, OutStreamType& out)
+  {
+    // walk all codim entitites
+    for (auto entityIt = localGridPart.template begin< codim >(); entityIt != localGridPart.template end< codim >(); ++entityIt) {
+      const auto& entity = *entityIt;
+      const auto& geometryType = entity.type();
+      const auto globalIndex = globalGridPart.indexSet().index(entity);
+      const auto localIndex = localGridPart.indexSet().index(entity);
+      out << prefix << geometryType << ", global index " << globalIndex << ", local index " << localIndex << std::endl;
+      out << prefix << "  corners: (" << entity.geometry().center() << ")" << std::endl;
+    } // walk all codim entitites
+  }
+};
+
 int main(int argc, char** argv)
 {
   try {
@@ -108,17 +153,19 @@ int main(int argc, char** argv)
     Dune::Timer timer;
 
     // grid
-    info << "setting up grid: " << std::endl;
+    info << "setting up grid";
+//    info << ":" << std::endl;
+    info << "... " << std::flush;
     debug.suspend();
-    typedef Dune::grid::Multiscale::Provider::Cube< Dune::GridSelector::GridType > GridProviderType;
+    typedef Dune::grid::Multiscale::Provider::Cube<> GridProviderType;
     Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::MsGridType MsGridType;
     const MsGridType& msGrid = gridProvider.msGrid();
-    debug.resume();
     info << "  took " << timer.elapsed()
          << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " elements, "
          << msGrid.size() << " subdomains)" << std::endl;
+    debug.resume();
 
     info << "visualizing... " << std::flush;
     debug.suspend();
@@ -127,22 +174,36 @@ int main(int argc, char** argv)
     debug.resume();
     info << " done (took " << timer.elapsed() << " sek)" << std::endl;
 
-    // time grid parts
-    info << "timing grid parts:" << std::endl;
-    typedef MsGridType::GlobalGridPartType GlobalGridPartType;
-    const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = msGrid.globalGridPart();
-    measureTiming(*globalGridPart, info, "global");
-    typedef MsGridType::CouplingGridPartType CouplingGridPartType;
-    const unsigned int neighbor = *(msGrid.neighborsOf(0)->begin());
-    const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart = msGrid.couplingGridPart(0, neighbor);
-    measureTiming(*couplingGridPart, info, "coupling (subdomain 0 with " + Dune::Stuff::Common::String::convertTo(neighbor) + ")");
-    typedef MsGridType::LocalGridPartType LocalGridPartType;
-    const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = msGrid.localGridPart(0);
-    measureTiming(*firstLocalGridPart, info, "local (subdomain 0)");
-    for (unsigned int subdomain = 1; subdomain < msGrid.size(); ++subdomain) {
-      const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(subdomain);
-      measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(subdomain) + ")");
+//    info << "inspecting global grid part:" << std::endl;
+    const auto& globalGridPart = *(msGrid.globalGridPart());
+//    Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
+//        ::Codim< GridProviderType::dim, 0 >
+//        ::entities(globalGridPart, globalGridPart, "  ", info);
+    info << "inspecting boundary grid parts:" << std::endl;
+    for (unsigned int subdomain = 0; subdomain < msGrid.size(); ++subdomain) {
+      info << "subdomain " << subdomain << std::endl;
+      const auto& boundaryGridPart = *(msGrid.boundaryGridPart(subdomain));
+      Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
+          ::Codim< GridProviderType::dim, 0 >
+          ::entities(globalGridPart, boundaryGridPart, "  ", info);
     }
+
+//    // time grid parts
+//    info << "timing grid parts:" << std::endl;
+//    typedef MsGridType::GlobalGridPartType GlobalGridPartType;
+//    const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = msGrid.globalGridPart();
+//    measureTiming(*globalGridPart, info, "global");
+//    typedef MsGridType::CouplingGridPartType CouplingGridPartType;
+//    const unsigned int neighbor = *(msGrid.neighborsOf(0)->begin());
+//    const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart = msGrid.couplingGridPart(0, neighbor);
+//    measureTiming(*couplingGridPart, info, "coupling (subdomain 0 with " + Dune::Stuff::Common::String::convertTo(neighbor) + ")");
+//    typedef MsGridType::LocalGridPartType LocalGridPartType;
+//    const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = msGrid.localGridPart(0);
+//    measureTiming(*firstLocalGridPart, info, "local (subdomain 0)");
+//    for (unsigned int subdomain = 1; subdomain < msGrid.size(); ++subdomain) {
+//      const Dune::shared_ptr< const LocalGridPartType > localGridPart = msGrid.localGridPart(subdomain);
+//      measureTiming(*localGridPart, debug, "local (subdomain " + Dune::Stuff::Common::String::convertTo(subdomain) + ")");
+//    }
 
 //    // test coupling grid part
 //    info << "testing coupling grid part:" << std::endl;
