@@ -31,7 +31,7 @@
   **/
 void ensureParamFile(std::string filename)
 {
-  Dune::Stuff::Common::Filesystem::testCreateDirectory(filename);
+  Dune::Stuff::Common::testCreateDirectory(filename);
   if (!boost::filesystem::exists(filename)) {
     std::ofstream file;
     file.open(filename);
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
     const std::string id = "cube";
     const std::string filename = id + ".param";
     ensureParamFile(filename);
-    Dune::ParameterTree paramTree = Dune::Stuff::Common::Parameter::Tree::init(argc, argv, filename);
+    Dune::Stuff::Common::ExtendedParameterTree paramTree(argc, argv, filename);
 
     // logger
     Dune::Stuff::Common::Logger().create(Dune::Stuff::Common::LOG_INFO |
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
     info << "... " << std::flush;
     debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube<> GridProviderType;
-    Dune::Stuff::Common::Parameter::Tree::assertSub(paramTree, GridProviderType::id, id);
+    paramTree.assertSub(GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
     typedef GridProviderType::MsGridType MsGridType;
     const MsGridType& msGrid = gridProvider.msGrid();
