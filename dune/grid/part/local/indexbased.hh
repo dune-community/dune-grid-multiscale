@@ -133,7 +133,7 @@ public:
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_);
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_);
   }
 
   template< int codim >
@@ -145,7 +145,7 @@ public:
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_, true);
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_, true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
@@ -387,7 +387,7 @@ public:
 private:
   const Dune::shared_ptr< const IntersectionInfoContainerType > intersectionContainer_;
   const Dune::shared_ptr< const InsideType > inside_;
-}; // class ConstCoupling
+}; // class ConstBoundary
 
 } // namespace IndexBased
 
