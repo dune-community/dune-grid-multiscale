@@ -5,6 +5,7 @@
 // system
 #include <map>
 #include <vector>
+#include <sstream>
 
 // dune-common
 #include <dune/common/exceptions.hh>
@@ -39,6 +40,8 @@ public:
   typedef GlobalGridPartImp GlobalGridPartType;
 
   typedef IndexBased< GlobalGridPartType > ThisType;
+
+  static const std::string id;
 
   typedef typename GlobalGridPartImp::IndexSetType BaseType;
 
@@ -89,19 +92,73 @@ public:
     return getIndex(entity);
   }
 
-//  template< int cc >
-//  IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
-//  {
-//    const IndexType& globalIndex = BaseType::template subIndex< cc >(entity, i, codim);
-//    return findLocalIndex(globalIndex);
-//  }
+  template< int cc >
+  IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
+  {
+    // get the global subindex
+    const IndexType& globalSubIndex = BaseType::template subIndex< cc >(entity, i, codim);
+    const int subCodim = cc + codim;
+    assert(0 <= subCodim && subCodim <= int(dimension) && "This should not happen, we have a bad codimension");
+    const unsigned int subDim = dimension - subCodim;
+    // loop over all geometry types
+    for (typename IndexContainerType::const_iterator it = indexContainer_->begin(); it != indexContainer_->end(); ++it) {
+      // check if geometry type has correct dimension
+      const GeometryType& geometryType = it->first;
+      if (geometryType.dim() == subDim) {
+        // get the index map
+        const std::map< IndexType, IndexType >& indexMap = it->second;
+        // search for the global index
+        const typename std::map< IndexType, IndexType >::const_iterator result = indexMap.find(globalSubIndex);
+        if (result != indexMap.end()) {
+          // return the corresponding local index
+          const IndexType localSubIndex = result->second;
+          return localSubIndex;
+        } // search for the global index
+      } // check if geometry type has correct dimension
+    } // loop over all geometry types
+    // if we came this far we did not find it
+    std::stringstream msg;
+    msg << std::endl
+        << "Error in " << id << ".subIndex< " << cc << " >(" << entity.type() << ", " << i << ", " << codim << "):"
+        << std::endl
+        << "  subIndex in the global index set is " << globalSubIndex << ", local subIndex could not be found!"
+        << std::endl;
+    DUNE_THROW(Dune::InvalidStateException, msg.str());
+  } // IndexType subIndex(const typename GridType::template Codim< cc >::Entity& entity, int i, unsigned int codim) const
 
-//  template< class EntityType >
-//  IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
-//  {
-//    const IndexType& globalIndex = BaseType::subIndex(entity, i, codim);
-//    return findLocalIndex(globalIndex);
-//  }
+  template< class EntityType >
+  IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
+  {
+    // get the global subindex
+    const IndexType& globalSubIndex = BaseType::subIndex(entity, i, codim);
+    const int subCodim = EntityType::codimension + codim;
+    assert(0 <= subCodim && subCodim <= int(dimension) && "This should not happen, we have a bad codimension");
+    const unsigned int subDim = dimension - subCodim;
+    // loop over all geometry types
+    for (typename IndexContainerType::const_iterator it = indexContainer_->begin(); it != indexContainer_->end(); ++it) {
+      // check if geometry type has correct dimension
+      const GeometryType& geometryType = it->first;
+      if (geometryType.dim() == subDim) {
+        // get the index map
+        const std::map< IndexType, IndexType >& indexMap = it->second;
+        // search for the global index
+        const typename std::map< IndexType, IndexType >::const_iterator result = indexMap.find(globalSubIndex);
+        if (result != indexMap.end()) {
+          // return the corresponding local index
+          const IndexType localSubIndex = result->second;
+          return localSubIndex;
+        } // search for the global index
+      } // check if geometry type has correct dimension
+    } // loop over all geometry types
+    // if we came this far we did not find it
+    std::stringstream msg;
+    msg << std::endl
+        << "Error in " << id << ".subIndex(" << entity.type() << ", " << i << ", " << codim << "):"
+        << std::endl
+        << "  subIndex in the global index set is " << globalSubIndex << ", local subIndex could not be found!"
+        << std::endl;
+    DUNE_THROW(Dune::InvalidStateException, msg.str());
+  } // IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
 
   const std::vector< GeometryType >& geomTypes(int codim) const
   {
@@ -189,7 +246,11 @@ private:
   std::map< GeometryType, IndexType > sizeByGeometryType_;
 }; // class IndexBased
 
-} // namespace IndexSet
+template< class GlobalGridPartType >
+const std::string IndexBased< GlobalGridPartType >::id = "grid.part.indexset.local.indexbased";
+
+
+} // namespace Local
 
 } // namespace IndexSet
 
