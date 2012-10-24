@@ -8,8 +8,8 @@ dnl -*- autoconf -*-
 # well as by dune-grid-multiscale itself
 AC_DEFUN([DUNE_GRID_MULTISCALE_CHECKS],
 [
-    AX_BOOST_BASE([1.50.0])
-    AX_BOOST_FILESYSTEM([1.50.0])
+    AX_BOOST_BASE([1.48.0])
+    AX_BOOST_FILESYSTEM([1.48.0])
 ])
 # Additional checks needed to find dune-grid-multiscale
 # This macro should be invoked by every module which depends on dune-grid-multiscale, but
