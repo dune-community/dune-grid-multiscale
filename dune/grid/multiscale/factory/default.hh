@@ -207,12 +207,12 @@ public:
       //   * vector to hold the above map for each subdomain
       std::vector< CouplingIntersectionMapType > couplingBoundaryInfos(size_, CouplingIntersectionMapType());
       // for the boundary grid parts
-      //   * a vector to hold the global entity ids for each subdomain
-      typename std::vector< Dune::shared_ptr< GeometryMapType > > boundaryGeometryMaps(size_);
-      //   * a vector to hold the codim sizes
-      typename std::vector< CodimSizesType > boundaryCodimSizesVector(size_, CodimSizesType(0));
-      //   * a vector to hold the intersection informations
-      std::vector< Dune::shared_ptr< EntityToIntersectionSetMapType > > boundaryInfos(size_);
+      //   * a map to hold the global entity ids for each subdomain
+      typename std::map< unsigned int, Dune::shared_ptr< GeometryMapType > > boundaryGeometryMapMap;
+      //   * a map to hold the codim sizes
+      typename std::map< unsigned int, CodimSizesType > boundaryCodimSizesMap;
+      //   * a map to hold the intersection informations
+      std::map< unsigned int, Dune::shared_ptr< EntityToIntersectionSetMapType > > boundaryInfoMap;
       // for the neighboring information
       neighboringSubdomainSets_
           = Dune::shared_ptr< std::vector< NeighboringSubdomainsSetType > >(new std::vector< NeighboringSubdomainsSetType >(size_, NeighboringSubdomainsSetType()));
@@ -248,8 +248,6 @@ public:
           } // loop over all geometry types of this subdomain
           // init data structures
           subdomainInnerBoundaryInfos[subdomain] = Dune::shared_ptr< EntityToIntersectionInfoMapType >(new EntityToIntersectionInfoMapType());
-          boundaryGeometryMaps[subdomain] = Dune::shared_ptr< GeometryMapType >(new GeometryMapType());
-          boundaryInfos[subdomain] = Dune::shared_ptr< EntityToIntersectionSetMapType >(new EntityToIntersectionSetMapType());
         } // test if this subdomain exists
       } // loop over all subdomains
       out << size_ << " subdomains:" << std::endl;
@@ -284,17 +282,23 @@ public:
             out << prefix << "    entity " << entityGlobalIndex
                   << " lies at the domain boundary of subdomain " << entitySubdomain << std::endl;
             // for the boundary grid part
-            //   * get the map for this subdomain
-            GeometryMapType& boundaryGeometryMap = *(boundaryGeometryMaps[entitySubdomain]);
+            //   * get the maps for this subdomain (and create them, if necessary)
+            if (boundaryGeometryMapMap.find(entitySubdomain) == boundaryGeometryMapMap.end())
+              boundaryGeometryMapMap.insert(std::pair< unsigned int, Dune::shared_ptr< GeometryMapType > >(entitySubdomain, Dune::shared_ptr< GeometryMapType >(new GeometryMapType())));
+            GeometryMapType& boundaryGeometryMap = *(boundaryGeometryMapMap[entitySubdomain]);
+            if (boundaryCodimSizesMap.find(entitySubdomain) == boundaryCodimSizesMap.end())
+              boundaryCodimSizesMap.insert(std::pair< unsigned int, CodimSizesType >(entitySubdomain, CodimSizesType(0)));
+            CodimSizesType& boundaryCodimSizes = boundaryCodimSizesMap[entitySubdomain];
             //   * and add geometry and global index of this codim 0 entity
             const GeometryType& entityGeometryType = entity.type();
-            CodimSizesType& boundaryCodimSizes = boundaryCodimSizesVector[entitySubdomain];
             addGeometryAndIndex(boundaryGeometryMap, boundaryCodimSizes, entityGeometryType, entityGlobalIndex);
             //   * and of all remaining codims
             Add< 1, dim >::subEntities(*this, entity, boundaryGeometryMap, boundaryCodimSizes);
             // for the intersection information of the boundary grid part
-            //   * get the map for this subdomain
-            EntityToIntersectionSetMapType& boundaryInfo = *(boundaryInfos[entitySubdomain]);
+            //   * get the map for this subdomain (and create it, if necessary)
+            if (boundaryInfoMap.find(entitySubdomain) == boundaryInfoMap.end())
+              boundaryInfoMap.insert(std::pair< unsigned int, Dune::shared_ptr< EntityToIntersectionSetMapType > >(entitySubdomain, Dune::shared_ptr< EntityToIntersectionSetMapType >(new EntityToIntersectionSetMapType())));
+            EntityToIntersectionSetMapType& boundaryInfo = *(boundaryInfoMap[entitySubdomain]);
             //   * and get the entry for this entity
             IntersectionInfoSetType& entityBoundaryInfo = boundaryInfo[entityGlobalIndex];
             //   * and add this local intersection
@@ -380,11 +384,7 @@ public:
       localGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >(
             new std::vector< Dune::shared_ptr< const LocalGridPartType > >(size_));
       std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
-      //   * to create the boundary grid parts
-      boundaryGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const BoundaryGridPartType > > >(
-            new std::vector< Dune::shared_ptr< const BoundaryGridPartType > >(size_));
-      std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-      out << prefix << "creating local and boundary grid parts:" << std::endl;
+      out << prefix << "creating local grid parts:" << std::endl;
       for (typename SubdomainMapType::const_iterator subdomainIterator = subdomainToEntityMap_.begin();
            subdomainIterator != subdomainToEntityMap_.end();
            ++subdomainIterator) {
@@ -402,19 +402,41 @@ public:
               new LocalGridPartType(globalGridPart_,
                                     localGeometryMap,
                                     localBoundaryInfo));
-        // for the boundary grid part
-        //   * get the geometry map
-        const Dune::shared_ptr< const GeometryMapType > boundaryGeometryMap = boundaryGeometryMaps[subdomain];
-        //   * get the boundary info map
-        const Dune::shared_ptr< const EntityToIntersectionSetMapType > boundaryBoundaryInfo = boundaryInfos[subdomain];
-        //   * and create the boundary grid part
-        boundaryGridParts[subdomain] = Dune::shared_ptr< const BoundaryGridPartType >(
-              new BoundaryGridPartType(globalGridPart_,
-                                       boundaryGeometryMap,
-                                       boundaryBoundaryInfo,
-                                       localGridParts[subdomain]));
         out << "done" << std::endl;
       } // walk the subdomains
+
+      // walk those subdomains which have a boundary grid part
+      out << prefix << "creating boundary grid parts:" << std::endl;
+      //   * to create the boundary grid parts
+      boundaryGridParts_ = Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > >(
+            new std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >());
+      std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
+      typename std::map< unsigned int, CodimSizesType >::const_iterator boundaryCodimSizesMapIt = boundaryCodimSizesMap.begin();
+      typename std::map< unsigned int, Dune::shared_ptr< EntityToIntersectionSetMapType > >::const_iterator boundaryInfoMapIt = boundaryInfoMap.begin();
+      for (typename std::map< unsigned int, Dune::shared_ptr< GeometryMapType > >::const_iterator boundaryGeometryMapMapIt = boundaryGeometryMapMap.begin();
+           boundaryGeometryMapMapIt != boundaryGeometryMapMap.end();
+           ++boundaryGeometryMapMapIt,
+           ++boundaryCodimSizesMapIt,
+           ++boundaryInfoMapIt) {
+        const unsigned int boundarySubdomain = boundaryGeometryMapMapIt->first;
+        assert(boundarySubdomain == boundaryCodimSizesMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to teach other!");
+        assert(boundarySubdomain == boundaryInfoMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to teach other!");
+        out << prefix << "  subdomain " << boundarySubdomain << " (of size " << boundaryCodimSizesMapIt->second.operator[](0) << ")... " << std::flush;
+        // for the boundary grid part
+        //   * get the geometry map
+        const Dune::shared_ptr< const GeometryMapType > boundaryGeometryMap = boundaryGeometryMapMapIt->second;
+        //   * get the boundary info map
+        const Dune::shared_ptr< const EntityToIntersectionSetMapType > boundaryBoundaryInfo = boundaryInfoMapIt->second;
+        //   * and create the boundary grid part
+        boundaryGridParts.insert(std::pair< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >(
+                                   boundarySubdomain,
+                                   Dune::shared_ptr< const BoundaryGridPartType >(
+                                     new BoundaryGridPartType(globalGridPart_,
+                                                              boundaryGeometryMap,
+                                                              boundaryBoundaryInfo,
+                                                              localGridParts[boundarySubdomain]))));
+        out << "done" << std::endl;
+      } // walk those subdomains which have a boundary grid part
 
       // walk the subdomains
       //   * to create the coupling grid parts
@@ -526,7 +548,7 @@ private:
   std::map< unsigned int, CodimSizesType > localCodimSizes_;
   Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts_;
   // for the boundary grid parts
-  Dune::shared_ptr< std::vector< Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
+  Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   // for the coupling grid parts
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
 }; // class Default

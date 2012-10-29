@@ -76,7 +76,7 @@ public:
           const Dune::shared_ptr< const std::vector< NeighborSetType > > neighboringSets,
           const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap,
           const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts,
-          const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts,
+          const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts,
           const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps)
     : grid_(grid)
     , globalGridPart_(globalGridPart)
@@ -87,7 +87,7 @@ public:
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
     , localGridViews_(new std::vector< Dune::shared_ptr< const LocalGridViewType > >(size_))
-    , boundaryGridViews_(new std::vector< Dune::shared_ptr< const BoundaryGridViewType > >(size_))
+    , boundaryGridViews_(new std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >())
     , couplingGridViewsMaps_(new std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > >(size_, std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >()))
   {
     // check for correct sizes
@@ -98,10 +98,10 @@ public:
       msg << "  - 'localGridParts' has wrong size (is " << localGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
       error = true;
     }
-    if (boundaryGridParts_->size() != size_) {
-      msg << "  - 'boundaryGridParts' has wrong size (is " << boundaryGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
-      error = true;
-    }
+//    if (boundaryGridParts_->size() != size_) {
+//      msg << "  - 'boundaryGridParts' has wrong size (is " << boundaryGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
+//      error = true;
+//    }
     if (couplingGridPartsMaps_->size() != size_) {
       msg << "  - 'localGridParts' has wrong size (is " << couplingGridPartsMaps_->size() << ", should be " << size_ << ")!" << std::endl;
       error = true;
@@ -141,18 +141,30 @@ public:
     return localGridViews[subdomain];
   }
 
+  bool boundary(const unsigned int subdomain) const {
+    assert(subdomain < size_);
+    const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
+    if (boundaryGridParts.find(subdomain) != boundaryGridParts.end())
+      return true;
+    return false;
+  } // bool boundary(const unsigned int subdomain) const {
+
   const Dune::shared_ptr< const BoundaryGridPartType > boundaryGridPart(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    const std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-    return boundaryGridParts[subdomain];
+    const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
+    typename std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >::const_iterator result = boundaryGridParts.find(subdomain);
+    assert(result != boundaryGridParts.end() && "Only call boundaryGridPart(subdomain), if boundary(subdomain) is true!");
+    return result->second;
   }
 
   const Dune::shared_ptr< const BoundaryGridViewType > boundaryGridView(const unsigned int subdomain) const
   {
     assert(subdomain < size_);
-    const std::vector< Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
-    return boundaryGridViews[subdomain];
+    const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
+    typename std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >::const_iterator result = boundaryGridViews.find(subdomain);
+    assert(result != boundaryGridViews.end() && "Only call boundaryGridView(subdomain), if boundary(subdomain) is true!");
+    return result->second;
   }
 
   const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart(const unsigned int subdomain, const unsigned int neighbor) const
@@ -248,14 +260,14 @@ private:
       //   * and create the local grid view
       std::vector< Dune::shared_ptr< const LocalGridViewType > >& localGridViews = *localGridViews_;
       localGridViews[subdomain] = Dune::shared_ptr< const LocalGridViewType >(new LocalGridViewType(localGridPart.gridView()));
-      // for the boundry grid view
-      //   * get the boundary grid part
-      const std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-      const Dune::shared_ptr< const BoundaryGridPartType >& boundaryGridPartPtr = boundaryGridParts[subdomain];
-      const BoundaryGridPartType& boundaryGridPart = *boundaryGridPartPtr;
-      //   * and create the boundary grid view
-      std::vector< Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
-      boundaryGridViews[subdomain] = Dune::shared_ptr< const BoundaryGridViewType >(new BoundaryGridViewType(boundaryGridPart.gridView()));
+//      // for the boundry grid view
+//      //   * get the boundary grid part
+//      const std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
+//      const Dune::shared_ptr< const BoundaryGridPartType >& boundaryGridPartPtr = boundaryGridParts[subdomain];
+//      const BoundaryGridPartType& boundaryGridPart = *boundaryGridPartPtr;
+//      //   * and create the boundary grid view
+//      std::vector< Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
+//      boundaryGridViews[subdomain] = Dune::shared_ptr< const BoundaryGridViewType >(new BoundaryGridViewType(boundaryGridPart.gridView()));
       // for the coupling grid views
       //   * get the grid parts map for this subdomain
       const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > >& couplingGridPartsMaps = *couplingGridPartsMaps_;
@@ -282,6 +294,19 @@ private:
                                       Dune::shared_ptr< const CouplingGridViewType >(new CouplingGridViewType(couplingGridPart.gridView()))));
       } // walk the neighbors
     } // walk the subdomains
+
+    // walk those subdomains that have a boundary grid part
+    //   * to create the boundary grid views
+    for (typename std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >::const_iterator boundaryGridPartIt = boundaryGridParts_->begin();
+         boundaryGridPartIt != boundaryGridParts_->end();
+         ++boundaryGridPartIt) {
+      const unsigned int subdomain = boundaryGridPartIt->first;
+      const Dune::shared_ptr< const BoundaryGridPartType > boundaryGridPart = boundaryGridPartIt->second;
+      assert(boundaryGridViews_->find(subdomain) == boundaryGridViews_->end() && "This should not happen!");
+      boundaryGridViews_->insert(std::pair< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >(
+                                   subdomain,
+                                   Dune::shared_ptr< const BoundaryGridViewType >(new BoundaryGridViewType(boundaryGridPart->gridView()))));
+    } // walk those subdomains that have a boundary grid part
   } // void createGridViews()
 
   std::vector< double > generateSubdomainVisualization() const
@@ -350,10 +375,10 @@ private:
   const Dune::shared_ptr< const std::vector< NeighborSetType > > neighboringSetsPtr_;
   const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap_;
   const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts_;
-  const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
+  const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
   Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridViewType > > > localGridViews_;
-  Dune::shared_ptr< std::vector< Dune::shared_ptr< const BoundaryGridViewType > > > boundaryGridViews_;
+  Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > > > boundaryGridViews_;
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > > > couplingGridViewsMaps_;
   Dune::shared_ptr< const GlobalGridViewType > globalGridView_;
 }; // class Default
