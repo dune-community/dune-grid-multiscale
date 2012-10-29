@@ -86,7 +86,7 @@ public:
 
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-  typedef typename GridType::template Codim<0>::Entity EntityType;
+  typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
   typedef typename IndexSetType::IndexType IndexType;
 
