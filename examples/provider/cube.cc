@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     Dune::Stuff::Common::Logger().create(Dune::Stuff::Common::LOG_INFO |
                                          Dune::Stuff::Common::LOG_CONSOLE |
                                          Dune::Stuff::Common::LOG_DEBUG);
-    Dune::Stuff::Common::LogStream& info = Dune::Stuff::Common::Logger().info();
+    Dune::Stuff::Common::LogStream& info = Dune::Stuff::Common::Logger().debug();
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
 
     // timer
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
     info << "setting up grid";
 //    info << ":" << std::endl;
     info << "... " << std::flush;
-    debug.suspend();
+//    debug.suspend();
     typedef Dune::grid::Multiscale::Provider::Cube<> GridProviderType;
     paramTree.assertSub(GridProviderType::id, id);
     GridProviderType gridProvider(paramTree.sub(GridProviderType::id));
@@ -165,7 +165,7 @@ int main(int argc, char** argv)
     info << "  took " << timer.elapsed()
          << " sec (has " << msGrid.globalGridPart()->grid().size(0) << " elements, "
          << msGrid.size() << " subdomains)" << std::endl;
-    debug.resume();
+//    debug.resume();
 
     info << "visualizing... " << std::flush;
     debug.suspend();
@@ -174,18 +174,30 @@ int main(int argc, char** argv)
     debug.resume();
     info << " done (took " << timer.elapsed() << " sek)" << std::endl;
 
-//    info << "inspecting global grid part:" << std::endl;
+    info << "inspecting global grid part:" << std::endl;
     const auto& globalGridPart = *(msGrid.globalGridPart());
-//    Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
-//        ::Codim< GridProviderType::dim, 0 >
-//        ::entities(globalGridPart, globalGridPart, "  ", info);
-    info << "inspecting boundary grid parts:" << std::endl;
+    Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
+        ::Codim< GridProviderType::dim, 0 >
+        ::entities(globalGridPart, globalGridPart, "  ", info);
+
+    info << "inspecting local grid parts:" << std::endl;
     for (unsigned int subdomain = 0; subdomain < msGrid.size(); ++subdomain) {
       info << "subdomain " << subdomain << std::endl;
-      const auto& boundaryGridPart = *(msGrid.boundaryGridPart(subdomain));
-      Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
+      const auto& localGridPart = *(msGrid.localGridPart(subdomain));
+      Inspect< MsGridType::GlobalGridPartType, MsGridType::LocalGridPartType, Dune::Stuff::Common::LogStream >
           ::Codim< GridProviderType::dim, 0 >
-          ::entities(globalGridPart, boundaryGridPart, "  ", info);
+          ::entities(globalGridPart, localGridPart, "  ", info);
+    }
+
+    info << "inspecting boundary grid parts:" << std::endl;
+    for (unsigned int subdomain = 0; subdomain < msGrid.size(); ++subdomain) {
+      if (msGrid.boundary(subdomain)) {
+        info << "subdomain " << subdomain << std::endl;
+        const auto& boundaryGridPart = *(msGrid.boundaryGridPart(subdomain));
+        Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
+            ::Codim< GridProviderType::dim, 0 >
+            ::entities(globalGridPart, boundaryGridPart, "  ", info);
+      }
     }
 
 //    // time grid parts
