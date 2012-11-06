@@ -15,6 +15,7 @@
 // dune-grid
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/sgrid.hh>
 
 // dune-stuff
 #include <dune/stuff/grid/provider/cube.hh>
@@ -31,11 +32,11 @@ namespace Multiscale {
 
 namespace Provider {
 
-#ifdef HAVE_CONFIG_H
+#if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 template< class GridImp = Dune::GridSelector::GridType >
-#else
-template< class GridImp >
-#endif
+#else // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
+template< class GridImp = Dune::SGrid< 2, 2 > >
+#endif // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 class Cube
   : public Dune::Stuff::Grid::Provider::Cube< GridImp >
 {
