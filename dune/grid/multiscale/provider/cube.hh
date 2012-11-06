@@ -46,8 +46,6 @@ public:
 
   typedef Cube< GridType > ThisType;
 
-  static const std::string id;
-
   static const unsigned int dim = BaseType::dim;
 
   typedef typename BaseType::CoordinateType CoordinateType;
@@ -63,6 +61,12 @@ public:
   {
     buildMsGrid(paramTree);
   }
+
+  static const std::string id()
+  {
+    return "grid.multiscale.provider.cube";
+  }
+
 
   const MsGridType& msGrid() const
   {
@@ -147,9 +151,6 @@ private:
 
   Dune::shared_ptr< const MsGridType > msGrid_;
 }; // class Cube
-
-template< class GridType >
-const std::string Cube< GridType >::id = "grid.multiscale.provider.cube";
 
 } // namespace Provider
 
