@@ -7,4 +7,4 @@ Module: dune-grid-multiscale
 Version: 2.2.1
 Maintainer: felix.albrecht@uni-muenster.de
 #depending on 
-Depends: dune-common (>= 2.2.1) dune-grid (>= 2.2.1) dune-stuff (>= 2.2.1)
+Depends: dune-common (>= 2.2) dune-grid (>= 2.2) dune-stuff (>= 2.2.1)
