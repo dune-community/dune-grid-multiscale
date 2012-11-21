@@ -53,10 +53,10 @@ SET_CONFIGHEADER_VARS()
 include_dir( ${dune-grid-multiscale_SOURCE_DIR} )
 INCLUDE_DIR( ${dune-grid-multiscale_BINARY_DIR} )
 
-add_cxx_flags(${CUSTOM_FLAGS})
+ADD_DEFINITIONS(${CUSTOM_FLAGS})
 
 IF( ${GRIDTYPE} STREQUAL "UGGRID" )
-  ADD_CXX_FLAGS( -DENABLE_UG )
+  ADD_DEFINITIONS( -DENABLE_UG )
   INCLUDE_SYS_DIR( ${UGGRID_BASE_PATH}/include )
   LINK_DIRECTORIES( ${UGGRID_BASE_PATH}/lib/ )
   SET( GRIDLIBS "ugS3" "ugS2" "devS")
@@ -64,8 +64,8 @@ ENDIF( ${GRIDTYPE} STREQUAL "UGGRID" )
 
 SET( ENABLE_ALUGRID OFF )
 IF( ${GRIDTYPE} MATCHES "ALUGRID" )
-  INCLUDE_SYS_DIR(  ${GRAPE_PATH} 
-    ${ALUGRID_BASE_PATH}/include 
+  INCLUDE_SYS_DIR(  ${GRAPE_PATH}
+    ${ALUGRID_BASE_PATH}/include
     ${ALUGRID_BASE_PATH}/include/serial
     ${ALUGRID_BASE_PATH}/include/duneinterface )
   LINK_DIRECTORIES( "${ALUGRID_BASE_PATH}/lib" )
@@ -74,17 +74,17 @@ IF( ${GRIDTYPE} MATCHES "ALUGRID" )
   IF ( ENABLE_PARALELL )
     INCLUDE_SYS_DIR( ${ALUGRID_BASE_PATH}/include/parallel )
   ENDIF ( ENABLE_PARALELL )
-  ADD_CXX_FLAGS( "-DENABLE_ALUGRID" )
+  ADD_DEFINITIONS( -DENABLE_ALUGRID )
 ENDIF( ${GRIDTYPE} MATCHES "ALUGRID" )
 
 SET( ENABLE_ALBERTA OFF )
 IF( ${GRIDTYPE} MATCHES "ALBERTAGRID" )
-  INCLUDE_SYS_DIR(  ${ALBERTA_GRID_BASE_PATH}/include 
+  INCLUDE_SYS_DIR(  ${ALBERTA_GRID_BASE_PATH}/include
     ${ALBERTA_GRID_BASE_PATH}/include/alberta )
   LINK_DIRECTORIES( "${ALBERTA_GRID_BASE_PATH}/lib" )
   SET( GRIDLIBS alberta_utilities alberta_2d dunealbertagrid_2d dunegrid)
   SET( ENABLE_ALBERTA ON )
-  ADD_CXX_FLAGS( -DENABLE_ALBERTA=1 -DDEBUG )
+  ADD_DEFINITIONS( -DENABLE_ALBERTA=1 -DDEBUG )
 ENDIF( ${GRIDTYPE} MATCHES "ALBERTAGRID" )
 
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_config.h )
@@ -92,7 +92,7 @@ CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_config.h.in ${CMAKE_CURR
 # the other dune modules
 ADD_DUNE_MODULES(common grid geometry stuff fem)
 set( COMMON_LIBS "dunefem" "dunegrid" "dunecommon" "dunegeometry"
-    ${BLAS_LIB} ${GRIDLIBS} ${ParaLIBS} 
+    ${BLAS_LIB} ${GRIDLIBS} ${ParaLIBS}
         "boost_filesystem" "boost_system" )
 FILE( GLOB_RECURSE header "${CMAKE_CURRENT_SOURCE_DIR}/dune/*.hh" )
 set( COMMON_HEADER ${header} ${DUNE_HEADERS} )
