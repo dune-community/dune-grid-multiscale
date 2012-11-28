@@ -9,7 +9,6 @@
 
 // dune-common
 #include <dune/common/exceptions.hh>
-#include <dune/common/parametertree.hh>
 #include <dune/common/shared_ptr.hh>
 
 // dune-grid
@@ -20,6 +19,7 @@
 // dune-stuff
 #include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/common/logging.hh>
+#include <dune/stuff/common/parameter/tree.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/multiscale/factory/default.hh>
@@ -41,9 +41,9 @@ class Cube
   : public Dune::Stuff::Grid::Provider::Cube< GridImp >
 {
 public:
-  typedef Dune::Stuff::Grid::Provider::Cube< GridImp > BaseType;
+  typedef GridImp GridType;
 
-  typedef typename BaseType::GridType GridType;
+  typedef Dune::Stuff::Grid::Provider::Cube< GridType > BaseType;
 
   typedef Cube< GridType > ThisType;
 
@@ -57,17 +57,47 @@ public:
 
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
 
-  Cube(Dune::ParameterTree paramTree = Dune::ParameterTree())
+  Cube(const Dune::Stuff::Common::ExtendedParameterTree& paramTree)
     : BaseType(paramTree)
   {
-    buildMsGrid(paramTree);
+    // get number of subdomains per direction
+    std::vector< unsigned int > partitions;
+    if (paramTree.hasVector("partitions")) {
+      partitions = paramTree.getVector("partitions", 2u);
+      assert(partitions.size() >= dim && "Given vector too short!");
+    } else if (paramTree.hasKey("partitions")) {
+        const unsigned int partition = paramTree.get("partitions", 2u);
+        partitions = std::vector< unsigned int >(dim, partition);
+    } else {
+      std::cout << "Warning in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
+      partitions = std::vector< unsigned int >(dim, 2u);
+    }
+    // build the grid
+    buildMsGrid(partitions);
+  }
+
+  Cube(const CoordinateType& lowerLeft,
+       const CoordinateType& upperRight,
+       const unsigned int numElements = 1u,
+       const unsigned int partitions = 2u)
+    : BaseType(lowerLeft, upperRight, numElements)
+  {
+    buildMsGrid(std::vector< unsigned int >(dim, partitions));
+  }
+
+  Cube(const double lowerLeft,
+       const double upperRight,
+       const unsigned int numElements = 1u,
+       const unsigned int partitions = 2u)
+    : BaseType(lowerLeft, upperRight, numElements)
+  {
+    buildMsGrid(std::vector< unsigned int >(dim, partitions));
   }
 
   static const std::string id()
   {
     return "grid.multiscale.provider.cube";
   }
-
 
   const MsGridType& msGrid() const
   {
@@ -80,7 +110,7 @@ public:
   }
 
 private:
-  void buildMsGrid(const Dune::ParameterTree& paramTree)
+  void buildMsGrid(std::vector< unsigned int >& partitions)
   {
     // prepare
     const CoordinateType& lowerLeft = BaseType::lowerLeft();
@@ -95,17 +125,8 @@ private:
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
     debug << prefix << "  upperRight: " << upperRight << std::endl;
     debug << prefix << "  partitions per dim: ";
-
-    // get number of subdomains per direction
-    std::vector< unsigned int > partitions(dim, 0);
-    unsigned int totalSubdomains = 1;
-    for (unsigned int d = 0; d < dim; ++d) {
-      std::stringstream key;
-      key << "partitions." << d;
-      partitions[d] = paramTree.get(key.str(), 1);
-      totalSubdomains *= partitions[d];
+    for (unsigned int d = 0; d < dim; ++d)
       debug << partitions[d] << " ";
-    }
     debug << std::endl;
 
     // global grid part
