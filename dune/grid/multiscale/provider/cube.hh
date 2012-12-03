@@ -98,7 +98,7 @@ public:
     , msGrid_(other.msGrid_)
   {}
 
-  //! \todo TODO Use BaseType::createFromParamTree() internally to avoid duplication!
+  //! \todo TODO Use BaseType::createFromParamTree() internally to avoid code duplication!
   static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
   {
     // get correct paramTree
@@ -191,24 +191,21 @@ private:
     // prepare
     const CoordinateType& lowerLeft = BaseType::lowerLeft();
     const CoordinateType& upperRight = BaseType::upperRight();
-    MsGridFactoryType factory(BaseType::gridPtr());
+    MsGridFactoryType factory(BaseType::grid());
     factory.prepare();
-
     // debug output
     const std::string prefix = "";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
-    debug << prefix << id << ":" << std::endl;
+    debug << prefix << id()<< ":" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
     debug << prefix << "  upperRight: " << upperRight << std::endl;
     debug << prefix << "  partitions per dim: ";
     for (unsigned int d = 0; d < dim; ++d)
       debug << partitions[d] << " ";
     debug << std::endl;
-
     // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
     const Dune::shared_ptr< const GridPartType> gridPart = factory.globalGridPart();
-
     // walk the grid
     for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart->template begin< 0 >();
         it != gridPart->template end< 0 >();
@@ -217,7 +214,6 @@ private:
       typename GridType::LeafGridView::template Codim< 0 >::Iterator::Entity& entity = *it;
       const CoordinateType center = entity.geometry().global(entity.geometry().center());
 //      debug << prefix << "  entity (" << center << "):" << std::endl;
-
       // decide on the subdomain this entity shall belong to
       std::vector< unsigned int > whichPartition;
       for (unsigned int d = 0; d < dim; ++d) {
@@ -232,18 +228,16 @@ private:
         subdomain = whichPartition[0] + whichPartition[1]*partitions[0] + whichPartition[2]*partitions[1]*partitions[0];
       else {
         std::stringstream msg;
-        msg << "Error in " << id << ": not implemented for grid dimensions other than 1, 2 or 3!";
+        msg << "Error in " << id()<< ": not implemented for grid dimensions other than 1, 2 or 3!";
         DUNE_THROW(Dune::NotImplemented, msg.str());
       } // decide on the subdomain this entity shall belong to
-
       // add entity to subdomain
       factory.add(entity, subdomain, prefix + "  ", debug);
     } // walk the grid
-
     // finalize
     factory.finalize(prefix + "  ", debug);
     debug << std::flush;
-
+    // be done with it
     msGrid_ = factory.createMsGrid();
   } // void setup(const Dune::ParameterTree& paramTree)
 
