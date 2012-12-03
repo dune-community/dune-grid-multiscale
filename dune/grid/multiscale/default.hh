@@ -1,27 +1,20 @@
-
 #ifndef DUNE_GRID_MULTISCALE_DEFAULT_HH
 #define DUNE_GRID_MULTISCALE_DEFAULT_HH
 
-// system
 #include <vector>
 #include <set>
 #include <map>
 
-// dune-common
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 
-// gune-grid
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-// dune-grid-multiscale
 #include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Multiscale {
 
 /**
@@ -40,8 +33,6 @@ public:
   typedef GridImp GridType;
 
   typedef Default< GridType > ThisType;
-
-  static const std::string id;
 
   static const unsigned int dim = GridType::dimension;
 
@@ -70,6 +61,11 @@ public:
   //! map type which maps from an entity index (of the global grid parts index set) to a subdomain
   typedef std::map< IndexType, unsigned int > EntityToSubdomainMapType;
 
+  static const std::string id()
+  {
+    return "grid.multiscale.default";
+  }
+
   Default(const Dune::shared_ptr< const GridType > grid,
           const Dune::shared_ptr< const GlobalGridPartType > globalGridPart,
           const unsigned int size,
@@ -93,17 +89,13 @@ public:
     // check for correct sizes
     std::stringstream msg;
     bool error = false;
-    msg << "Error in " << id << ":" << std::endl;
+    msg << "Error in " << id() << ":" << std::endl;
     if (localGridParts_->size() != size_) {
       msg << "  - 'localGridParts' has wrong size (is " << localGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
       error = true;
     }
-//    if (boundaryGridParts_->size() != size_) {
-//      msg << "  - 'boundaryGridParts' has wrong size (is " << boundaryGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
-//      error = true;
-//    }
     if (couplingGridPartsMaps_->size() != size_) {
-      msg << "  - 'localGridParts' has wrong size (is " << couplingGridPartsMaps_->size() << ", should be " << size_ << ")!" << std::endl;
+      msg << "  - 'couplingGridPartsMaps' has wrong size (is " << couplingGridPartsMaps_->size() << ", should be " << size_ << ")!" << std::endl;
       error = true;
     }
     if (error)
@@ -125,7 +117,7 @@ public:
   unsigned int size() const
   {
     return size_;
-  } // unsigned int size() const
+  }
 
   const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
   {
@@ -144,10 +136,8 @@ public:
   bool boundary(const unsigned int subdomain) const {
     assert(subdomain < size_);
     const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-    if (boundaryGridParts.find(subdomain) != boundaryGridParts.end())
-      return true;
-    return false;
-  } // bool boundary(const unsigned int subdomain) const {
+    return (boundaryGridParts.find(subdomain) != boundaryGridParts.end());
+  }
 
   const Dune::shared_ptr< const BoundaryGridPartType > boundaryGridPart(const unsigned int subdomain) const
   {
@@ -176,7 +166,7 @@ public:
     const typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > >::const_iterator result = couplingGridPartsMap.find(neighbor);
     if (result == couplingGridPartsMap.end()) {
       std::stringstream msg;
-      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
+      msg << "Error in " << id()<< ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
       DUNE_THROW(Dune::InvalidStateException, msg.str());
     }
     return result->second;
@@ -191,7 +181,7 @@ public:
     const typename std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >::const_iterator result = couplingGridViewsMap.find(neighbor);
     if (result == couplingGridViewsMap.end()) {
       std::stringstream msg;
-      msg << "Error in " << id << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
+      msg << "Error in " << id()<< ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain << "!";
       DUNE_THROW(Dune::InvalidStateException, msg.str());
     }
     return result->second;
@@ -214,7 +204,7 @@ public:
     const typename EntityToSubdomainMapType::const_iterator result = entityToSubdomainMap_->find(globalIndex);
     if (result == entityToSubdomainMap_->end()) {
       std::stringstream msg;
-      msg << "Error in " << id << ": missing information for entity " << globalIndex << "in entityToSubdomainMap_!";
+      msg << "Error in " << id()<< ": missing information for entity " << globalIndex << "in entityToSubdomainMap_!";
       DUNE_THROW(Dune::InvalidStateException, msg.str());
     }
     return result->second;
@@ -225,7 +215,7 @@ public:
     return subdomainOf(globalGridPart_->indexSet().index(entity));
   } // unsigned int subdomainOf(const EntityType& entity) const
 
-  void visualize(const std::string filename = id + ".visualization") const
+  void visualize(const std::string filename = id()+ ".visualization") const
   {
     // vtk writer
     Dune::VTKWriter< GlobalGridViewType > vtkwriter(*globalGridView_);
@@ -260,14 +250,6 @@ private:
       //   * and create the local grid view
       std::vector< Dune::shared_ptr< const LocalGridViewType > >& localGridViews = *localGridViews_;
       localGridViews[subdomain] = Dune::shared_ptr< const LocalGridViewType >(new LocalGridViewType(localGridPart.gridView()));
-//      // for the boundry grid view
-//      //   * get the boundary grid part
-//      const std::vector< Dune::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
-//      const Dune::shared_ptr< const BoundaryGridPartType >& boundaryGridPartPtr = boundaryGridParts[subdomain];
-//      const BoundaryGridPartType& boundaryGridPart = *boundaryGridPartPtr;
-//      //   * and create the boundary grid view
-//      std::vector< Dune::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
-//      boundaryGridViews[subdomain] = Dune::shared_ptr< const BoundaryGridViewType >(new BoundaryGridViewType(boundaryGridPart.gridView()));
       // for the coupling grid views
       //   * get the grid parts map for this subdomain
       const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > >& couplingGridPartsMaps = *couplingGridPartsMaps_;
@@ -294,7 +276,6 @@ private:
                                       Dune::shared_ptr< const CouplingGridViewType >(new CouplingGridViewType(couplingGridPart.gridView()))));
       } // walk the neighbors
     } // walk the subdomains
-
     // walk those subdomains that have a boundary grid part
     //   * to create the boundary grid views
     for (typename std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > >::const_iterator boundaryGridPartIt = boundaryGridParts_->begin();
@@ -383,13 +364,8 @@ private:
   Dune::shared_ptr< const GlobalGridViewType > globalGridView_;
 }; // class Default
 
-template< class GridType >
-const std::string Default< GridType >::id = "grid.multiscale.default";
-
 } // namespace Multiscale
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_MULTISCALE_DEFAULT_HH
