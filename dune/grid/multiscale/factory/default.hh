@@ -1,33 +1,24 @@
-
 #ifndef DUNE_GRID_MULTISCALE_FACTORY_DEFAULT_HH
 #define DUNE_GRID_MULTISCALE_FACTORY_DEFAULT_HH
 
-// system
 #include <vector>
 #include <map>
 
-// dune-common
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 
-// dune-geometry
 #include <dune/geometry/type.hh>
 
-// dune-grid-multiscale
 #include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 #include <dune/grid/multiscale/default.hh>
 
-// dune-stuff
 #include <dune/stuff/common/logging.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Multiscale {
-
 namespace Factory {
 
 template< class GridImp >
@@ -38,13 +29,16 @@ public:
 
   typedef Default< GridType > ThisType;
 
-  static const std::string id;
-
   static const unsigned int dim = GridType::dimension;
 
   typedef Dune::grid::Multiscale::Default< GridType > MsGridType;
 
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
+
+  static const std::string id()
+  {
+    return "grid.multiscale.factory.default";
+  }
 
 private:
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
@@ -143,7 +137,6 @@ public:
     assert(!finalized_ && "Do not call add() after calling finalized()!");
     const IndexType globalIndex = globalGridPart_->indexSet().index(entity);
     out << prefix << "adding entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
-
     // add subdomain to this entity index
     typename EntityToSubdomainMapType::iterator indexIt = entityToSubdomainMap_->find(globalIndex);
     if (indexIt == entityToSubdomainMap_->end()) {
@@ -155,7 +148,6 @@ public:
         DUNE_THROW(Dune::InvalidStateException, msg.str());
       }
     } // add subdomain to this entity index
-
     // create geometry map for this subdomain if needed (doing this explicitly (instead of just using insert()) only to increment size)
     if (subdomainToEntityMap_.find(subdomain) == subdomainToEntityMap_.end()) {
       subdomainToEntityMap_.insert(std::pair< unsigned int, Dune::shared_ptr< GeometryMapType > >(
@@ -167,7 +159,6 @@ public:
     localCodimSizes_.insert(std::pair< unsigned int, CodimSizesType >(
         subdomain,
         CodimSizesType(0)));
-
     // add this entity and all subentities to the geometry map (geometry map has to exist, see above)
     assert(subdomainToEntityMap_.find(subdomain) != subdomainToEntityMap_.end() && "This should not happen!");
     GeometryMapType& geometryMap = *(subdomainToEntityMap_.find(subdomain)->second);
@@ -217,7 +208,6 @@ public:
       neighboringSubdomainSets_
           = Dune::shared_ptr< std::vector< NeighboringSubdomainsSetType > >(new std::vector< NeighboringSubdomainsSetType >(size_, NeighboringSubdomainsSetType()));
       std::vector< NeighboringSubdomainsSetType >& neighboringSubdomainSets = *neighboringSubdomainSets_;
-
       // loop over all subdomains
       //   * to test for consecutive numbering
       //   * to compute the number of codim 0 entities per subdomain
@@ -251,7 +241,6 @@ public:
         } // test if this subdomain exists
       } // loop over all subdomains
       out << size_ << " subdomains:" << std::endl;
-
       // walk the global grid part
       //   * to generate the information which sudomains neighbor each other
       out << prefix << "  generating boundary information:" << std::endl;
@@ -378,7 +367,6 @@ public:
           DUNE_THROW(Dune::InvalidStateException, msg.str());
         } // check if this entity is connected to the other entities of this subdomain
       } // walk the global grid part
-
       // walk the subdomains
       //   * to create the local grid parts
       localGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >(
@@ -404,7 +392,6 @@ public:
                                     localBoundaryInfo));
         out << "done" << std::endl;
       } // walk the subdomains
-
       // walk those subdomains which have a boundary grid part
       out << prefix << "creating boundary grid parts:" << std::endl;
       //   * to create the boundary grid parts
@@ -437,7 +424,6 @@ public:
                                                               localGridParts[boundarySubdomain]))));
         out << "done" << std::endl;
       } // walk those subdomains which have a boundary grid part
-
       // walk the subdomains
       //   * to create the coupling grid parts
       couplingGridPartsMaps_ = Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > >(
@@ -475,7 +461,6 @@ public:
           out << "done" << std::endl;
         } // loop over all neighbors
       } // walk the subdomains
-
       // done
       finalized_ = true;
     } // if (!finalized_)
@@ -553,9 +538,6 @@ private:
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
 }; // class Default
 
-template< class GridType >
-const std::string Default< GridType >::id = "grid.multiscale.factory.default";
-
 //! specialization to stop the recursion
 template< class GridType >
 template< int c >
@@ -582,11 +564,8 @@ struct Default< GridType >::Add< c, c >
 }; // struct Default< GridType >::Add< c, c >
 
 } // namespace Factory
-
 } // namespace Multiscale
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_MULTISCALE_FACTORY_DEFAULT_HH
