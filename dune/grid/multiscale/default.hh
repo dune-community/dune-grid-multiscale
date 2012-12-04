@@ -215,23 +215,6 @@ public:
     return subdomainOf(globalGridPart_->indexSet().index(entity));
   } // unsigned int subdomainOf(const EntityType& entity) const
 
-  void visualize(const std::string filename = id()+ ".visualization") const
-  {
-    // vtk writer
-    Dune::VTKWriter< GlobalGridViewType > vtkwriter(*globalGridView_);
-    // subdomain id
-    std::vector< double > subdomainId = generateSubdomainVisualization();
-    vtkwriter.addCellData(subdomainId, "subdomainId");
-    // boundary id
-    std::vector< double > boundaryId = generateBoundaryIdVisualization();
-    vtkwriter.addCellData(boundaryId, "boundaryId");
-    // codim 0 entity id
-    std::vector< double > entityId = generateEntityVisualization();
-    vtkwriter.addCellData(entityId, "entityId");
-    // write
-    vtkwriter.write(filename, Dune::VTK::ascii);
-  } // visualize()
-
 private:
   void createGridViews()
   {
@@ -289,66 +272,6 @@ private:
                                    Dune::shared_ptr< const BoundaryGridViewType >(new BoundaryGridViewType(boundaryGridPart->gridView()))));
     } // walk those subdomains that have a boundary grid part
   } // void createGridViews()
-
-  std::vector< double > generateSubdomainVisualization() const
-  {
-    std::vector< double > data(globalGridView_->indexSet().size(0));
-    // walk the grid
-    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-         it != globalGridView_->template end< 0 >();
-         ++it)
-    {
-      const EntityType& entity = *it;
-      const IndexType index = globalGridView_->indexSet().index(entity);
-      const unsigned int subdomain = subdomainOf(index);
-      data[index] = subdomain;
-    } // walk the grid
-    return data;
-  } // std::vector< double > generateSubdomainVisualization() const
-
-  std::vector< double > generateEntityVisualization() const
-  {
-    std::vector< double > data(globalGridView_->indexSet().size(0));
-    // walk the grid
-    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-         it != globalGridView_->template end< 0 >();
-         ++it)
-    {
-      const EntityType& entity = *it;
-      const IndexType& index = globalGridView_->indexSet().index(entity);
-      data[index] = double(index);
-    } // walk the grid
-    return data;
-  } // std::vector< double > generateEntityVisualization() const
-
-  std::vector< double > generateBoundaryIdVisualization() const
-  {
-    std::vector< double > data(globalGridView_->indexSet().size(0));
-    // walk the grid
-    for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView_->template begin< 0 >();
-         it != globalGridView_->template end< 0 >();
-         ++it)
-    {
-      const EntityType& entity = *it;
-      const IndexType& index = globalGridView_->indexSet().index(entity);
-      data[index] = 0.0;
-      int numberOfBoundarySegments = 0;
-      bool isOnBoundary = false;
-      for (typename GlobalGridViewType::IntersectionIterator intersectionIt = globalGridView_->ibegin(entity);
-           intersectionIt != globalGridView_->iend(entity);
-           ++intersectionIt) {
-        if (!intersectionIt->neighbor() && intersectionIt->boundary()){
-          isOnBoundary = true;
-          numberOfBoundarySegments += 1;
-          data[index] += double(intersectionIt->boundaryId());
-        }
-      }
-      if (isOnBoundary) {
-        data[index] /= double(numberOfBoundarySegments);
-      }
-    } // walk the grid
-    return data;
-  } // std::vector< double > generateBoundaryIdVisualization() const
 
   const Dune::shared_ptr< const GridType > grid_;
   const Dune::shared_ptr< const GlobalGridPartType > globalGridPart_;
