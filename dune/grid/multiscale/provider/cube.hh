@@ -16,6 +16,8 @@
 
 #include <dune/grid/multiscale/factory/default.hh>
 
+#include "interface.hh"
+
 namespace Dune {
 namespace grid {
 namespace Multiscale {
@@ -27,10 +29,13 @@ template< class GridImp = Dune::GridSelector::GridType >
 template< class GridImp = Dune::SGrid< 2, 2 > >
 #endif // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 class Cube
-  : public Dune::Stuff::Grid::Provider::Cube< GridImp >
+  : public Interface< GridImp >
+  , public Dune::Stuff::Grid::Provider::Cube< GridImp >
 {
 public:
   typedef GridImp GridType;
+
+  typedef Interface< GridType > InterfaceType;
 
   typedef Dune::Stuff::Grid::Provider::Cube< GridType > BaseType;
 
@@ -53,7 +58,7 @@ private:
 public:
   static const std::string id()
   {
-    return "grid.multiscale.provider.cube";
+    return InterfaceType::id() + ".cube";
   }
 
   Cube(const double lowerLeft = 0.0,
@@ -110,49 +115,49 @@ public:
     // get lower left
     std::vector< ctype > lowerLefts;
     if (extendedParamTree.hasVector("lowerLeft")) {
-      lowerLefts = extendedParamTree.getVector("lowerLeft", ctype(0));
+      lowerLefts = extendedParamTree.getVector("lowerLeft", ctype(0), dim);
       assert(lowerLefts.size() >= dim && "Given vector too short!");
     } else if (extendedParamTree.hasKey("lowerLeft")) {
         const ctype lowerLeft = extendedParamTree.get("lowerLeft", ctype(0));
         lowerLefts = std::vector< ctype >(dim, lowerLeft);
     } else {
-      std::cout << "Warning in " << id() << ": neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::endl;
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::endl;
       lowerLefts = std::vector< ctype >(dim, ctype(0));
     }
     // get upper right
     std::vector< ctype > upperRights;
     if (extendedParamTree.hasVector("upperRight")) {
-      upperRights = extendedParamTree.getVector("upperRight", ctype(1));
+      upperRights = extendedParamTree.getVector("upperRight", ctype(1), dim);
       assert(upperRights.size() >= dim && "Given vector too short!");
     } else if (extendedParamTree.hasKey("upperRight")) {
         const ctype upperRight = extendedParamTree.get("upperRight", ctype(1));
         upperRights = std::vector< ctype >(dim, upperRight);
     } else {
-      std::cout << "Warning in " << id() << ": neither vector nor key 'upperRight' given, defaulting to 1.0!" << std::endl;
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'upperRight' given, defaulting to 1.0!" << std::endl;
       upperRights = std::vector< ctype >(dim, ctype(1));
     }
     // get number of elements
     std::vector< unsigned int > tmpNumElements;
     if (extendedParamTree.hasVector("numElements")) {
-      tmpNumElements = extendedParamTree.getVector("numElements", 4u);
+      tmpNumElements = extendedParamTree.getVector("numElements", 4u, dim);
       assert(tmpNumElements.size() >= dim && "Given vector too short!");
     } else if (extendedParamTree.hasKey("numElements")) {
         const unsigned int numElement = extendedParamTree.get("numElements", 4u);
         tmpNumElements = std::vector< unsigned int >(dim, numElement);
     } else {
-      std::cout << "Warning in " << id() << ": neither vector nor key 'numElements' given, defaulting to 4!" << std::endl;
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'numElements' given, defaulting to 4!" << std::endl;
       tmpNumElements = std::vector< unsigned int >(dim, 4u);
     }
     // get partitions
     std::vector< unsigned int > tmpPartitions;
     if (extendedParamTree.hasVector("partitions")) {
-      tmpPartitions = extendedParamTree.getVector("partitions", 2u);
+      tmpPartitions = extendedParamTree.getVector("partitions", 2u, dim);
       assert(tmpPartitions.size() >= dim && "Given vector too short!");
     } else if (extendedParamTree.hasKey("partitions")) {
         const unsigned int partitions = extendedParamTree.get("partitions", 2u);
         tmpPartitions = std::vector< unsigned int >(dim, partitions);
     } else {
-      std::cout << "Warning in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
       tmpPartitions = std::vector< unsigned int >(dim, 2u);
     }
     // check and save
@@ -168,7 +173,7 @@ public:
       numElements[d] = tmpNumElements[d];
       assert(tmpPartitions[d] > 0 && "Given 'partitions' has to be elementwise positive!");
     }
-    return Cube(lowerLeft, upperRight, numElements, tmpPartitions);
+    return ThisType(lowerLeft, upperRight, numElements, tmpPartitions);
   } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
 
   const ThisType& operator=(const ThisType& other)
@@ -180,7 +185,12 @@ public:
     return this;
   } // ThisType& operator=(ThisType& other)
 
-  const Dune::shared_ptr< const MsGridType > msGrid() const
+  virtual const Dune::shared_ptr< const GridType > grid() const
+  {
+    return BaseType::grid();
+  }
+
+  virtual const Dune::shared_ptr< const MsGridType > msGrid() const
   {
     return msGrid_;
   }
@@ -228,7 +238,7 @@ private:
         subdomain = whichPartition[0] + whichPartition[1]*partitions[0] + whichPartition[2]*partitions[1]*partitions[0];
       else {
         std::stringstream msg;
-        msg << "Error in " << id()<< ": not implemented for grid dimensions other than 1, 2 or 3!";
+        msg << "ERROR in " << id()<< ": not implemented for grid dimensions other than 1, 2 or 3!";
         DUNE_THROW(Dune::NotImplemented, msg.str());
       } // decide on the subdomain this entity shall belong to
       // add entity to subdomain
