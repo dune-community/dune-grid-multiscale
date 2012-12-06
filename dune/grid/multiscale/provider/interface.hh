@@ -7,6 +7,7 @@
   #include "config.h"
 #endif // ifdef HAVE_CMAKE_CONFIG
 
+#include <dune/common/fvector.hh>
 #include <dune/common/shared_ptr.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -31,6 +32,12 @@ public:
   typedef Interface< GridType > ThisType;
 
   typedef Dune::grid::Multiscale::Default< GridType > MsGridType;
+
+  static const unsigned int dim = GridType::dimension;
+
+  typedef typename GridType::ctype ctype;
+
+  typedef Dune::FieldVector< typename GridType::ctype, GridType::dimension > CoordinateType;
 
   static const std::string id()
   {
