@@ -144,7 +144,7 @@ public:
     } else {
       if (indexIt->second != subdomain) {
         std::stringstream msg;
-        msg << "Error in " << id << ": can not add entity to more than one subdomain!";
+        msg << "Error in " << id()<< ": can not add entity to more than one subdomain!";
         DUNE_THROW(Dune::InvalidStateException, msg.str());
       }
     } // add subdomain to this entity index
@@ -218,7 +218,7 @@ public:
         typename SubdomainMapType::iterator subdomainToEntityMapIt = subdomainToEntityMap_.find(subdomain);
         if (subdomainToEntityMapIt == subdomainToEntityMap_.end()) {
           std::stringstream msg;
-          msg << "Error in " << id << ": numbering of subdomains has to be consecutive upon calling finalize()!";
+          msg << "Error in " << id()<< ": numbering of subdomains has to be consecutive upon calling finalize()!";
           DUNE_THROW(Dune::InvalidStateException, msg.str());
         } else {
           // compute number of codim 0 entities
@@ -362,7 +362,7 @@ public:
         // check if this entity is connected to the other entities of this subdomain
         if (subdomainSizes[entitySubdomain] != 1 && !subdomainsEntitiesAreConnected) {
           std::stringstream msg;
-          msg << "Error in " << id << ": at least one entity of subdomain " << entitySubdomain
+          msg << "Error in " << id()<< ": at least one entity of subdomain " << entitySubdomain
               << " is not connected to entity " << entityGlobalIndex << " (connected)!";
           DUNE_THROW(Dune::InvalidStateException, msg.str());
         } // check if this entity is connected to the other entities of this subdomain
@@ -507,7 +507,7 @@ private:
     const typename EntityToSubdomainMapType::const_iterator result = entityToSubdomainMap_->find(globalIndex);
     if (result == entityToSubdomainMap_->end()) {
       std::stringstream msg;
-      msg << "Error in " << id << ": entity " << globalIndex << " not added to any subdomain!";
+      msg << "Error in " << id()<< ": entity " << globalIndex << " not added to any subdomain!";
       DUNE_THROW(Dune::InvalidStateException, msg.str());
     }
     return result->second;
