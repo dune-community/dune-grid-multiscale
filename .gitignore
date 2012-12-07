@@ -1,3 +1,4 @@
+*.o
 CMakeLists.txt.user
 Makefile
 Makefile.in
@@ -31,8 +32,7 @@ dune/grid/multiscale/provider/Makefile
 dune/grid/multiscale/provider/Makefile.in
 examples/Makefile
 examples/Makefile.in
-examples/provider/.deps/cube-cube.Po
-examples/provider/.deps/cube.Po
+.deps
 install-sh
 libtool
 ltmain.sh
@@ -40,9 +40,6 @@ m4/Makefile
 m4/Makefile.in
 missing
 stamp-h1
-examples/provider/cube-cube.o
-examples/provider/cube
-examples/provider/cube.param
 doc/doxygen/html
 doc/doxygen/doxyerr.log
 doc/doxygen/doxygen-tag
