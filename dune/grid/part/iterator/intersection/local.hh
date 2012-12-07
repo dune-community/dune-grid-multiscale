@@ -1,6 +1,11 @@
-
 #ifndef DUNE_GRID_PART_ITERATOR_INTERSECTION_LOCAL_HH
 #define DUNE_GRID_PART_ITERATOR_INTERSECTION_LOCAL_HH
+
+#ifdef HAVE_CMAKE_CONFIG
+  #include "cmake_config.h"
+#elif defined (HAVE_CONFIG_H)
+  #include <config.h>
+#endif // ifdef HAVE_CMAKE_CONFIG
 
 // system
 #include <map>

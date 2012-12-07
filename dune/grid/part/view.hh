@@ -1,11 +1,11 @@
-
-/**
- *  \attention  This file was copied from dune-fem, please observe the corresponding license.
- *  \todo       Add licensing information.
- **/
-
 #ifndef DUNE_GRID_PART_VIEW_HH
 #define DUNE_GRID_PART_VIEW_HH
+
+#ifdef HAVE_CMAKE_CONFIG
+  #include "cmake_config.h"
+#elif defined (HAVE_CONFIG_H)
+  #include <config.h>
+#endif // ifdef HAVE_CMAKE_CONFIG
 
 // dune-grid
 #include <dune/grid/common/gridview.hh>

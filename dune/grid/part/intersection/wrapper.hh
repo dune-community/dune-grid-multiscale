@@ -1,6 +1,11 @@
-
 #ifndef DUNE_GRID_PART_INTERSECTION_WRAPPER_HH
 #define DUNE_GRID_PART_INTERSECTION_WRAPPER_HH
+
+#ifdef HAVE_CMAKE_CONFIG
+  #include "cmake_config.h"
+#elif defined (HAVE_CONFIG_H)
+  #include <config.h>
+#endif // ifdef HAVE_CMAKE_CONFIG
 
 // dune-geometry
 #include <dune/geometry/type.hh>
