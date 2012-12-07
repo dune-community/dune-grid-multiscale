@@ -11,6 +11,7 @@
 #include <dune/common/shared_ptr.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/sgrid.hh>
 
 #include <dune/grid/multiscale/default.hh>
 

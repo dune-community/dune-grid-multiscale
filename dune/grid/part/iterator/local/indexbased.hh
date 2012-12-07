@@ -7,6 +7,7 @@
 
 // dune-common
 #include <dune/common/exceptions.hh>
+#include <dune/common/shared_ptr.hh>
 
 // dune-geometry
 #include <dune/geometry/type.hh>
