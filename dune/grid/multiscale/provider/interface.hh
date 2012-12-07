@@ -48,7 +48,7 @@ public:
 
   virtual const Dune::shared_ptr< const MsGridType > msGrid() const = 0;
 
-  void visualize(const std::string filename = id()) const
+  virtual void visualize(const std::string filename = id()) const
   {
     // vtk writer
     typedef typename MsGridType::GlobalGridViewType GlobalGridViewType;

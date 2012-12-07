@@ -19,9 +19,9 @@
 #include <dune/stuff/common/string.hh>
 
 // dune-grid-multiscale
-#include <dune/grid/multiscale/provider/cube.hh>
+#include <dune/grid/multiscale/provider.hh>
 
-const std::string id = "provider.cube";
+const std::string id = "provider";
 
 /**
   \brief      Creates a parameter file if it does not exist.
@@ -39,6 +39,7 @@ void ensureParamFile(std::string filename)
     file.open(filename);
     file << "[" << id << "]" << std::endl;
     file << "filename = " << id << ".grid" << std::endl;
+    file << "grid = " << "grid.multiscale.provider.cube" << std::endl;
     file << "[grid.multiscale.provider.cube]" << std::endl;
     file << "numElements = [4; 4; 4]" << std::endl;
     file << "partitions = [2; 2; 2]" << std::endl;
@@ -151,23 +152,23 @@ int main(int argc, char** argv)
     Dune::Timer timer;
 
     // grid
-    info << "setting up grid";
-//    info << ":" << std::endl;
-    info << "... " << std::flush;
+    info << "setting up grid:" << std::endl;
     debug.suspend();
-    typedef Dune::grid::Multiscale::Provider::Cube<> GridProviderType;
-    GridProviderType gridProvider = GridProviderType::createFromParamTree(paramTree);
+    typedef Dune::grid::Multiscale::Provider::Interface<> GridProviderType;
+    const GridProviderType* gridProvider
+        = Dune::grid::Multiscale::Provider::create<>(paramTree.get(id + ".grid", "grid.multiscale.provider.cube"),
+                                                     paramTree);
     typedef GridProviderType::MsGridType MsGridType;
-    const Dune::shared_ptr< const MsGridType > msGrid = gridProvider.msGrid();
+    const Dune::shared_ptr< const MsGridType > msGrid = gridProvider->msGrid();
+    debug.resume();
     info << "  took " << timer.elapsed()
          << " sec (has " << msGrid->globalGridPart()->grid().size(0) << " elements, "
          << msGrid->size() << " subdomains)" << std::endl;
-    debug.resume();
 
     info << "visualizing... " << std::flush;
     debug.suspend();
     timer.reset();
-    msGrid->visualize();
+    gridProvider->visualize();
     info << " done (took " << timer.elapsed() << " sek)" << std::endl;
     debug.resume();
 

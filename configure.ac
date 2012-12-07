@@ -34,7 +34,6 @@ AC_CONFIG_FILES([
   dune/grid/part/iterator/intersection/Makefile
   dune/grid/part/local/Makefile
   examples/Makefile
-  examples/provider/Makefile
   m4/Makefile
   dune-grid-multiscale.pc
 ])
