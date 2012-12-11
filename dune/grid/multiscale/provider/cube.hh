@@ -201,6 +201,8 @@ public:
     return msGrid_;
   }
 
+  using InterfaceType::visualize;
+
 private:
   void setup(std::vector< unsigned int >& partitions)
   {
