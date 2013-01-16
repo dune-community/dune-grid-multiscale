@@ -1,24 +1,24 @@
 PROJECT(dune-grid-multiscale)
 
-SET( CMAKE_CXX_COMPILER
-  "g++-4.6" CACHE FORCE
-    "" )
-
 #set minimum cmake version
 cmake_minimum_required(VERSION 2.6)
-cmake_policy(SET CMP0009 NEW)
-# tell cmake where to look for .cmake files
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/../dune-stuff/cmake )
 
-# stuff needed for dune
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/../dune-stuff/cmake )
 include(DuneUtils)
+include(UseDoxygen)
+
+#needs to come first to include correct config.h
+INCLUDE_DIR(${dune-grid-multiscale_BINARY_DIR})
+INCLUDE_DIR(${dune-grid-multiscale_SOURCE_DIR})
 
 # General Settings
-SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true )
-SET( CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".lib" ".la" ".a" )
 SET( CMAKE_COLOR_MAKEFILE ON )
 
 # Options, that can be changed by the User in order to customise the module
+set(ENABLE_MPI
+    "0" CACHE STRING
+    "set to 1 to enable mpi")
+
 SET( BLAS_LIB
   "blas" CACHE STRING
   "BLAS LIB" )
@@ -33,34 +33,19 @@ SET( GRIDDIM
 
 SET( ALUGRID_BASE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/../local" CACHE STRING
-  "ALUGRID_BASE_PATH" )
+  "ALUGRID BASE PATH" )
 
 SET( ALBERTA_GRID_BASE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/../local" CACHE STRING
-  "ALBERTA_GRID_BASE_PATH" )
+  "ALBERTA GRID BASE_PATH" )
 
 SET( UGGRID_BASE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/../local" CACHE STRING
-  "UGGRID_BASE_PATH" )
+  "UGGRID BASE PATH" )
 
 SET( CUSTOM_FLAGS
-  "-Wall -O0 -DDEBUG -g -fdiagnostics-show-option" CACHE LIST
+  "-Wall -O0 -DDEBUG -g -ggdb -fdiagnostics-show-option" CACHE LIST
   "CUSTOM FLAGS" )
-
-SET_CONFIGHEADER_VARS()
-
-# needs to come first to include correct config.h
-include_dir( ${dune-grid-multiscale_SOURCE_DIR} )
-INCLUDE_DIR( ${dune-grid-multiscale_BINARY_DIR} )
-
-ADD_DEFINITIONS(${CUSTOM_FLAGS})
-
-IF( ${GRIDTYPE} STREQUAL "UGGRID" )
-  ADD_DEFINITIONS( -DENABLE_UG )
-  INCLUDE_SYS_DIR( ${UGGRID_BASE_PATH}/include )
-  LINK_DIRECTORIES( ${UGGRID_BASE_PATH}/lib/ )
-  SET( GRIDLIBS "ugS3" "ugS2" "devS")
-ENDIF( ${GRIDTYPE} STREQUAL "UGGRID" )
 
 SET( ENABLE_ALUGRID OFF )
 IF( ${GRIDTYPE} MATCHES "ALUGRID" )
@@ -88,10 +73,11 @@ IF( ${GRIDTYPE} MATCHES "ALBERTAGRID" )
 ENDIF( ${GRIDTYPE} MATCHES "ALBERTAGRID" )
 
 CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_config.h )
+ADD_DEFINITIONS(${CUSTOM_FLAGS})
 
 # the other dune modules
-ADD_DUNE_MODULES(common grid geometry stuff fem)
-set( COMMON_LIBS "dunefem" "dunegrid" "dunecommon" "dunegeometry"
+ADD_DUNE_MODULES(common grid geometry stuff)
+set( COMMON_LIBS "dunegrid" "dunecommon" "dunegeometry"
     ${BLAS_LIB} ${GRIDLIBS} ${ParaLIBS}
         "boost_filesystem" "boost_system" )
 FILE( GLOB_RECURSE header "${CMAKE_CURRENT_SOURCE_DIR}/dune/*.hh" )
@@ -102,9 +88,5 @@ set_source_files_properties( ${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1 )
 add_subdirectory(doc)
 add_subdirectory(examples)
 
-#ADD_EXECUTABLE( examples_provider_cube "examples/provider/cube.cc" ${LIST_LIBS} )
-#TARGET_LINK_LIBRARIES( examples_provider_cube ${COMMON_LIBS} )
-
-HEADERCHECK( ${header} )
-DEPENDENCYCHECK( ${header} )
-#ADD_CPPCHECK( ${CMAKE_CURRENT_SOURCE_DIR}/src/elliptic_hmm.cc ${CMAKE_CURRENT_SOURCE_DIR}/src/elliptic_msfem.cc ${dune} ${header})
+#HEADERCHECK( ${header} )
+#DEPENDENCYCHECK( ${header} )
