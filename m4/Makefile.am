@@ -1,4 +1,4 @@
-M4FILES = dune-grid-multiscale.m4 ax_boost_filesystem.m4 ax_boost_base.m4
+M4FILES = dune-grid-multiscale.m4
 
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = $(M4FILES)
