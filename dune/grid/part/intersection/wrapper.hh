@@ -1,26 +1,22 @@
 #ifndef DUNE_GRID_PART_INTERSECTION_WRAPPER_HH
 #define DUNE_GRID_PART_INTERSECTION_WRAPPER_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
+#include <dune/stuff/common/header/disable_warnings.hh>
+  #ifdef HAVE_CMAKE_CONFIG
+    #include "cmake_config.h"
+  #elif defined (HAVE_CONFIG_H)
+    #include <config.h>
+  #endif // ifdef HAVE_CMAKE_CONFIG
 
-// dune-geometry
-#include <dune/geometry/type.hh>
+  #include <dune/geometry/type.hh>
 
-// dune-grid
-#include <dune/grid/common/intersection.hh>
+  #include <dune/grid/common/intersection.hh>
+#include <dune/stuff/common/header/reenable_warnings.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace Intersection {
-
 namespace Wrapper {
 
 template< class IntersectionIteratorImp, class WrappedIntersectionImp >
@@ -88,9 +84,11 @@ public:
 
   int boundaryId() const
   {
-    if (passThrough_)
+    if (passThrough_) {
+#include <dune/stuff/common/header/disable_warnings.hh>
       return intersectionIterator_.getBaseIntersection().boundaryId();
-    else
+#include <dune/stuff/common/header/reenable_warnings.hh>
+    } else
       return boundaryId_;
   }
 
@@ -171,13 +169,9 @@ private:
 }; // class FakeDomainBoundary
 
 } // namespace Wrapper
-
 } // namespace Intersection
-
 } // namespace Part
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_PART_INTERSECTION_WRAPPER_HH

@@ -1,20 +1,22 @@
 #ifndef DUNE_GRID_MULTISCALE_DEFAULT_HH
 #define DUNE_GRID_MULTISCALE_DEFAULT_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
+#include <dune/stuff/common/header/disable_warnings.hh>
+  #ifdef HAVE_CMAKE_CONFIG
+    #include "cmake_config.h"
+  #elif defined (HAVE_CONFIG_H)
+    #include <config.h>
+  #endif // ifdef HAVE_CMAKE_CONFIG
 
-#include <vector>
-#include <set>
-#include <map>
+  #include <vector>
+  #include <set>
+  #include <map>
 
-#include <dune/common/shared_ptr.hh>
-#include <dune/common/exceptions.hh>
+  #include <dune/common/shared_ptr.hh>
+  #include <dune/common/exceptions.hh>
 
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
+  #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/stuff/common/header/reenable_warnings.hh>
 
 #include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
