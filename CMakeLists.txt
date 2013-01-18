@@ -10,7 +10,7 @@ SET(ENV{LD_LIBRARY_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib:$ENV{LD_LIBRA
 SET(ENV{PKG_CONFIG_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}" )
 
 include(DuneUtils)
-include(UseDoxygen)
+#include(UseDoxygen)
 
 #needs to come first to include correct config.h
 INCLUDE_DIR(${dune-grid-multiscale_BINARY_DIR})
