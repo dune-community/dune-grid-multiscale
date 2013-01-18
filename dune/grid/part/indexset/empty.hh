@@ -78,19 +78,19 @@ public:
   }
 
   //! we have no old size
-  int numberOfHoles ( const int /*codim*/ ) const
+  int numberOfHoles ( const int codim ) const
   {
     return 0;
   }
 
   //! return old index, for dof manager only
-  int oldIndex ( const int /*hole*/, const int /*codim*/ ) const
+  int oldIndex ( const int hole, const int codim ) const
   {
     return 0;
   }
 
   //! return new index, for dof manager only
-  int newIndex ( const int /*hole*/, const int /*codim*/ ) const
+  int newIndex ( const int hole, const int codim ) const
   {
     return 0;
   }

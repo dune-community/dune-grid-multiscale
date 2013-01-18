@@ -1,24 +1,27 @@
-#include <dune/stuff/common/header/disable_warnings.hh>
-  #ifdef HAVE_CMAKE_CONFIG
-    #include "cmake_config.h"
-  #elif defined (HAVE_CONFIG_H)
-    #include <config.h>
-  #endif // ifdef HAVE_CMAKE_CONFIG
+#ifdef HAVE_CMAKE_CONFIG
+  #include "cmake_config.h"
+#elif defined (HAVE_CONFIG_H)
+  #include <config.h>
+#endif // ifdef HAVE_CMAKE_CONFIG
 
-  #include <iostream>
+// system
+#include <iostream>
 
-  #include <boost/filesystem.hpp>
+// boost
+#include <boost/filesystem.hpp>
 
-  #include <dune/common/exceptions.hh>
-  #include <dune/common/mpihelper.hh>
-  #include <dune/common/timer.hh>
-#include <dune/stuff/common/header/reenable_warnings.hh>
+// dune-common
+#include <dune/common/exceptions.hh>
+#include <dune/common/mpihelper.hh>
+#include <dune/common/timer.hh>
 
+// dune-stuff
 #include <dune/stuff/common/parameter/tree.hh>
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/filesystem.hh>
 #include <dune/stuff/common/string.hh>
 
+// dune-grid-multiscale
 #include <dune/grid/multiscale/provider.hh>
 
 const std::string id = "provider";

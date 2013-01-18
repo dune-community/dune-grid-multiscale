@@ -56,12 +56,10 @@ public:
   };
 
   //! store const reference to set
-#include <dune/stuff/common/header/disable_warnings.hh>
   Wrapper(const IndexSetImp & set, bool adaptive = false)
     : Empty()
     , set_(set)
   {}
-#include <dune/stuff/common/header/reenable_warnings.hh>
 
   //! store const reference to set
   Wrapper(const Wrapper<IndexSetImp> & s)
@@ -160,10 +158,8 @@ public:
   //! number of codimensions
   enum { ncodim = GridType::dimension + 1 };
   //! constructor
-#include <dune/stuff/common/header/disable_warnings.hh>
   Leaf ( const GridType & grid , const int level =-1 )
     : Wrapper < IndexSetType > (grid.leafIndexSet()) {}
-#include <dune/stuff/common/header/reenable_warnings.hh>
 
   //! constructor taking grid part
   template <class GridPartType>

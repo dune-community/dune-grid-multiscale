@@ -1,19 +1,17 @@
 #ifndef DUNE_GRID_MULTISCALE_PROVIDER_INTERFACE_HH
 #define DUNE_GRID_MULTISCALE_PROVIDER_INTERFACE_HH
 
-#include <dune/stuff/common/header/disable_warnings.hh>
-  #ifdef HAVE_CMAKE_CONFIG
-    #include "cmake_config.h"
-  #else
-    #include "config.h"
-  #endif // ifdef HAVE_CMAKE_CONFIG
+#ifdef HAVE_CMAKE_CONFIG
+  #include "cmake_config.h"
+#else
+  #include "config.h"
+#endif // ifdef HAVE_CMAKE_CONFIG
 
-  #include <dune/common/fvector.hh>
-  #include <dune/common/shared_ptr.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/shared_ptr.hh>
 
-  #include <dune/grid/io/file/vtk/vtkwriter.hh>
-  #include <dune/grid/sgrid.hh>
-#include <dune/stuff/common/header/reenable_warnings.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/sgrid.hh>
 
 #include <dune/grid/multiscale/default.hh>
 
@@ -80,9 +78,7 @@ public:
         if (!intersectionIt->neighbor() && intersectionIt->boundary()){
           isOnBoundary = true;
           numberOfBoundarySegments += 1;
-#include <dune/stuff/common/header/disable_warnings.hh>
           globalBoundaryId[index] += double(intersectionIt->boundaryId());
-#include <dune/stuff/common/header/reenable_warnings.hh>
         }
       }
       if (isOnBoundary) {
