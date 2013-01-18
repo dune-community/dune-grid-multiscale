@@ -79,7 +79,6 @@ public:
       const unsigned int codim = dimension - geometryType.dim();
       geometryTypesByCodim_[codim].push_back(geometryType);
       sizeByGeometryType_.insert(std::pair< GeometryType, IndexType >(geometryType, size));
-      assert(0 <= codim);
       assert(codim <= dimension);
       sizeByCodim_[codim] += size;
     }

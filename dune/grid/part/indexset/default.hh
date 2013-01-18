@@ -56,7 +56,7 @@ public:
   };
 
   //! store const reference to set
-  Wrapper(const IndexSetImp & set, bool adaptive = false)
+  Wrapper(const IndexSetImp & set, bool /*adaptive*/ = false)
     : Empty()
     , set_(set)
   {}
@@ -158,7 +158,7 @@ public:
   //! number of codimensions
   enum { ncodim = GridType::dimension + 1 };
   //! constructor
-  Leaf ( const GridType & grid , const int level =-1 )
+  Leaf ( const GridType & grid , const int /*level*/ =-1 )
     : Wrapper < IndexSetType > (grid.leafIndexSet()) {}
 
   //! constructor taking grid part
