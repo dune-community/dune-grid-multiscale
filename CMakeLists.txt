@@ -16,7 +16,6 @@ set( ENV{PKG_CONFIG_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib/pkgconfig:$E
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/../dune-stuff/cmake )
 include(DuneUtils)
 include(GridUtils)
-include(UseDoxygen)
 
 # needs to come first to include correct config.h
 include_dir(${dune-grid-multiscale_BINARY_DIR})
@@ -61,5 +60,6 @@ set( COMMON_LIBS
 
 headercheck( ${grid-multiscale} )
 
-add_subdirectory(examples)
+add_subdirectory( doc )
+add_subdirectory( examples )
 
