@@ -119,7 +119,7 @@ public:
   template< int codim, class Entity >
   int DUNE_DEPRECATED index ( const Entity &entity, int i ) const
   {
-    static const int cc = Entity::codimension;
+    static const int DUNE_UNUSED(cc) = Entity::codimension;
     return set_.subIndex( entity, i, codim );
   }
 

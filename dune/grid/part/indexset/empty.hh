@@ -54,12 +54,12 @@ public:
 
   //! do nothing here, because fathers index should already exist
   template< class EntityType >
-  void insertEntity ( const EntityType &entity )
+  void insertEntity ( const EntityType &/*entity*/ )
   {}
 
   //! do nothing here, because fathers index should already exist
   template< class EntityType >
-  void removeEntity ( const EntityType &entity )
+  void removeEntity ( const EntityType &/*entity*/ )
   {}
 
   //! nothing to do here
