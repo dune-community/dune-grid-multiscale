@@ -26,7 +26,7 @@ Interface< GridType >* create(const std::string& type = "grid.multiscale.provide
   // choose provider
   if (type == "grid.multiscale.provider.cube") {
     typedef Dune::grid::Multiscale::Provider::Cube< GridType > CubeProviderType;
-    CubeProviderType* cubeProvider = new CubeProviderType(CubeProviderType::createFromParamTree(paramTree));
+    CubeProviderType* cubeProvider = new CubeProviderType(CubeProviderType::createFromDescription(paramTree));
     return cubeProvider;
   } else
     DUNE_THROW(Dune::RangeError,
