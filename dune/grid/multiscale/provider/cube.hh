@@ -39,13 +39,10 @@ class Cube
   , public Dune::Stuff::Grid::Provider::Cube< GridImp >
 {
 public:
-  typedef GridImp GridType;
-
-  typedef Interface< GridType > InterfaceType;
-
-  typedef Dune::Stuff::Grid::Provider::Cube< GridType > BaseType;
-
-  typedef Cube< GridType > ThisType;
+  typedef Cube< GridImp >                               ThisType;
+  typedef Dune::Stuff::Grid::Provider::Cube< GridImp >  BaseType;
+  typedef Interface< GridImp >                          InterfaceType;
+  typedef GridImp                                       GridType;
 
   static const unsigned int dim = BaseType::dim;
 
@@ -110,7 +107,7 @@ public:
   {}
 
   //! \todo TODO Use BaseType::createFromParamTree() internally to avoid code duplication!
-  static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
+  static ThisType createFromDescription(const Dune::ParameterTree& paramTree, const std::string subName = id())
   {
     // get correct paramTree
     Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
