@@ -49,7 +49,6 @@ set_source_files_properties( ${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1 )
 #libs
 set( COMMON_LIBS
      ${DUNE_LIBS}
-     ${BLAS_LIB}
      ${ParaLIBS}
      "boost_filesystem" "boost_system" 
      ${GRIDLIBS}
