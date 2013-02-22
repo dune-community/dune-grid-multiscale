@@ -50,7 +50,6 @@ set_source_files_properties( ${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1 )
 set( COMMON_LIBS
      ${DUNE_LIBS}
      ${BLAS_LIB}
-     "GL"
      ${ParaLIBS}
      "boost_filesystem" "boost_system" 
      ${GRIDLIBS}
