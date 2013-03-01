@@ -79,13 +79,15 @@ public:
           const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap,
           const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts,
           const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts,
-          const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps)
+          const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps,
+          const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > oversampledLocalGridParts)
     : grid_(grid)
     , globalGridPart_(globalGridPart)
     , size_(size)
     , neighboringSetsPtr_(neighboringSets)
     , entityToSubdomainMap_(entityToSubdomainMap)
     , localGridParts_(localGridParts)
+    , oversampledLocalGridParts_(oversampledLocalGridParts)
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
     , localGridViews_(new std::vector< Dune::shared_ptr< const LocalGridViewType > >(size_))
@@ -125,12 +127,19 @@ public:
     return size_;
   }
 
-  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain) const
+  const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain,
+                                                                  const bool oversampling = false) const
   {
     assert(subdomain < size_);
-    const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
-    return localGridParts[subdomain];
-  }
+    if (!oversampling) {
+      const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
+      return localGridParts[subdomain];
+    } else {
+        const std::vector< Dune::shared_ptr< const LocalGridPartType > >&
+            oversampledLocalGridParts = *oversampledLocalGridParts_;
+        return oversampledLocalGridParts[subdomain];
+    }
+  } // ... localGridPart(...)
 
   const Dune::shared_ptr< const LocalGridViewType > localGridView(const unsigned int subdomain) const
   {
@@ -287,6 +296,7 @@ private:
   const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts_;
   const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
+  const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > oversampledLocalGridParts_;
   Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridViewType > > > localGridViews_;
   Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > > > boundaryGridViews_;
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > > > couplingGridViewsMaps_;
