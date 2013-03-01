@@ -15,6 +15,8 @@
 
 #include <dune/grid/multiscale/default.hh>
 
+#include <dune/stuff/common/string.hh>
+
 namespace Dune {
 namespace grid {
 namespace Multiscale {
@@ -60,6 +62,7 @@ public:
     std::vector< double > entityId(globalGridView.indexSet().size(0), 0.0);
     std::vector< double > globalBoundaryId(globalGridView.indexSet().size(0), 0.0);
     std::vector< double > localBoundaryId(globalGridView.indexSet().size(0), 0.0);
+    std::vector< std::vector< double > > oversampledSubdomains(msGrid()->size());
     // walk the global grid view
     for (typename GlobalGridViewType::template Codim< 0 >::Iterator it = globalGridView.template begin< 0 >();
          it != globalGridView.template end< 0 >();
@@ -112,11 +115,40 @@ public:
         } // compute global boundary id
       } // walk the local grid view
     } // walk the subdomains
+    // walk the oversampled grid parts
+    for (size_t ss = 0; ss < msGrid()->size(); ++ss) {
+      oversampledSubdomains[ss] = std::vector< double >(globalGridView.indexSet().size(0), -1.0);
+      typedef typename MsGridType::LocalGridPartType LocalGridPartType;
+      const LocalGridPartType& oversampledGridPart = *(msGrid()->localGridPart(ss, true));
+      for (typename LocalGridPartType::template Codim< 0 >::IteratorType it = oversampledGridPart.template begin< 0 >();
+           it != oversampledGridPart.template end< 0 >();
+           ++it) {
+        const typename LocalGridPartType::template Codim< 0 >::EntityType& entity = *it;
+        const typename GlobalGridViewType::IndexSet::IndexType index = globalGridView.indexSet().index(entity);
+        oversampledSubdomains[ss][index] = 0.0;
+        // compute local boundary id
+        unsigned int numberOfBoundarySegments = 0u;
+        for (typename LocalGridPartType::IntersectionIteratorType intersectionIt = oversampledGridPart.ibegin(entity);
+             intersectionIt != oversampledGridPart.iend(entity);
+             ++intersectionIt) {
+          if (!intersectionIt->neighbor() && intersectionIt->boundary()){
+            numberOfBoundarySegments += 1u;
+            oversampledSubdomains[ss][index] += double(intersectionIt->boundaryId());
+          }
+        }
+        if (numberOfBoundarySegments > 0) {
+          oversampledSubdomains[ss][index] /= double(numberOfBoundarySegments);
+        } // compute global boundary id
+      }
+    }
+
     // write
     vtkwriter.addCellData(subdomainId, "subdomain Id");
     vtkwriter.addCellData(globalBoundaryId, "global boundary id");
     vtkwriter.addCellData(localBoundaryId, "local boundary id");
     vtkwriter.addCellData(entityId, "entity id");
+    for (size_t ss = 0; ss < msGrid()->size(); ++ss)
+      vtkwriter.addCellData(oversampledSubdomains[ss], "oversampled subdomain " + Dune::Stuff::Common::toString(ss));
     vtkwriter.write(filename, Dune::VTK::ascii);
   } // void visualize(const std::string filename = id()) const
 }; // class Interface
