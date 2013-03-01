@@ -187,7 +187,8 @@ public:
 
   int boundaryId(const IntersectionType& intersection) const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
+    DUNE_THROW(Dune::NotImplemented,
+               "Call intersection.boundaryId() instead!");
     return intersection.boundaryId();
   }
 
