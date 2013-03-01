@@ -210,7 +210,7 @@ private:
     factory.prepare();
     // debug output
     const std::string prefix = "";
-    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().debug();
+    Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().devnull();
     debug << prefix << id()<< ":" << std::endl;
     debug << prefix << "  lowerLeft: " << lowerLeft << std::endl;
     debug << prefix << "  upperRight: " << upperRight << std::endl;
