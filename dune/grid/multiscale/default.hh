@@ -16,6 +16,8 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
+#include <dune/stuff/common/color.hh>
+
 #include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 
@@ -79,6 +81,45 @@ public:
           const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap,
           const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts,
           const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts,
+          const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps)
+    : grid_(grid)
+    , globalGridPart_(globalGridPart)
+    , size_(size)
+    , neighboringSetsPtr_(neighboringSets)
+    , entityToSubdomainMap_(entityToSubdomainMap)
+    , localGridParts_(localGridParts)
+    , boundaryGridParts_(boundaryGridParts)
+    , couplingGridPartsMaps_(couplingGridPartsMaps)
+    , oversampling_(false)
+    , localGridViews_(new std::vector< Dune::shared_ptr< const LocalGridViewType > >(size_))
+    , boundaryGridViews_(new std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >())
+    , couplingGridViewsMaps_(new std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > >(size_, std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >()))
+  {
+    // check for correct sizes
+    std::stringstream msg;
+    bool error = false;
+    msg << "Error in " << id() << ":" << std::endl;
+    if (localGridParts_->size() != size_) {
+      msg << "  - 'localGridParts' has wrong size (is " << localGridParts_->size() << ", should be " << size_ << ")!" << std::endl;
+      error = true;
+    }
+    if (couplingGridPartsMaps_->size() != size_) {
+      msg << "  - 'couplingGridPartsMaps' has wrong size (is " << couplingGridPartsMaps_->size() << ", should be " << size_ << ")!" << std::endl;
+      error = true;
+    }
+    if (error)
+      DUNE_THROW(Dune::InvalidStateException, msg.str());
+    // create grid views
+    createGridViews();
+  } // Default()
+
+  Default(const Dune::shared_ptr< const GridType > grid,
+          const Dune::shared_ptr< const GlobalGridPartType > globalGridPart,
+          const unsigned int size,
+          const Dune::shared_ptr< const std::vector< NeighborSetType > > neighboringSets,
+          const Dune::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap,
+          const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts,
+          const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts,
           const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps,
           const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > oversampledLocalGridParts)
     : grid_(grid)
@@ -87,9 +128,10 @@ public:
     , neighboringSetsPtr_(neighboringSets)
     , entityToSubdomainMap_(entityToSubdomainMap)
     , localGridParts_(localGridParts)
-    , oversampledLocalGridParts_(oversampledLocalGridParts)
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
+    , oversampling_(true)
+    , oversampledLocalGridParts_(oversampledLocalGridParts)
     , localGridViews_(new std::vector< Dune::shared_ptr< const LocalGridViewType > >(size_))
     , boundaryGridViews_(new std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > >())
     , couplingGridViewsMaps_(new std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > > >(size_, std::map< unsigned int, Dune::shared_ptr< const CouplingGridViewType > >()))
@@ -135,9 +177,13 @@ public:
       const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts = *localGridParts_;
       return localGridParts[subdomain];
     } else {
-        const std::vector< Dune::shared_ptr< const LocalGridPartType > >&
-            oversampledLocalGridParts = *oversampledLocalGridParts_;
-        return oversampledLocalGridParts[subdomain];
+      if (!oversampling_)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
+                   << " oversampled local gridpart requested from a grid without oversampling!");
+      const std::vector< Dune::shared_ptr< const LocalGridPartType > >&
+          oversampledLocalGridParts = *oversampledLocalGridParts_;
+      return oversampledLocalGridParts[subdomain];
     }
   } // ... localGridPart(...)
 
@@ -296,6 +342,7 @@ private:
   const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > localGridParts_;
   const Dune::shared_ptr< const std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   const Dune::shared_ptr< const std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
+  bool oversampling_;
   const Dune::shared_ptr< const std::vector< Dune::shared_ptr< const LocalGridPartType > > > oversampledLocalGridParts_;
   Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridViewType > > > localGridViews_;
   Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridViewType > > > boundaryGridViews_;
