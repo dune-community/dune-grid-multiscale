@@ -232,7 +232,8 @@ private:
       // decide on the subdomain this entity shall belong to
       std::vector< unsigned int > whichPartition;
       for (unsigned int d = 0; d < dim; ++d) {
-        whichPartition.push_back(std::floor(partitions[d]*((center[d] - lowerLeft[d])/(upperRight[d] - lowerLeft[d]))));
+        whichPartition.push_back(std::min((unsigned int)(std::floor(partitions[d]*((center[d] - lowerLeft[d])/(upperRight[d] - lowerLeft[d])))),
+                                          partitions[d] - 1));
       }
       unsigned int subdomain = 0;
       if (dim == 1)
