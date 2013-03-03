@@ -67,19 +67,21 @@ public:
   Cube(const double lowerLeft = 0.0,
        const double upperRight = 1.0,
        const unsigned int numElements = 4u,
-       const unsigned int partitions = 2u)
+       const unsigned int partitions = 2u,
+       const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
-    setup(std::vector< unsigned int >(dim, partitions));
+    setup(std::vector< unsigned int >(dim, partitions), oversamplingLayers);
   }
 
   Cube(const CoordinateType& lowerLeft,
        const CoordinateType& upperRight,
        const unsigned int numElements = 4u,
-       const unsigned int partitions = 2u)
+       const unsigned int partitions = 2u,
+       const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
-    setup(std::vector< unsigned int >(dim, partitions));
+    setup(std::vector< unsigned int >(dim, partitions), oversamplingLayers);
   }
 
   template< class ElementsContainerType, class PartitionsContainerType >
@@ -90,7 +92,8 @@ public:
                                                                                        typename ElementsContainerType::value_type(4u)),
        const PartitionsContainerType partitions
         = boost::assign::list_of< typename PartitionsContainerType::value_type>().repeat(dim,
-                                                                                         typename PartitionsContainerType::value_type(2u)))
+                                                                                         typename PartitionsContainerType::value_type(2u)),
+       const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
     std::vector< unsigned int > tmpPartitions(dim);
@@ -98,7 +101,7 @@ public:
                   && std::is_integral< typename PartitionsContainerType::value_type >::value,
                   "Only unsigned integral number of partitions per dimension allowed!");
     std::copy(partitions.begin(), partitions.end(), tmpPartitions.begin());
-    setup(tmpPartitions);
+    setup(tmpPartitions, oversamplingLayers);
   }
 
   Cube(const ThisType& other)
@@ -163,6 +166,8 @@ public:
       std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
       tmpPartitions = std::vector< unsigned int >(dim, 2u);
     }
+    // get oversampling size
+    const size_t oversamplingLayers = extendedParamTree.get< size_t >("oversamplingLayers", 0);
     // check and save
     CoordinateType lowerLeft;
     CoordinateType upperRight;
@@ -176,7 +181,7 @@ public:
       numElements[d] = tmpNumElements[d];
       assert(tmpPartitions[d] > 0 && "Given 'partitions' has to be elementwise positive!");
     }
-    return ThisType(lowerLeft, upperRight, numElements, tmpPartitions);
+    return ThisType(lowerLeft, upperRight, numElements, tmpPartitions, oversamplingLayers);
   } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
 
   const ThisType& operator=(const ThisType& other)
@@ -201,7 +206,7 @@ public:
   using InterfaceType::visualize;
 
 private:
-  void setup(std::vector< unsigned int >& partitions)
+  void setup(std::vector< unsigned int >& partitions, size_t oversamplingLayers)
   {
     // prepare
     const CoordinateType& lowerLeft = BaseType::lowerLeft();
@@ -251,7 +256,7 @@ private:
       factory.add(entity, subdomain, prefix + "  ", debug);
     } // walk the grid
     // finalize
-    factory.finalize(prefix + "  ", debug);
+    factory.finalize(oversamplingLayers, prefix + "  ", debug);
     debug << std::flush;
     // be done with it
     msGrid_ = factory.createMsGrid();
