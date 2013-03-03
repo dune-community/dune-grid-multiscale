@@ -176,7 +176,7 @@ public:
     Add< 1, dim >::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, out);
   } // void add()
 
-  void finalize(const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug())
+  void finalize(size_t oversamplingLayers = 0, const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug())
   {
     assert(prepared_ && "Please call prepare() and add() before calling finalize()!");
     if (!finalized_) {
@@ -190,8 +190,6 @@ public:
       typedef std::map< IndexType, IntersectionToBoundaryIdMapType > EntityToIntersectionInfoMapType;
       //   * to hold one of those maps for each subdomain
       std::vector< Dune::shared_ptr< EntityToIntersectionInfoMapType > > subdomainInnerBoundaryInfos(size_);
-      //     (also for the oversampling)
-      std::vector< Dune::shared_ptr< EntityToIntersectionInfoMapType > > oversamplingSubdomainInnerBoundaryInfos(size_);
       // for the coupling grid parts
       //   * vector to hold a (neighboring subdomain -> entity) map for each subdomain
       typename std::vector< SubdomainMapType > couplingMaps(size_, SubdomainMapType());
@@ -401,160 +399,6 @@ public:
         out << "done" << std::endl;
       } // walk the subdomains
 
-      // walk the subdomains to create the oversampling
-      for (auto subdomainIt = subdomainToEntityMap_.begin();
-           subdomainIt != subdomainToEntityMap_.end();
-           ++subdomainIt) {
-        const unsigned int subdomain = subdomainIt->first;
-        const GeometryMapType& geometryMap = *(subdomainIt->second);
-        // * therefore, hardcopy the existing map we want to extend,
-        Dune::shared_ptr< GeometryMapType > geometryMapCopy = Dune::make_shared< GeometryMapType >(geometryMap);
-        // * and create an empty local boundary info map for later use
-        oversamplingSubdomainInnerBoundaryInfos[subdomain] = Dune::make_shared< EntityToIntersectionInfoMapType >();
-        // * then walk the local grid part to find the local boundary entities
-        const LocalGridPartType& localGridPart = *(localGridParts[subdomain]);
-        for (auto entityIt = localGridPart.template begin< 0 >();
-             entityIt != localGridPart.template end< 0 >();
-             ++entityIt) {
-          // get the entity index
-          const EntityType& entity = *entityIt;
-          const IndexType entityGlobalIndex = globalGridPart_->indexSet().index(entity);
-          // lets see if this is a boundary entity of the local grid part
-          const EntityToIntersectionInfoMapType& localBoundaryInfo = *(subdomainInnerBoundaryInfos[subdomain]);
-          if (localBoundaryInfo.find(entityGlobalIndex) != localBoundaryInfo.end()) {
-            // add all the "neighbors"
-            // * therefore, iterate over the intersections in the global grid part
-            for (auto intersectionIt = globalGridPart_->ibegin(entity);
-                 intersectionIt != globalGridPart_->iend(entity);
-                 ++intersectionIt) {
-              const auto& intersection = *intersectionIt;
-              // if this intersection is not on the domain boundary
-              if (intersection.neighbor()) {
-                // get the neighbor
-                const auto neighborPtr = intersection.outside();
-                const auto& neighbor = *neighborPtr;
-                const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
-                const unsigned int neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
-                // if the neighbor is not in the subdomain
-                if (neighborSubdomain != subdomain) {
-                  // add him to the oversampling
-                  // * thereforre we can use the old localCodimSizes,
-                  CodimSizesType& localCodimSizes = localCodimSizes_.find(subdomain)->second;
-                  // * add the neighbor
-                  addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighbor.type(), neighborGlobalIndex);
-                  // * and all remaining codims entities
-                  Add< 1, dim >::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
-                  // we also loop over all the neighbors of the neighbor
-                  for (auto neighborIntersectionIt = globalGridPart_->ibegin(neighbor);
-                       neighborIntersectionIt != globalGridPart_->iend(neighbor);
-                       ++neighborIntersectionIt) {
-                    const auto& neighborIntersection = *neighborIntersectionIt;
-                    if (neighborIntersection.neighbor()) {
-                      // get the neighbors neighbor
-                      const auto neighborsNeighborPtr = neighborIntersection.outside();
-                      const auto& neighborsNeighbor = *neighborsNeighborPtr;
-                      const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
-                      const unsigned int neighborsNeighborSubdomain = getSubdomainOf(neighborsNeighborGlobalIndex);
-                      // if the neighbor is not in the subdomain
-                      if (neighborsNeighborSubdomain != subdomain) {
-                        // check, if he intersects the entity
-                        const auto& entityGeometry = entity.geometry();
-                        const auto& neighborsNeighborGeometry = neighborsNeighbor.geometry();
-                        // * therefore loop over all corners of the entity
-                        for (int ii = 0; ii < entityGeometry.corners(); ++ii) {
-                          const auto entityCorner = entityGeometry.corner(ii);
-                          // then loop over all the corners of the neighbors neighbor
-                          for (int jj = 0; jj < neighborsNeighborGeometry.corners(); ++jj) {
-                            const auto neighborsNeighborCorner = neighborsNeighborGeometry.corner(jj);
-                            // and check for equality
-                            if (entityCorner == neighborsNeighborCorner) {
-                              // then add the neighbors neighbor
-                              addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighborsNeighbor.type(), neighborsNeighborGlobalIndex);
-                              Add< 1, dim >::subEntities(*this, neighborsNeighbor, *geometryMapCopy, localCodimSizes);
-                            }
-                          }
-                        }
-                      } // if the neighbor is not in the subdomain
-                    }
-                  } // we also loop over all the neighbors of the neighbor
-                } // if the neighbor is not in the subdomain
-              } // if this intersection is not on the domain boundary
-            } // iterate over the intersections in the global grid part
-          } // lets see if this is a boundary entity of the local grid part
-        } // then walk the local grid part to find the local boundary entities
-        subdomainToOversamplingEntitiesMap_.insert(std::make_pair(subdomain, geometryMapCopy));
-      } // walk the subdomains to create the oversampling
-
-      // now we need to create the local boundary info for the oversampling, so walk the global grid part
-      for (auto entityIt = globalGridPart_->template begin< 0 >();
-           entityIt != globalGridPart_->template end< 0 >();
-           ++entityIt) {
-        const auto& entity = *entityIt;
-        const IndexType entityIndex = globalGridPart_->indexSet().index(entity);
-        // now we find all the oversampled subdomains this entity is a part of
-        for (auto subdomainToOversamplingEntitiesMap : subdomainToOversamplingEntitiesMap_) {
-          const auto geometryMapIt = subdomainToOversamplingEntitiesMap.second->find(entity.type());
-          if (geometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
-            const auto& geometryMap = geometryMapIt->second;
-            if (geometryMap.find(entityIndex) != geometryMap.end()) {
-              // this entity is a part of this subdomain!
-              const unsigned int entitySubdomain = subdomainToOversamplingEntitiesMap.first;
-              // then walk the neighbors
-              for (auto intersectionIt = globalGridPart_->ibegin(entity);
-                   intersectionIt != globalGridPart_->iend(entity);
-                   ++intersectionIt) {
-                const auto& intersection = *intersectionIt;
-                if (intersection.neighbor()) {
-                  const auto neighborPtr = intersection.outside();
-                  const auto& neighbor = *neighborPtr;
-                  const IndexType neighborIndex = globalGridPart_->indexSet().index(neighbor);
-                  // and check, if the neighbor is in the same subdomain
-                  bool isInSame = false;
-                  const auto neighborGeometryMapIt = subdomainToOversamplingEntitiesMap.second->find(neighbor.type());
-                  if (neighborGeometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
-                    const auto& neighborGeometryMap = neighborGeometryMapIt->second;
-                    if (neighborGeometryMap.find(neighborIndex) != neighborGeometryMap.end()) {
-                      isInSame = true;
-                    }
-                  } // and check, if the neighbor is in the same subdomain
-                  if (!isInSame) {
-                    // the neighbor is not part of this oversampled subdomain,
-                    // so the entity in question is on the boundary!
-                    const int intersectionLocalIndex = intersection.indexInInside();
-                    auto& localBoundaryInfo = *(oversamplingSubdomainInnerBoundaryInfos[entitySubdomain]);
-                    // get the boundary info map for this entity
-                    IntersectionToBoundaryIdMapType& entityBoundaryInfo = localBoundaryInfo[entityIndex];
-                    // and add the local intersection id and its desired fake boundary id to this entities map
-                    entityBoundaryInfo.insert(std::pair< int, int >(intersectionLocalIndex, boundaryId_));
-                  } // if (!isInSame)
-                }
-              } // then walk the neighbors
-            }
-          }
-        } // now we find all the oversampled subdomains this entity is a part of
-      } // walk the global grid part
-
-      // and crete the oversampled local grid parts
-      oversampledLocalGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >(
-            new std::vector< Dune::shared_ptr< const LocalGridPartType > >(size_));
-      std::vector< Dune::shared_ptr< const LocalGridPartType > >& oversampledLocalGridParts = *oversampledLocalGridParts_;
-      for (typename SubdomainMapType::const_iterator subdomainIterator = subdomainToOversamplingEntitiesMap_.begin();
-           subdomainIterator != subdomainToOversamplingEntitiesMap_.end();
-           ++subdomainIterator) {
-        // report
-        const unsigned int subdomain = subdomainIterator->first;
-        // for the local grid part
-        //   * get the geometry map
-        const Dune::shared_ptr< const GeometryMapType > localGeometryMap = subdomainIterator->second;
-        //   * get the boundary info map
-        const Dune::shared_ptr< const EntityToIntersectionInfoMapType > localBoundaryInfo = oversamplingSubdomainInnerBoundaryInfos[subdomain];
-        //   * and create the local grid part
-        oversampledLocalGridParts[subdomain] = Dune::shared_ptr< const LocalGridPartType >(
-              new LocalGridPartType(globalGridPart_,
-                                    localGeometryMap,
-                                    localBoundaryInfo));
-      } // and crete the oversampled local grid parts
-
       // walk those subdomains which have a boundary grid part
       out << prefix << "creating boundary grid parts:" << std::endl;
       //   * to create the boundary grid parts
@@ -624,6 +468,27 @@ public:
           out << "done" << std::endl;
         } // loop over all neighbors
       } // walk the subdomains
+
+      // create the first layer of oversampling
+      if (oversamplingLayers > 0) {
+        oversampledLocalGridParts_ = addOneLayerOfOverSampling(subdomainToEntityMap_,
+                                                               *localGridParts_,
+                                                               subdomainToOversamplingEntitiesMap_);
+        oversampled_ = true;
+      }
+      // and the rest
+      for (size_t ii = 1; ii < oversamplingLayers; ++ii) {
+        Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >
+            tmpOversapledGridParts = oversampledLocalGridParts_;
+        oversampledLocalGridParts_ = Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >(
+                                       new std::vector< Dune::shared_ptr< const LocalGridPartType > >(size_));
+        SubdomainMapType tmpSubdomainToOversamplingEntitiesMap = subdomainToOversamplingEntitiesMap_;
+        subdomainToOversamplingEntitiesMap_ = SubdomainMapType();
+        oversampledLocalGridParts_ = addOneLayerOfOverSampling(tmpSubdomainToOversamplingEntitiesMap,
+                                                               *tmpOversapledGridParts,
+                                                               subdomainToOversamplingEntitiesMap_);
+      }
+
       // done
       finalized_ = true;
     } // if (!finalized_)
@@ -632,16 +497,25 @@ public:
   const Dune::shared_ptr< const MsGridType > createMsGrid() const
   {
     assert(finalized_ && "Please call finalize() before calling createMsGrid()!");
-    const Dune::shared_ptr< const MsGridType > msGrid(new MsGridType(grid_,
-                                                                     globalGridPart_,
-                                                                     size_,
-                                                                     neighboringSubdomainSets_,
-                                                                     entityToSubdomainMap_,
-                                                                     localGridParts_,
-                                                                     boundaryGridParts_,
-                                                                     couplingGridPartsMaps_,
-                                                                     oversampledLocalGridParts_));
-    return msGrid;
+    if (oversampled_)
+      return Dune::make_shared< MsGridType >(grid_,
+                                             globalGridPart_,
+                                             size_,
+                                             neighboringSubdomainSets_,
+                                             entityToSubdomainMap_,
+                                             localGridParts_,
+                                             boundaryGridParts_,
+                                             couplingGridPartsMaps_,
+                                             oversampledLocalGridParts_);
+    else
+      return Dune::make_shared< MsGridType >(grid_,
+                                             globalGridPart_,
+                                             size_,
+                                             neighboringSubdomainSets_,
+                                             entityToSubdomainMap_,
+                                             localGridParts_,
+                                             boundaryGridParts_,
+                                             couplingGridPartsMaps_);
   } // const Dune::shared_ptr< const MsGridType > createMsGrid() const
 
 private:
@@ -677,6 +551,197 @@ private:
     return result->second;
   } // unsigned int getSubdomainOf(const IndexType& globalIndex) const
 
+  Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > > addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
+                                 const std::vector< Dune::shared_ptr< const LocalGridPartType > >& localGridParts,
+                                 SubdomainMapType& subdomainToOversamplingEntitiesMap)
+  {
+    // init data structures
+    // for the subdomains inner boundaries
+    //   * to map the local intersection index to the desired fake boundary id
+    typedef std::map< int, int > IntersectionToBoundaryIdMapType;
+    //   * to map the global entity index to one of those maps
+    typedef std::map< IndexType, IntersectionToBoundaryIdMapType > EntityToIntersectionInfoMapType;
+    //   * to hold one of those maps for each subdomain
+    std::vector< Dune::shared_ptr< EntityToIntersectionInfoMapType > > oversamplingSubdomainInnerBoundaryInfos(size_);
+    // walk the subdomains to create the oversampling
+    for (auto subdomainIt = subdomainToEntityMap.begin();
+         subdomainIt != subdomainToEntityMap.end();
+         ++subdomainIt) {
+      const unsigned int subdomain = subdomainIt->first;
+      const GeometryMapType& geometryMap = *(subdomainIt->second);
+      // * therefore, hardcopy the existing map we want to extend,
+      Dune::shared_ptr< GeometryMapType > geometryMapCopy = Dune::make_shared< GeometryMapType >(geometryMap);
+      // * and create an empty local boundary info map for later use
+      oversamplingSubdomainInnerBoundaryInfos[subdomain] = Dune::make_shared< EntityToIntersectionInfoMapType >();
+      // * then walk the local grid part to find the local boundary entities
+      const LocalGridPartType& localGridPart = *(localGridParts[subdomain]);
+      for (auto entityIt = localGridPart.template begin< 0 >();
+           entityIt != localGridPart.template end< 0 >();
+           ++entityIt) {
+        // get the entity index
+        const EntityType& entity = *entityIt;
+//        const IndexType entityGlobalIndex = globalGridPart_->indexSet().index(entity);
+        // lets see if this is a boundary entity of the local grid part
+        bool isOnLocalBoundary = false;
+        for (auto intersectionIt = localGridPart.ibegin(entity);
+             intersectionIt != localGridPart.iend(entity);
+             ++intersectionIt) {
+          const auto& intersection = *intersectionIt;
+          if (intersection.boundary())
+            isOnLocalBoundary = true;
+        }
+        if (isOnLocalBoundary) {
+          // add all the "neighbors"
+          // * therefore, iterate over the intersections in the global grid part
+          for (auto intersectionIt = globalGridPart_->ibegin(entity);
+               intersectionIt != globalGridPart_->iend(entity);
+               ++intersectionIt) {
+            const auto& intersection = *intersectionIt;
+            // if this intersection is not on the domain boundary
+            if (intersection.neighbor()) {
+              // get the neighbor
+              const auto neighborPtr = intersection.outside();
+              const auto& neighbor = *neighborPtr;
+              const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
+//              const unsigned int neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
+              // if the neighbor is not in the subdomain
+              bool neighborIsNotInThisSubdomain = true;
+              if (geometryMap.find(neighbor.type()) != geometryMap.end()) {
+                if (geometryMap.find(neighbor.type())->second.find(neighborGlobalIndex)
+                    != geometryMap.find(neighbor.type())->second.end()) {
+                  neighborIsNotInThisSubdomain = false;
+                }
+              }
+              if (neighborIsNotInThisSubdomain) {
+                // add him to the oversampling
+                // * therefore we can use the old localCodimSizes,
+                CodimSizesType& localCodimSizes = localCodimSizes_.find(subdomain)->second;
+                // * add the neighbor
+                addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighbor.type(), neighborGlobalIndex);
+                // * and all remaining codims entities
+                Add< 1, dim >::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
+                // we also loop over all the neighbors of the neighbor
+                for (auto neighborIntersectionIt = globalGridPart_->ibegin(neighbor);
+                     neighborIntersectionIt != globalGridPart_->iend(neighbor);
+                     ++neighborIntersectionIt) {
+                  const auto& neighborIntersection = *neighborIntersectionIt;
+                  if (neighborIntersection.neighbor()) {
+                    // get the neighbors neighbor
+                    const auto neighborsNeighborPtr = neighborIntersection.outside();
+                    const auto& neighborsNeighbor = *neighborsNeighborPtr;
+                    const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
+//                    const unsigned int neighborsNeighborSubdomain = getSubdomainOf(neighborsNeighborGlobalIndex);
+                    bool neighborsNeighborIsNotInThisSubdomain = true;
+                    if (geometryMap.find(neighborsNeighbor.type()) != geometryMap.end()) {
+                      if (geometryMap.find(neighborsNeighbor.type())->second.find(neighborsNeighborGlobalIndex)
+                          != geometryMap.find(neighborsNeighbor.type())->second.end()) {
+                        neighborsNeighborIsNotInThisSubdomain = false;
+                      }
+                    }
+                    // if the neighbor is not in the subdomain
+                    if (neighborsNeighborIsNotInThisSubdomain) {
+                      // check, if he intersects the entity
+                      const auto& entityGeometry = entity.geometry();
+                      const auto& neighborsNeighborGeometry = neighborsNeighbor.geometry();
+                      // * therefore loop over all corners of the entity
+                      for (int ii = 0; ii < entityGeometry.corners(); ++ii) {
+                        const auto entityCorner = entityGeometry.corner(ii);
+                        // then loop over all the corners of the neighbors neighbor
+                        for (int jj = 0; jj < neighborsNeighborGeometry.corners(); ++jj) {
+                          const auto neighborsNeighborCorner = neighborsNeighborGeometry.corner(jj);
+                          // and check for equality
+                          if (entityCorner == neighborsNeighborCorner) {
+                            // then add the neighbors neighbor
+                            addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighborsNeighbor.type(), neighborsNeighborGlobalIndex);
+                            Add< 1, dim >::subEntities(*this, neighborsNeighbor, *geometryMapCopy, localCodimSizes);
+                          }
+                        }
+                      }
+                    } // if the neighbor is not in the subdomain
+                  }
+                } // we also loop over all the neighbors of the neighbor
+              } // if the neighbor is not in the subdomain
+            } // if this intersection is not on the domain boundary
+          } // iterate over the intersections in the global grid part
+        } // lets see if this is a boundary entity of the local grid part
+      } // then walk the local grid part to find the local boundary entities
+      subdomainToOversamplingEntitiesMap.insert(std::make_pair(subdomain, geometryMapCopy));
+    } // walk the subdomains to create the oversampling
+
+    // now we need to create the local boundary info for the oversampling, so walk the global grid part
+    for (auto entityIt = globalGridPart_->template begin< 0 >();
+         entityIt != globalGridPart_->template end< 0 >();
+         ++entityIt) {
+      const auto& entity = *entityIt;
+      const IndexType entityIndex = globalGridPart_->indexSet().index(entity);
+      // now we find all the oversampled subdomains this entity is a part of
+      for (auto subdomainToOversamplingEntitiesMap : subdomainToOversamplingEntitiesMap) {
+        const auto geometryMapIt = subdomainToOversamplingEntitiesMap.second->find(entity.type());
+        if (geometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
+          const auto& geometryMap = geometryMapIt->second;
+          if (geometryMap.find(entityIndex) != geometryMap.end()) {
+            // this entity is a part of this subdomain!
+            const unsigned int entitySubdomain = subdomainToOversamplingEntitiesMap.first;
+            // then walk the neighbors
+            for (auto intersectionIt = globalGridPart_->ibegin(entity);
+                 intersectionIt != globalGridPart_->iend(entity);
+                 ++intersectionIt) {
+              const auto& intersection = *intersectionIt;
+              if (intersection.neighbor()) {
+                const auto neighborPtr = intersection.outside();
+                const auto& neighbor = *neighborPtr;
+                const IndexType neighborIndex = globalGridPart_->indexSet().index(neighbor);
+                // and check, if the neighbor is in the same subdomain
+                bool isInSame = false;
+                const auto neighborGeometryMapIt = subdomainToOversamplingEntitiesMap.second->find(neighbor.type());
+                if (neighborGeometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
+                  const auto& neighborGeometryMap = neighborGeometryMapIt->second;
+                  if (neighborGeometryMap.find(neighborIndex) != neighborGeometryMap.end()) {
+                    isInSame = true;
+                  }
+                } // and check, if the neighbor is in the same subdomain
+                if (!isInSame) {
+                  // the neighbor is not part of this oversampled subdomain,
+                  // so the entity in question is on the boundary!
+                  const int intersectionLocalIndex = intersection.indexInInside();
+                  auto& localBoundaryInfo = *(oversamplingSubdomainInnerBoundaryInfos[entitySubdomain]);
+                  // get the boundary info map for this entity
+                  IntersectionToBoundaryIdMapType& entityBoundaryInfo = localBoundaryInfo[entityIndex];
+                  // and add the local intersection id and its desired fake boundary id to this entities map
+                  entityBoundaryInfo.insert(std::pair< int, int >(intersectionLocalIndex, boundaryId_));
+                } // if (!isInSame)
+              }
+            } // then walk the neighbors
+          }
+        }
+      } // now we find all the oversampled subdomains this entity is a part of
+    } // walk the global grid part
+
+    // and create the oversampled local grid parts
+    Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >
+      oversampledLocalGridPartsRet = Dune::shared_ptr< std::vector< Dune::shared_ptr< const LocalGridPartType > > >(
+          new std::vector< Dune::shared_ptr< const LocalGridPartType > >(size_));
+    std::vector< Dune::shared_ptr< const LocalGridPartType > >& oversampledLocalGridParts = *oversampledLocalGridPartsRet;
+    for (typename SubdomainMapType::const_iterator subdomainIterator = subdomainToOversamplingEntitiesMap.begin();
+         subdomainIterator != subdomainToOversamplingEntitiesMap.end();
+         ++subdomainIterator) {
+      // report
+      const unsigned int subdomain = subdomainIterator->first;
+      // for the local grid part
+      //   * get the geometry map
+      const Dune::shared_ptr< const GeometryMapType > localGeometryMap = subdomainIterator->second;
+      //   * get the boundary info map
+      const Dune::shared_ptr< const EntityToIntersectionInfoMapType > localBoundaryInfo = oversamplingSubdomainInnerBoundaryInfos[subdomain];
+      //   * and create the local grid part
+      oversampledLocalGridParts[subdomain] = Dune::shared_ptr< const LocalGridPartType >(
+            new LocalGridPartType(globalGridPart_,
+                                  localGeometryMap,
+                                  localBoundaryInfo));
+    } // and crete the oversampled local grid parts
+    return oversampledLocalGridPartsRet;
+  } // ... addOneLayerOfOverSampling(...)
+
+
   // friends
   template< int, int >
   friend class Add;
@@ -702,6 +767,7 @@ private:
   Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   // for the coupling grid parts
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
+  bool oversampled_ = false;
 }; // class Default
 
 //! specialization to stop the recursion
