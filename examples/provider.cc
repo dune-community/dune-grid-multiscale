@@ -44,8 +44,11 @@ void ensureParamFile(std::string filename)
     file << "filename = " << id << ".grid" << std::endl;
     file << "grid = " << "grid.multiscale.provider.cube" << std::endl;
     file << "[grid.multiscale.provider.cube]" << std::endl;
-    file << "numElements = [4; 4; 4]" << std::endl;
+    file << "lowerLeft = [0.0; 0.0; 0.0]" << std::endl;
+    file << "upperRight = [1.0; 1.0; 1.0]" << std::endl;
+    file << "numElements = [16; 16; 16]" << std::endl;
     file << "partitions = [2; 2; 2]" << std::endl;
+    file << "oversamplingLayers = 1" << std::endl;
     file << "boundaryId = 7" << std::endl; // a cube from the factory gets the boundary ids 1 to 4 ind 2d and 1 to 6 in 3d?
     file.close();
   } // only write param file if there is none
