@@ -160,10 +160,10 @@ int main(int argc, char** argv)
     // grid
     info << "setting up grid:" << std::endl;
     debug.suspend();
-    typedef Dune::grid::Multiscale::Provider::Interface<> GridProviderType;
+    typedef Dune::grid::Multiscale::ProviderInterface<> GridProviderType;
     const GridProviderType* gridProvider
-        = Dune::grid::Multiscale::Provider::create<>(paramTree.get(id + ".grid", "grid.multiscale.provider.cube"),
-                                                     paramTree);
+        = Dune::grid::Multiscale::Providers<>::create(paramTree.get(id + ".grid", "grid.multiscale.provider.cube"),
+                                                      paramTree);
     typedef GridProviderType::MsGridType MsGridType;
     const Dune::shared_ptr< const MsGridType > msGrid = gridProvider->msGrid();
     debug.resume();
