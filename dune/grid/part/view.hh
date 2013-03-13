@@ -1,3 +1,7 @@
+// This file was copied from dune-fem and slightly modified.
+// See http://dune.mathematik.uni-freiburg.de/ for the orginal
+// file, authors, licence and readme!
+
 #ifndef DUNE_GRID_PART_VIEW_HH
 #define DUNE_GRID_PART_VIEW_HH
 
