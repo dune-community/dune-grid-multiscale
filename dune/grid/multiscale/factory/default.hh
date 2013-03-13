@@ -108,6 +108,7 @@ public:
     , prepared_(false)
     , finalized_(false)
     , size_(0)
+    , oversampled_(false)
   {}
 
   Default(const Dune::shared_ptr< const GridType > grid, const int boundaryId = 7)
@@ -116,6 +117,7 @@ public:
     , prepared_(false)
     , finalized_(false)
     , size_(0)
+    , oversampled_(false)
   {}
 
   void prepare()
@@ -767,7 +769,7 @@ private:
   Dune::shared_ptr< std::map< unsigned int, Dune::shared_ptr< const BoundaryGridPartType > > > boundaryGridParts_;
   // for the coupling grid parts
   Dune::shared_ptr< std::vector< std::map< unsigned int, Dune::shared_ptr< const CouplingGridPartType > > > > couplingGridPartsMaps_;
-  bool oversampled_ = false;
+  bool oversampled_;
 }; // class Default
 
 //! specialization to stop the recursion
