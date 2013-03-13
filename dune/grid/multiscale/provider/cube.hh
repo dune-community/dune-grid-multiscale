@@ -27,22 +27,22 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
-namespace Provider {
+
 
 #if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 template< class GridImp = Dune::GridSelector::GridType >
-#else // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
+#else
 template< class GridImp = Dune::SGrid< 2, 2 > >
-#endif // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-class Cube
-  : public Interface< GridImp >
-  , public Dune::Stuff::Grid::Provider::Cube< GridImp >
+#endif
+class ProviderCube
+  : public ProviderInterface< GridImp >
+  , public Dune::Stuff::GridProviderCube< GridImp >
 {
 public:
-  typedef Cube< GridImp >                               ThisType;
-  typedef Dune::Stuff::Grid::Provider::Cube< GridImp >  BaseType;
-  typedef Interface< GridImp >                          InterfaceType;
-  typedef GridImp                                       GridType;
+  typedef ProviderCube< GridImp >                   ThisType;
+  typedef Dune::Stuff::GridProviderCube< GridImp >  BaseType;
+  typedef ProviderInterface< GridImp >              InterfaceType;
+  typedef GridImp                                   GridType;
 
   static const unsigned int dim = BaseType::dim;
 
@@ -64,36 +64,36 @@ public:
     return InterfaceType::id() + ".cube";
   }
 
-  Cube(const double lowerLeft = 0.0,
-       const double upperRight = 1.0,
-       const unsigned int numElements = 4u,
-       const unsigned int partitions = 2u,
-       const size_t oversamplingLayers = 0)
+  ProviderCube(const double lowerLeft = 0.0,
+               const double upperRight = 1.0,
+               const unsigned int numElements = 4u,
+               const unsigned int partitions = 2u,
+               const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
     setup(std::vector< unsigned int >(dim, partitions), oversamplingLayers);
   }
 
-  Cube(const CoordinateType& lowerLeft,
-       const CoordinateType& upperRight,
-       const unsigned int numElements = 4u,
-       const unsigned int partitions = 2u,
-       const size_t oversamplingLayers = 0)
+  ProviderCube(const CoordinateType& lowerLeft,
+               const CoordinateType& upperRight,
+               const unsigned int numElements = 4u,
+               const unsigned int partitions = 2u,
+               const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
     setup(std::vector< unsigned int >(dim, partitions), oversamplingLayers);
   }
 
   template< class ElementsContainerType, class PartitionsContainerType >
-  Cube(const CoordinateType& lowerLeft,
-       const CoordinateType& upperRight,
-       const ElementsContainerType numElements
-        = boost::assign::list_of< typename ElementsContainerType::value_type>().repeat(dim,
-                                                                                       typename ElementsContainerType::value_type(4u)),
-       const PartitionsContainerType partitions
-        = boost::assign::list_of< typename PartitionsContainerType::value_type>().repeat(dim,
-                                                                                         typename PartitionsContainerType::value_type(2u)),
-       const size_t oversamplingLayers = 0)
+  ProviderCube(const CoordinateType& lowerLeft,
+               const CoordinateType& upperRight,
+               const ElementsContainerType numElements
+                 = boost::assign::list_of< typename ElementsContainerType::value_type>().repeat(dim,
+                                                                                                typename ElementsContainerType::value_type(4u)),
+               const PartitionsContainerType partitions
+                 = boost::assign::list_of< typename PartitionsContainerType::value_type>().repeat(dim,
+                                                                                                  typename PartitionsContainerType::value_type(2u)),
+               const size_t oversamplingLayers = 0)
     : BaseType(lowerLeft, upperRight, numElements)
   {
     std::vector< unsigned int > tmpPartitions(dim);
@@ -104,20 +104,38 @@ public:
     setup(tmpPartitions, oversamplingLayers);
   }
 
-  Cube(const ThisType& other)
+  ProviderCube(const ThisType& other)
     : BaseType(other)
     , msGrid_(other.msGrid_)
   {}
 
+  static Dune::ParameterTree createSampleDescription(const std::string subName = "")
+  {
+    Dune::ParameterTree description;
+    description["lowerLeft"] = "[0.0; 0.0; 0.0]";
+    description["upperRight"] = "[1.0; 1.0; 1.0]";
+    description["numElements"] = "[4; 4; 4]";
+    description["partitions"] = "[2; 2; 2]";
+    description["oversamplingLayers"] = "2";
+    if (subName.empty())
+      return description;
+    else {
+      Dune::Stuff::Common::ExtendedParameterTree extendedDescription;
+      extendedDescription.add(description, subName);
+      return extendedDescription;
+    }
+  } // ... createSampleDescription(...)
+
+
   //! \todo TODO Use BaseType::createFromParamTree() internally to avoid code duplication!
-  static ThisType createFromDescription(const Dune::ParameterTree& paramTree, const std::string subName = id())
+  static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
   {
     // get correct paramTree
     Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
-    if (paramTree.hasSub(subName))
-      extendedParamTree = paramTree.sub(subName);
+    if (description.hasSub(subName))
+      extendedParamTree = description.sub(subName);
     else
-      extendedParamTree = paramTree;
+      extendedParamTree = description;
     // get lower left
     std::vector< ctype > lowerLefts;
     if (extendedParamTree.hasVector("lowerLeft")) {
@@ -181,7 +199,7 @@ public:
       numElements[d] = tmpNumElements[d];
       assert(tmpPartitions[d] > 0 && "Given 'partitions' has to be elementwise positive!");
     }
-    return ThisType(lowerLeft, upperRight, numElements, tmpPartitions, oversamplingLayers);
+    return new ThisType(lowerLeft, upperRight, numElements, tmpPartitions, oversamplingLayers);
   } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
 
   const ThisType& operator=(const ThisType& other)
@@ -263,9 +281,9 @@ private:
   } // void setup(const Dune::ParameterTree& paramTree)
 
   Dune::shared_ptr< const MsGridType > msGrid_;
-}; // class Cube
+}; // class ProviderCube
 
-} // namespace Provider
+
 } // namespace Multiscale
 } // namespace Grid
 } // namespace Dune

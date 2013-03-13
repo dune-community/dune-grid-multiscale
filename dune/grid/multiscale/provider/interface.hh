@@ -20,19 +20,19 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
-namespace Provider {
+
 
 #if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 template< class GridImp = Dune::GridSelector::GridType >
 #else // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
 template< class GridImp = Dune::SGrid< 2, 2 > >
 #endif // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-class Interface
+class ProviderInterface
 {
 public:
   typedef GridImp GridType;
 
-  typedef Interface< GridType > ThisType;
+  typedef ProviderInterface< GridType > ThisType;
 
   typedef Dune::grid::Multiscale::Default< GridType > MsGridType;
 
@@ -46,6 +46,8 @@ public:
   {
     return "grid.multiscale.provider";
   }
+
+  virtual ~ProviderInterface(){};
 
   virtual const Dune::shared_ptr< const GridType > grid() const = 0;
 
@@ -151,9 +153,9 @@ public:
       vtkwriter.addCellData(oversampledSubdomains[ss], "oversampled subdomain " + Dune::Stuff::Common::toString(ss));
     vtkwriter.write(filename, Dune::VTK::ascii);
   } // void visualize(const std::string filename = id()) const
-}; // class Interface
+}; // class ProviderInterface
 
-} // namespace Provider
+
 } // namespace Multiscale
 } // namespace grid
 } // namespace Dune
