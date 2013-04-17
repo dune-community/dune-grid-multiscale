@@ -36,9 +36,9 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_config.h.in ${CMAKE_CURR
 
 add_dune_modules(
   grid
+  stuff
   common
   geometry
-  stuff
 )
 
 # header
