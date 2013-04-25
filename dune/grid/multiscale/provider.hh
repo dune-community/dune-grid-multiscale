@@ -31,13 +31,13 @@ public:
   static std::vector< std::string > available()
   {
     return {
-        "grid.multiscale.provider.cube"
+        "gridprovider.multiscale.cube"
     };
   } // ... available(...)
 
   static Dune::ParameterTree createSampleDescription(const std::string type)
   {
-  if (type == "grid.multiscale.provider.cube")
+  if (type == "gridprovider.multiscale.cube")
     return ProviderCube< GridType >::createSampleDescription();
   else
     DUNE_THROW(Dune::RangeError,
@@ -49,7 +49,7 @@ public:
                                                const Dune::ParameterTree description = Dune::ParameterTree())
   {
     // choose provider
-    if (type == "grid.multiscale.provider.cube")
+    if (type == "gridprovider.multiscale.cube")
       return Dune::grid::Multiscale::ProviderCube< GridType >::create(description);
     else
       DUNE_THROW(Dune::RangeError,

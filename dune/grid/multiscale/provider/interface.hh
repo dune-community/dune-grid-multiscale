@@ -44,7 +44,7 @@ public:
 
   static const std::string id()
   {
-    return "grid.multiscale.provider";
+    return "gridprovider.multiscale";
   }
 
   virtual ~ProviderInterface(){};
