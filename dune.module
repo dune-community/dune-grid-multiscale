@@ -1,10 +1,4 @@
-################################
-# Dune module information file #
-################################
-
-#Name of the module
 Module: dune-grid-multiscale
-Version: 2.2.1
+Version: 0.1
 Maintainer: felix.albrecht@uni-muenster.de
-#depending on 
 Depends: dune-common (>= 2.2) dune-grid (>= 2.2) dune-stuff (>= 2.2.1)
