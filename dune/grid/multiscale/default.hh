@@ -169,6 +169,11 @@ public:
     return size_;
   }
 
+  bool oversampling() const
+  {
+    return oversampling_;
+  }
+
   const Dune::shared_ptr< const LocalGridPartType > localGridPart(const unsigned int subdomain,
                                                                   const bool oversampling = false) const
   {
