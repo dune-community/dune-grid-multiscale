@@ -35,10 +35,10 @@ public:
     };
   } // ... available(...)
 
-  static Dune::ParameterTree createSampleDescription(const std::string type)
+  static Dune::ParameterTree createSampleDescription(const std::string type, const std::string subname = "")
   {
   if (type == "gridprovider.multiscale.cube")
-    return ProviderCube< GridType >::createSampleDescription();
+    return ProviderCube< GridType >::createSampleDescription(subname);
   else
     DUNE_THROW(Dune::RangeError,
                "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
