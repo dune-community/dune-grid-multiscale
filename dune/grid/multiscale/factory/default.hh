@@ -677,13 +677,13 @@ private:
       const auto& entity = *entityIt;
       const IndexType entityIndex = globalGridPart_->indexSet().index(entity);
       // now we find all the oversampled subdomains this entity is a part of
-      for (auto subdomainToOversamplingEntitiesMap : subdomainToOversamplingEntitiesMap) {
-        const auto geometryMapIt = subdomainToOversamplingEntitiesMap.second->find(entity.type());
-        if (geometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
+      for (auto subdomainToOversamplingEntitiesMapIt : subdomainToOversamplingEntitiesMap) {
+        const auto geometryMapIt = subdomainToOversamplingEntitiesMapIt.second->find(entity.type());
+        if (geometryMapIt != subdomainToOversamplingEntitiesMapIt.second->end()) {
           const auto& geometryMap = geometryMapIt->second;
           if (geometryMap.find(entityIndex) != geometryMap.end()) {
             // this entity is a part of this subdomain!
-            const unsigned int entitySubdomain = subdomainToOversamplingEntitiesMap.first;
+            const unsigned int entitySubdomain = subdomainToOversamplingEntitiesMapIt.first;
             // then walk the neighbors
             for (auto intersectionIt = globalGridPart_->ibegin(entity);
                  intersectionIt != globalGridPart_->iend(entity);
@@ -695,8 +695,8 @@ private:
                 const IndexType neighborIndex = globalGridPart_->indexSet().index(neighbor);
                 // and check, if the neighbor is in the same subdomain
                 bool isInSame = false;
-                const auto neighborGeometryMapIt = subdomainToOversamplingEntitiesMap.second->find(neighbor.type());
-                if (neighborGeometryMapIt != subdomainToOversamplingEntitiesMap.second->end()) {
+                const auto neighborGeometryMapIt = subdomainToOversamplingEntitiesMapIt.second->find(neighbor.type());
+                if (neighborGeometryMapIt != subdomainToOversamplingEntitiesMapIt.second->end()) {
                   const auto& neighborGeometryMap = neighborGeometryMapIt->second;
                   if (neighborGeometryMap.find(neighborIndex) != neighborGeometryMap.end()) {
                     isInSame = true;
