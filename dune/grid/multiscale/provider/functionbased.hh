@@ -21,10 +21,10 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/sgrid.hh>
 
-#include <dune/stuff/grid/provider/cube.hh>
+#include <dune/stuff/grid/provider.hh>
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/parameter/tree.hh>
-#include <dune/stuff/functions/fromfile.hh>
+#include <dune/stuff/functions.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
 
@@ -53,7 +53,7 @@ public:
 
   typedef typename NonMultiscaleType::ctype ctype;
   typedef typename NonMultiscaleType::CoordinateType CoordinateType;
-  typedef int RangeFieldType;
+  typedef double RangeFieldType;
   // until now only implemented for scalar functions
   typedef Dune::Stuff::FunctionInterface< ctype, dim, RangeFieldType, 1, 1 > FunctionType;
 private:
@@ -123,33 +123,85 @@ public:
     , msGrid_(other.msGrid_)
   {}
 
-//  static Dune::ParameterTree createSampleDescription(const std::string subName = "")
-//  {
-//    Dune::ParameterTree description;
-//    description["lowerLeft"] = "[0.0; 0.0; 0.0]";
-//    description["upperRight"] = "[1.0; 1.0; 1.0]";
-//    description["numElements"] = "[4; 4; 4]";
-//    description["partitions"] = "[2; 2; 2]";
-//    description["oversamplingLayers"] = "2";
-//    if (subName.empty())
-//      return description;
-//    else {
-//      Dune::Stuff::Common::ExtendedParameterTree extendedDescription;
-//      extendedDescription.add(description, subName);
-//      return extendedDescription;
-//    }
-//  } // ... createSampleDescription(...)
+  static Dune::ParameterTree createSampleDescription(const std::string subName = "")
+  {
+    typedef Stuff::GridProviders< GridType > Providers;
+    typedef Stuff::Functions< ctype, dim, RangeFieldType, 1, 1 > Functions;
+    Dune::ParameterTree description;
+    description["provider"] = Providers::available()[0];
+    description["function"] = Functions::available()[0];
+    description["partitions"] = "[0.5; 1.0]";
+    if (subName.empty())
+      return description;
+    else {
+      Dune::Stuff::Common::ExtendedParameterTree extendedDescription;
+      extendedDescription.add(description, subName);
+      return extendedDescription;
+    }
+  } // ... createSampleDescription(...)
 
 
-  //! \todo TODO Use NonMultiscaleType::createFromParamTree() internally to avoid code duplication!
-//  static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
-//  {
-//    // get correct paramTree
-//    Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
-//    if (description.hasSub(subName))
-//      extendedParamTree = description.sub(subName);
-//    else
-//      extendedParamTree = description;
+  static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
+  {
+    // get correct paramTree
+    Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
+    if (description.hasSub(subName))
+      extendedParamTree = description.sub(subName);
+    else
+      extendedParamTree = description;
+
+    // get grid provider
+    NonMultiscaleType gridProvider;
+    if (extendedParamTree.hasKey("provider")) {
+        typedef Stuff::GridProviders< GridType > Providers;
+        gridProvider = extendedParamTree.get("provider", Providers::available()[0]);
+    } else {
+        DUNE_THROW(Dune::IOError, "Error: no key 'provider' given in " << id() << std::endl);
+    }
+    std::shared_ptr< GridType > grid(gridProvider->grid());
+    // get function
+    FunctionType function;
+    if (extendedParamTree.hasKey("function")) {
+        typedef Stuff::Functions< ctype, dim, RangeFieldType, 1, 1 > Functions;
+        gridProvider = extendedParamTree.get("function", Functions::available()[0]);
+    } else {
+        DUNE_THROW(Dune::IOError, "Error: no key 'function' given in " << id() << std::endl);
+    }
+    // get partitions
+    std::vector< RangeFieldType > partitions;
+    if (extendedParamTree.hasVector("partitions")) {
+      partitions = extendedParamTree.getVector< RangeFieldType >("partitions", 1);//länge des vektors nicht bekannt! muss nicht dim sein
+//      if (partitions.size() < dim)
+//        DUNE_THROW(Dune::IOError, "Error: given vector too short!" << std::endl);
+    } else if (extendedParamTree.hasKey("partitions")) {
+      partitions = std::vector< RangeFieldType >(1, extendedParamTree.get("partitions", 1u));
+    } else {
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 1!" << std::endl;
+      partitions = std::vector< RangeFieldType >(1, 1u);
+    }
+
+
+
+
+/*
+    // get lower left
+    std::vector< ctype > lowerLefts;
+    if (settings.hasVector("lowerLeft")) {
+      lowerLefts = settings.getVector("lowerLeft", ctype(0), dim);
+      assert(lowerLefts.size() >= dim && "Given vector too short!");
+    } else if (settings.hasKey("lowerLeft")) {
+        const ctype lowerLeft = settings.get("lowerLeft", ctype(0));
+        lowerLefts = std::vector< ctype >(dim, lowerLeft);
+    } else {
+      std::cout << "\n" << Dune::Stuff::Common::colorString("WARNING in " + id() + ":")
+                << " neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::flush;
+      lowerLefts = std::vector< ctype >(dim, ctype(0));
+    }
+
+    */
+
+
+
 //    // get lower left
 //    std::vector< ctype > lowerLefts;
 //    if (extendedParamTree.hasVector("lowerLeft")) {
@@ -216,8 +268,8 @@ public:
 //    // get filename for the function from file
 //    const std::string filename = extendedParamTree.get< std::string >("filename", 0);
 //    FunctionType function(filename, lowerLeft, upperRight, numElements);
-//    return new ThisType(function, /*lowerLeft, upperRight, numElements,*/ tmpPartitions, oversamplingLayers);
-//  } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
+    return new ThisType(grid, function, partitions);
+  } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
 
   const ThisType& operator=(const ThisType& other)
   {
