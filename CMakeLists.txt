@@ -59,8 +59,7 @@ set( COMMON_LIBS
      ${GRIDLIBS}
 )
 
-headercheck( ${grid-multiscale} )
-
 add_subdirectory( doc )
 add_subdirectory( examples )
+add_subdirectory( dune )
 
