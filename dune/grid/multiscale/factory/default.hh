@@ -183,7 +183,10 @@ public:
     Add< 1, dim >::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, out);
   } // void add()
 
-  void finalize(size_t oversamplingLayers = 0, const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug())
+  void finalize(size_t oversamplingLayers = 0,
+                const std::string prefix = "",
+                std::ostream& out = Dune::Stuff::Common::Logger().debug(),
+                bool assert_connected = true)
   {
     assert(prepared_ && "Please call prepare() and add() before calling finalize()!");
     if (!finalized_) {
@@ -373,7 +376,7 @@ public:
           } // check the type of this intersection
         } // walk the neighbors
         // check if this entity is connected to the other entities of this subdomain
-        if (subdomainSizes[entitySubdomain] != 1 && !subdomainsEntitiesAreConnected) {
+        if (assert_connected && subdomainSizes[entitySubdomain] != 1 && !subdomainsEntitiesAreConnected) {
           std::stringstream msg;
           msg << "Error in " << id()<< ": at least one entity of subdomain " << entitySubdomain
               << " is not connected to entity " << entityGlobalIndex << " (connected)!";
