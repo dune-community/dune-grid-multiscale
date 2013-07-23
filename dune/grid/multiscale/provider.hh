@@ -20,6 +20,7 @@
 
 #include "provider/interface.hh"
 #include "provider/cube.hh"
+#include "provider/functionbased.hh"
 
 namespace Dune {
 namespace grid {
@@ -36,14 +37,17 @@ public:
   static std::vector< std::string > available()
   {
     return {
-        "gridprovider.multiscale.cube"
+        "grid.multiscale.provider.cube",
+        "grid.multiscale.provider.functionbased"
     };
   } // ... available(...)
 
   static Dune::ParameterTree createSampleDescription(const std::string type, const std::string subname = "")
   {
-  if (type == "gridprovider.multiscale.cube")
+  if (type == "grid.multiscale.provider.cube")
     return ProviderCube< GridType >::createSampleDescription(subname);
+  else if (type == "grid.multiscale.provider.functionbased")
+    return ProviderFunctionbased< GridType >::createSampleDescription(subname);
   else
     DUNE_THROW(Dune::RangeError,
                "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
@@ -54,8 +58,10 @@ public:
                                                const Dune::ParameterTree description = Dune::ParameterTree())
   {
     // choose provider
-    if (type == "gridprovider.multiscale.cube")
+    if (type == "grid.multiscale.provider.cube")
       return Dune::grid::Multiscale::ProviderCube< GridType >::create(description);
+    else if (type == "grid.multiscale.provider.functionbased")
+      return Dune::grid::Multiscale::ProviderFunctionbased< GridType >::create(description);
     else
       DUNE_THROW(Dune::RangeError,
                  "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
