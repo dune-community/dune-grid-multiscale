@@ -170,104 +170,13 @@ public:
     // get partitions
     std::vector< RangeFieldType > partitions;
     if (extendedParamTree.hasVector("partitions")) {
-      partitions = extendedParamTree.getVector< RangeFieldType >("partitions", 1);//länge des vektors nicht bekannt! muss nicht dim sein
-//      if (partitions.size() < dim)
-//        DUNE_THROW(Dune::IOError, "Error: given vector too short!" << std::endl);
+      partitions = extendedParamTree.getVector< RangeFieldType >("partitions", 1);
     } else if (extendedParamTree.hasKey("partitions")) {
       partitions = std::vector< RangeFieldType >(1, extendedParamTree.get("partitions", 1u));
     } else {
       std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 1!" << std::endl;
       partitions = std::vector< RangeFieldType >(1, 1u);
     }
-
-
-
-
-/*
-    // get lower left
-    std::vector< ctype > lowerLefts;
-    if (settings.hasVector("lowerLeft")) {
-      lowerLefts = settings.getVector("lowerLeft", ctype(0), dim);
-      assert(lowerLefts.size() >= dim && "Given vector too short!");
-    } else if (settings.hasKey("lowerLeft")) {
-        const ctype lowerLeft = settings.get("lowerLeft", ctype(0));
-        lowerLefts = std::vector< ctype >(dim, lowerLeft);
-    } else {
-      std::cout << "\n" << Dune::Stuff::Common::colorString("WARNING in " + id() + ":")
-                << " neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::flush;
-      lowerLefts = std::vector< ctype >(dim, ctype(0));
-    }
-
-    */
-
-
-
-//    // get lower left
-//    std::vector< ctype > lowerLefts;
-//    if (extendedParamTree.hasVector("lowerLeft")) {
-//      lowerLefts = extendedParamTree.getVector("lowerLeft", ctype(0), dim);
-//      assert(lowerLefts.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("lowerLeft")) {
-//        const ctype lowerLeft = extendedParamTree.get("lowerLeft", ctype(0));
-//        lowerLefts = std::vector< ctype >(dim, lowerLeft);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::endl;
-//      lowerLefts = std::vector< ctype >(dim, ctype(0));
-//    }
-//    // get upper right
-//    std::vector< ctype > upperRights;
-//    if (extendedParamTree.hasVector("upperRight")) {
-//      upperRights = extendedParamTree.getVector("upperRight", ctype(1), dim);
-//      assert(upperRights.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("upperRight")) {
-//        const ctype upperRight = extendedParamTree.get("upperRight", ctype(1));
-//        upperRights = std::vector< ctype >(dim, upperRight);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'upperRight' given, defaulting to 1.0!" << std::endl;
-//      upperRights = std::vector< ctype >(dim, ctype(1));
-//    }
-//    // get number of elements
-//    std::vector< unsigned int > tmpNumElements;
-//    if (extendedParamTree.hasVector("numElements")) {
-//      tmpNumElements = extendedParamTree.getVector("numElements", 4u, dim);
-//      assert(tmpNumElements.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("numElements")) {
-//        const unsigned int numElement = extendedParamTree.get("numElements", 4u);
-//        tmpNumElements = std::vector< unsigned int >(dim, numElement);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'numElements' given, defaulting to 4!" << std::endl;
-//      tmpNumElements = std::vector< unsigned int >(dim, 4u);
-//    }
-//    // get partitions
-//    std::vector< unsigned int > tmpPartitions;
-//    if (extendedParamTree.hasVector("partitions")) {
-//      tmpPartitions = extendedParamTree.getVector("partitions", 2u, dim);
-//      assert(tmpPartitions.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("partitions")) {
-//        const unsigned int partitions = extendedParamTree.get("partitions", 2u);
-//        tmpPartitions = std::vector< unsigned int >(dim, partitions);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
-//      tmpPartitions = std::vector< unsigned int >(dim, 2u);
-//    }
-//    // get oversampling size
-//    const size_t oversamplingLayers = extendedParamTree.get< size_t >("oversamplingLayers", 0);
-//    // check and save
-//    CoordinateType lowerLeft;
-//    CoordinateType upperRight;
-//    std::vector< unsigned int> numElements;
-//    for (unsigned int d = 0; d < dim; ++d) {
-//      assert(lowerLefts[d] < upperRights[d]
-//             && "Given 'upperRight' hast to be elementwise larger than given 'lowerLeft'!");
-//      lowerLeft[d] = lowerLefts[d];
-//      upperRight[d] = upperRights[d];
-//      assert(tmpNumElements[d] > 0 && "Given 'numElements' has to be elementwise positive!");
-//      numElements.push_back(tmpNumElements[d]);
-//      assert(tmpPartitions[d] > 0 && "Given 'partitions' has to be elementwise positive!");
-//    }
-//    // get filename for the function from file
-//    const std::string filename = extendedParamTree.get< std::string >("filename", 0);
-//    FunctionType function(filename, lowerLeft, upperRight, numElements);
     return new ThisType(grid, function, partitions);
   } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
 
