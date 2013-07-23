@@ -93,12 +93,12 @@ public:
 
   int boundaryId() const
   {
-#include <dune/stuff/common/header/disable_warnings.hh>
+#include <dune/stuff/common/disable_warnings.hh>
     if (passThrough_)
       return intersectionIterator_.getBaseIntersection().boundaryId();
     else
       return boundaryId_;
-#include <dune/stuff/common/header/reenable_warnings.hh>
+#include <dune/stuff/common/reenable_warnings.hh>
   }
 
   size_t boundarySegmentIndex() const
