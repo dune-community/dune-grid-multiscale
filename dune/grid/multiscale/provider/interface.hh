@@ -85,12 +85,10 @@ public:
       for (typename GlobalGridViewType::IntersectionIterator intersectionIt = globalGridView.ibegin(entity);
            intersectionIt != globalGridView.iend(entity);
            ++intersectionIt) {
-        if (!intersectionIt->neighbor() && intersectionIt->boundary()){
+        if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
           isOnBoundary = true;
           numberOfBoundarySegments += 1;
-#include <dune/stuff/common/disable_warnings.hh>
           globalBoundaryId[index] += double(intersectionIt->boundaryId());
-#include <dune/stuff/common/reenable_warnings.hh>
         }
       }
       if (isOnBoundary) {
