@@ -6,57 +6,43 @@
 #ifndef DUNE_GRID_MULTISCALE_PROVIDER_INTERFACE_HH
 #define DUNE_GRID_MULTISCALE_PROVIDER_INTERFACE_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#else
-  #include "config.h"
-#endif // ifdef HAVE_CMAKE_CONFIG
+#include <memory>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/shared_ptr.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/sgrid.hh>
-
-#include <dune/grid/multiscale/default.hh>
 
 #include <dune/stuff/common/string.hh>
+
+#include "../default.hh"
 
 namespace Dune {
 namespace grid {
 namespace Multiscale {
 
 
-#if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-template< class GridImp = Dune::GridSelector::GridType >
-#else // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-template< class GridImp = Dune::SGrid< 2, 2 > >
-#endif // defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
+template< class GridImp >
 class ProviderInterface
 {
 public:
   typedef GridImp GridType;
-
-  typedef ProviderInterface< GridType > ThisType;
-
   typedef Dune::grid::Multiscale::Default< GridType > MsGridType;
-
-  static const unsigned int dim = GridType::dimension;
-
+  static const unsigned int dimension = GridType::dimension;
   typedef typename GridType::ctype ctype;
+  typedef Dune::FieldVector< ctype, dimension > CoordinateType;
 
-  typedef Dune::FieldVector< typename GridType::ctype, GridType::dimension > CoordinateType;
+//  typedef ProviderInterface< GridType > ThisType;
 
   static const std::string id()
   {
-    return "gridprovider.multiscale";
+    return "dune.grid.multiscale.provider";
   }
 
-  virtual ~ProviderInterface(){};
+  virtual ~ProviderInterface(){}
 
-  virtual const Dune::shared_ptr< const GridType > grid() const = 0;
+  virtual std::shared_ptr< const GridType > grid() const = 0;
 
-  virtual const Dune::shared_ptr< const MsGridType > msGrid() const = 0;
+  virtual std::shared_ptr< const MsGridType > msGrid() const = 0;
 
   virtual void visualize(const std::string filename = id()) const
   {
