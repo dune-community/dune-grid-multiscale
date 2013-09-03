@@ -38,6 +38,10 @@ namespace Multiscale {
  *              an existing local grid part (not yet implemented).
  *  \attention  Works only for one GeometryType per Codim (I think)! Problem is, that indices are unique per GeometryType, not per Codim.
  *  \todo       Resolve the above Issue (should be easy, compute the size as a sum over all GeometryTypes for a given codim)!
+ *
+ *  \todo       Giving the local and global gridparts as shared pointers is quite misleading, since it is not
+ *              guaranteed that the underlying grid parts and the grid will exist forever. So we should change those to
+ *              reference imho.
  */
 template< class GridImp >
 class Default
