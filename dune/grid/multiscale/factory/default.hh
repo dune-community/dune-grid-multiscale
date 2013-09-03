@@ -149,7 +149,9 @@ public:
     assert(prepared_ && "Please call prepare() before calling add()!");
     assert(!finalized_ && "Do not call add() after calling finalized()!");
     const IndexType globalIndex = globalGridPart_->indexSet().index(entity);
+#ifndef NDEBUG
     out << prefix << "adding entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
+#endif
     // add subdomain to this entity index
     typename EntityToSubdomainMapType::iterator indexIt = entityToSubdomainMap_->find(globalIndex);
     if (indexIt == entityToSubdomainMap_->end()) {
@@ -284,8 +286,10 @@ public:
             // get local index of the intersection
             const int intersectionLocalIndex = intersection.indexInInside();
             // report
+#ifndef NDEBUG
             out << prefix << "    entity " << entityGlobalIndex
                   << " lies at the domain boundary of subdomain " << entitySubdomain << std::endl;
+#endif
             // for the boundary grid part
             //   * get the maps for this subdomain (and create them, if necessary)
             if (boundaryGeometryMapMap.find(entitySubdomain) == boundaryGeometryMapMap.end())
@@ -320,12 +324,14 @@ public:
             if (neighborSubdomain != entitySubdomain) {
               // get local index of the intersection
               const int intersectionLocalIndex = intersection.indexInInside();
+#ifndef NDEBUG
               // report
               out << prefix << "    entity " << entityGlobalIndex
                     << " lies at an inner boundary of subdomain " << entitySubdomain << std::endl;
               out << prefix << "      at intersection " << intersectionLocalIndex
                     << " with neighbor " << neighborGlobalIndex
                     << " of subdomain " << neighborSubdomain << std::endl;
+#endif
               // for the neighbor information between the subdomains
               //   * the subdomain of the neighbor is a neighboring subdomain of the entities subdomain
               neighborsOfSubdomain.insert(neighborSubdomain);
@@ -395,7 +401,9 @@ public:
         // report
         const unsigned int subdomain = subdomainIterator->first;
         const unsigned int subdomainSize  = subdomainSizes[subdomain];
+#ifndef NDEBUG
         out << prefix << "  subdomain " << subdomain << " (of size " << subdomainSize << ")... " << std::flush;
+#endif
         // for the local grid part
         //   * get the geometry map
         const Dune::shared_ptr< const GeometryMapType > localGeometryMap = subdomainIterator->second;
@@ -406,7 +414,9 @@ public:
               new LocalGridPartType(globalGridPart_,
                                     localGeometryMap,
                                     localBoundaryInfo));
+#ifndef NDEBUG
         out << "done" << std::endl;
+#endif
       } // walk the subdomains
 
       // walk those subdomains which have a boundary grid part
@@ -423,9 +433,11 @@ public:
            ++boundaryCodimSizesMapIt,
            ++boundaryInfoMapIt) {
         const unsigned int boundarySubdomain = boundaryGeometryMapMapIt->first;
-        assert(boundarySubdomain == boundaryCodimSizesMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to teach other!");
-        assert(boundarySubdomain == boundaryInfoMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to teach other!");
+        assert(boundarySubdomain == boundaryCodimSizesMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to each other!");
+        assert(boundarySubdomain == boundaryInfoMapIt->first && "We should not get here: we are in big trouble, if these maps do not correspond to each other!");
+#ifndef NDEBUG
         out << prefix << "  subdomain " << boundarySubdomain << " (of size " << boundaryCodimSizesMapIt->second.operator[](0) << ")... " << std::flush;
+#endif
         // for the boundary grid part
         //   * get the geometry map
         const Dune::shared_ptr< const GeometryMapType > boundaryGeometryMap = boundaryGeometryMapMapIt->second;
@@ -439,7 +451,9 @@ public:
                                                               boundaryGeometryMap,
                                                               boundaryBoundaryInfo,
                                                               localGridParts[boundarySubdomain]))));
+#ifndef NDEBUG
         out << "done" << std::endl;
+#endif
       } // walk those subdomains which have a boundary grid part
       // walk the subdomains
       //   * to create the coupling grid parts
@@ -459,7 +473,9 @@ public:
              neighborIt != couplingMap.end();
              ++neighborIt) {
           const unsigned int neighbor = neighborIt->first;
+#ifndef NDEBUG
           out << prefix << "  subdomain " << subdomain << ", neighbor " << neighbor <<  "... " << std::flush;
+#endif
           // get the geometry map
           const Dune::shared_ptr< const GeometryMapType > couplingGeometryMap = neighborIt->second;
           // get the boundary info map
@@ -475,7 +491,9 @@ public:
                                                                    couplingBoundaryInfo,
                                                                    localGridParts[subdomain],
                                                                    localGridParts[neighbor]))));
+#ifndef NDEBUG
           out << "done" << std::endl;
+#endif
         } // loop over all neighbors
       } // walk the subdomains
 
@@ -546,7 +564,9 @@ private:
       // increase count for this codim
       ++(localCodimSizes[codim]);
       // report
+#ifndef NDEBUG
       out << prefix << "- " << geometryType << ", global index " << globalIndex << ", local index " << localIndex << std::endl;
+#endif
     } // add if needed
   } // void addGeometryAndIndex()
 
