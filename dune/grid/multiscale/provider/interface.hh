@@ -33,7 +33,12 @@ public:
 
 //  typedef ProviderInterface< GridType > ThisType;
 
-  static const std::string id()
+  static std::string static_id()
+  {
+    return "dune.grid.multiscale.provider";
+  }
+
+  virtual std::string id() const
   {
     return "dune.grid.multiscale.provider";
   }
@@ -44,7 +49,7 @@ public:
 
   virtual std::shared_ptr< const MsGridType > msGrid() const = 0;
 
-  virtual void visualize(const std::string filename = id()) const
+  virtual void visualize(const std::string filename = static_id()) const
   {
     // vtk writer
     typedef typename MsGridType::GlobalGridViewType GlobalGridViewType;
