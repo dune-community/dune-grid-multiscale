@@ -52,6 +52,9 @@ public:
   typedef Default< GridType > ThisType;
 
   static const unsigned int dim = GridType::dimension;
+  static const unsigned int dimension = GridType::dimension;
+
+  typedef typename GridType::ctype ctype;
 
   typedef Dune::grid::Part::Leaf::Const< GridType > GlobalGridPartType;
 
