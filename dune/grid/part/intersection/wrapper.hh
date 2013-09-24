@@ -169,6 +169,11 @@ public:
     return intersectionIterator_.getBaseIntersection().centerUnitOuterNormal();
   }
 
+  const typename IntersectionIteratorType::BaseIntersectionType& asBase() const
+  {
+    return intersectionIterator_.getBaseIntersection();
+  }
+
 private:
   const IntersectionIteratorType& intersectionIterator_;
   bool passThrough_;
