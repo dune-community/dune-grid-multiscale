@@ -235,7 +235,7 @@ public:
 private:
   void setup(const std::vector< ctype >& lower_left,
              const std::vector< ctype >& upper_right,
-             const std::vector< size_t >& num_partittions,
+             const std::vector< size_t >& num_partitions,
              const size_t num_oversampling_layers,
              std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
   {
@@ -247,7 +247,7 @@ private:
     out << prefix << static_id()<< ":" << std::endl;
     Stuff::Common::print(lower_left, "lower_left", out, prefix);
     Stuff::Common::print(upper_right, "upper_right", out, prefix);
-    Stuff::Common::print(num_partittions, "num_partittions", out, prefix);
+    Stuff::Common::print(num_partitions, "num_partitions", out, prefix);
 #endif // NDEBUG
     // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
@@ -265,20 +265,18 @@ private:
       // decide on the subdomain this entity shall belong to
       std::vector< size_t > whichPartition(dim, 0);
       for (size_t dd = 0; dd < dim; ++dd)
-        whichPartition[dd] = (std::min((size_t)(std::floor(num_partittions[dd]*((center[dd] - lower_left[dd])/(upper_right[dd] - lower_left[dd])))),
-                                       num_partittions[dd] - 1));
+        whichPartition[dd] = (std::min((size_t)(std::floor(num_partitions[dd]*((center[dd] - lower_left[dd])/(upper_right[dd] - lower_left[dd])))),
+                                       num_partitions[dd] - 1));
       size_t subdomain = 0;
       if (dim == 1)
         subdomain = whichPartition[0];
       else if (dim == 2)
-        subdomain = whichPartition[0] + whichPartition[1]*num_partittions[0];
+        subdomain = whichPartition[0] + whichPartition[1]*num_partitions[0];
       else if (dim == 3)
-        subdomain = whichPartition[0] + whichPartition[1]*num_partittions[0] + whichPartition[2]*num_partittions[1]*num_partittions[0];
-      else {
-        std::stringstream msg;
-        msg << "ERROR in " << static_id()<< ": not implemented for grid dimensions other than 1, 2 or 3!";
-        DUNE_THROW(Dune::NotImplemented, msg.str());
-      } // decide on the subdomain this entity shall belong to
+        subdomain = whichPartition[0] + whichPartition[1]*num_partitions[0] + whichPartition[2]*num_partitions[1]*num_partitions[0];
+      else
+        DUNE_THROW(Dune::NotImplemented,
+                   "ERROR in " << static_id()<< ": not implemented for grid dimensions other than 1, 2 or 3!");
       // add entity to subdomain
       factory.add(entity, subdomain, prefix + "  ", out);
     } // walk the grid
