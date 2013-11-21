@@ -576,9 +576,10 @@ private:
     return result->second;
   } // size_t getSubdomainOf(const IndexType& globalIndex) const
 
-  std::shared_ptr< std::vector< std::shared_ptr< const LocalGridPartType > > > addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
-                                 const std::vector< std::shared_ptr< const LocalGridPartType > >& localGridParts,
-                                 SubdomainMapType& subdomainToOversamplingEntitiesMap)
+      std::shared_ptr< std::vector< std::shared_ptr< const LocalGridPartType > > >
+  addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
+                            const std::vector< std::shared_ptr< const LocalGridPartType > >& localGridParts,
+                            SubdomainMapType& subdomainToOversamplingEntitiesMap)
   {
     // init data structures
     // for the subdomains inner boundaries
