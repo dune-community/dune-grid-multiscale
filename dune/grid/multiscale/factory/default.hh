@@ -16,6 +16,10 @@
 
 #include <dune/geometry/type.hh>
 
+#if HAVE_ALUGRID
+# include <dune/grid/alugrid.hh>
+#endif
+
 #include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 #include <dune/grid/multiscale/default.hh>
@@ -26,6 +30,48 @@ namespace Dune {
 namespace grid {
 namespace Multiscale {
 namespace Factory {
+
+
+template< class GridImp >
+class NeighborRecursionLevel
+{
+public:
+  // If you get an error here, add an appropriate specialization of this class below!
+  static size_t compute() = delete;
+};
+
+#if HAVE_ALUGRID
+template<>
+class NeighborRecursionLevel< ALUConformGrid< 2, 2 > >
+{
+public:
+  static size_t compute()
+  {
+    return 3;
+  }
+};
+
+template<>
+class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::conforming, Dune::No_Comm > >
+{
+public:
+  static size_t compute()
+  {
+    return 3;
+  }
+};
+
+template<>
+class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::nonconforming, Dune::No_Comm > >
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
+#endif
+
 
 template< class GridImp >
 class Default
@@ -180,7 +226,8 @@ public:
     Add< 1, dim >::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, out);
   } // void add()
 
-  void finalize(size_t oversamplingLayers = 0,
+  void finalize(const size_t oversamplingLayers = 0,
+                const size_t neighbor_recursion_level = NeighborRecursionLevel< GridType >::compute(),
                 const std::string prefix = "",
                 std::ostream& out = Dune::Stuff::Common::Logger().debug(),
                 bool assert_connected = true)
@@ -496,6 +543,7 @@ public:
       if (oversamplingLayers > 0) {
         oversampledLocalGridParts_ = addOneLayerOfOverSampling(subdomainToEntityMap_,
                                                                *localGridParts_,
+                                                               neighbor_recursion_level,
                                                                subdomainToOversamplingEntitiesMap_);
         oversampled_ = true;
       }
@@ -509,6 +557,7 @@ public:
         subdomainToOversamplingEntitiesMap_ = SubdomainMapType();
         oversampledLocalGridParts_ = addOneLayerOfOverSampling(tmpSubdomainToOversamplingEntitiesMap,
                                                                *tmpOversapledGridParts,
+                                                               neighbor_recursion_level,
                                                                subdomainToOversamplingEntitiesMap_);
       }
 
@@ -579,6 +628,7 @@ private:
       std::shared_ptr< std::vector< std::shared_ptr< const LocalGridPartType > > >
   addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
                             const std::vector< std::shared_ptr< const LocalGridPartType > >& localGridParts,
+                            const size_t neighbor_recursion_level,
                             SubdomainMapType& subdomainToOversamplingEntitiesMap)
   {
     // init data structures
@@ -647,11 +697,13 @@ private:
                 // * and all remaining codims entities
                 Add< 1, dim >::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
                 // and also check all its neighbors
-                add_neighbors_neighbors_recursively(entity,
-                                                    neighbor,
-                                                    geometryMap,
-                                                    localCodimSizes,
-                                                    *geometryMapCopy);
+                if (neighbor_recursion_level > 0)
+                  add_neighbors_neighbors_recursively(entity,
+                                                      neighbor,
+                                                      geometryMap,
+                                                      neighbor_recursion_level,
+                                                      localCodimSizes,
+                                                      *geometryMapCopy);
               } // if the neighbor is not in the subdomain
             } // if this intersection is not on the domain boundary
           } // iterate over the intersections in the global grid part
@@ -737,6 +789,7 @@ private:
   void add_neighbors_neighbors_recursively(const EntityType& entity,
                                            const NeighborType& neighbor,
                                            const GeometryMapType& geometryMap,
+                                           size_t recursion_level,
                                            CodimSizesType& localCodimSizes,
                                            GeometryMapType& geometryMapCopy)
   {
@@ -780,6 +833,14 @@ private:
             }
           }
         } // if the neighbor is not in the subdomain
+        // call this function on the neighbours neighbor
+        if (recursion_level > 0)
+          add_neighbors_neighbors_recursively(entity,
+                                              neighborsNeighbor,
+                                              geometryMap,
+                                              --recursion_level,
+                                              localCodimSizes,
+                                              geometryMapCopy);
       }
     } // loop over all the neighbors of the neighbor
   } // ... add_neighbors_neighbors_recursively(...)
