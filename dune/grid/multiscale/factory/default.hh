@@ -646,46 +646,12 @@ private:
                 addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighbor.type(), neighborGlobalIndex);
                 // * and all remaining codims entities
                 Add< 1, dim >::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
-                // we also loop over all the neighbors of the neighbor
-                for (auto neighborIntersectionIt = globalGridPart_->ibegin(neighbor);
-                     neighborIntersectionIt != globalGridPart_->iend(neighbor);
-                     ++neighborIntersectionIt) {
-                  const auto& neighborIntersection = *neighborIntersectionIt;
-                  if (neighborIntersection.neighbor()) {
-                    // get the neighbors neighbor
-                    const auto neighborsNeighborPtr = neighborIntersection.outside();
-                    const auto& neighborsNeighbor = *neighborsNeighborPtr;
-                    const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
-//                    const size_t neighborsNeighborSubdomain = getSubdomainOf(neighborsNeighborGlobalIndex);
-                    bool neighborsNeighborIsNotInThisSubdomain = true;
-                    if (geometryMap.find(neighborsNeighbor.type()) != geometryMap.end()) {
-                      if (geometryMap.find(neighborsNeighbor.type())->second.find(neighborsNeighborGlobalIndex)
-                          != geometryMap.find(neighborsNeighbor.type())->second.end()) {
-                        neighborsNeighborIsNotInThisSubdomain = false;
-                      }
-                    }
-                    // if the neighbor is not in the subdomain
-                    if (neighborsNeighborIsNotInThisSubdomain) {
-                      // check, if he intersects the entity
-                      const auto& entityGeometry = entity.geometry();
-                      const auto& neighborsNeighborGeometry = neighborsNeighbor.geometry();
-                      // * therefore loop over all corners of the entity
-                      for (int ii = 0; ii < entityGeometry.corners(); ++ii) {
-                        const auto entityCorner = entityGeometry.corner(ii);
-                        // then loop over all the corners of the neighbors neighbor
-                        for (int jj = 0; jj < neighborsNeighborGeometry.corners(); ++jj) {
-                          const auto neighborsNeighborCorner = neighborsNeighborGeometry.corner(jj);
-                          // and check for equality
-                          if (entityCorner == neighborsNeighborCorner) {
-                            // then add the neighbors neighbor
-                            addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighborsNeighbor.type(), neighborsNeighborGlobalIndex);
-                            Add< 1, dim >::subEntities(*this, neighborsNeighbor, *geometryMapCopy, localCodimSizes);
-                          }
-                        }
-                      }
-                    } // if the neighbor is not in the subdomain
-                  }
-                } // we also loop over all the neighbors of the neighbor
+                // and also check all its neighbors
+                add_neighbors_neighbors_recursively(entity,
+                                                    neighbor,
+                                                    geometryMap,
+                                                    localCodimSizes,
+                                                    *geometryMapCopy);
               } // if the neighbor is not in the subdomain
             } // if this intersection is not on the domain boundary
           } // iterate over the intersections in the global grid part
@@ -767,6 +733,56 @@ private:
     return oversampledLocalGridPartsRet;
   } // ... addOneLayerOfOverSampling(...)
 
+  template< class EntityType, class NeighborType >
+  void add_neighbors_neighbors_recursively(const EntityType& entity,
+                                           const NeighborType& neighbor,
+                                           const GeometryMapType& geometryMap,
+                                           CodimSizesType& localCodimSizes,
+                                           GeometryMapType& geometryMapCopy)
+  {
+    // loop over all the neighbors of the neighbor
+    for (auto neighborIntersectionIt = globalGridPart_->ibegin(neighbor);
+         neighborIntersectionIt != globalGridPart_->iend(neighbor);
+         ++neighborIntersectionIt) {
+      const auto& neighborIntersection = *neighborIntersectionIt;
+      if (neighborIntersection.neighbor()) {
+        // get the neighbors neighbor
+        const auto neighborsNeighborPtr = neighborIntersection.outside();
+        const auto& neighborsNeighbor = *neighborsNeighborPtr;
+        const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
+        bool neighborsNeighborIsNotInThisSubdomain = true;
+        if (geometryMap.find(neighborsNeighbor.type()) != geometryMap.end()) {
+          if (geometryMap.find(neighborsNeighbor.type())->second.find(neighborsNeighborGlobalIndex)
+              != geometryMap.find(neighborsNeighbor.type())->second.end()) {
+            neighborsNeighborIsNotInThisSubdomain = false;
+          }
+        }
+        // if the neighbor is not in the subdomain
+        if (neighborsNeighborIsNotInThisSubdomain) {
+          // check, if he intersects the entity
+          const auto& entityGeometry = entity.geometry();
+          const auto& neighborsNeighborGeometry = neighborsNeighbor.geometry();
+          // * therefore loop over all corners of the entity
+          for (int ii = 0; ii < entityGeometry.corners(); ++ii) {
+            const auto entityCorner = entityGeometry.corner(ii);
+            // then loop over all the corners of the neighbors neighbor
+            for (int jj = 0; jj < neighborsNeighborGeometry.corners(); ++jj) {
+              const auto neighborsNeighborCorner = neighborsNeighborGeometry.corner(jj);
+              // and check for equality
+              if (entityCorner == neighborsNeighborCorner) {
+                // then add the neighbors neighbor
+                addGeometryAndIndex(geometryMapCopy,
+                                    localCodimSizes,
+                                    neighborsNeighbor.type(),
+                                    neighborsNeighborGlobalIndex);
+                Add< 1, dim >::subEntities(*this, neighborsNeighbor, geometryMapCopy, localCodimSizes);
+              }
+            }
+          }
+        } // if the neighbor is not in the subdomain
+      }
+    } // loop over all the neighbors of the neighbor
+  } // ... add_neighbors_neighbors_recursively(...)
 
   // friends
   template< int, int >
