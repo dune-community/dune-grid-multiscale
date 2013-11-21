@@ -239,6 +239,7 @@ private:
              const size_t num_oversampling_layers,
              std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
   {
+    const size_t neighbor_recursion_level = Factory::NeighborRecursionLevel< GridType >::compute();
     // prepare
     MsGridFactoryType factory(grid_);
     factory.prepare();
@@ -281,7 +282,7 @@ private:
       factory.add(entity, subdomain, prefix + "  ", out);
     } // walk the grid
     // finalize
-    factory.finalize(num_oversampling_layers, prefix + "  ", out);
+    factory.finalize(num_oversampling_layers, neighbor_recursion_level, prefix + "  ", out);
 //    debug << std::flush;
     // be done with it
     ms_grid_ = factory.createMsGrid();
