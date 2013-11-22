@@ -181,7 +181,7 @@ public:
   }
 
   const std::shared_ptr< const LocalGridPartType > localGridPart(const size_t subdomain,
-                                                                  const bool oversampling = false) const
+                                                                 const bool oversampling = false) const
   {
     assert(subdomain < size_);
     if (!oversampling) {
