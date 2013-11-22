@@ -137,25 +137,25 @@ public:
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_);
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_);
   }
 
   template< int codim >
   typename BaseType::template Codim< codim >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename BaseType::template Codim< codim >::IteratorType(globalGridPart_, indexContainer_, true);
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(globalGridPart_, indexContainer_, true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& entity) const

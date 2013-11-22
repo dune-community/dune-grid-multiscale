@@ -6,33 +6,20 @@
 #ifndef DUNE_GRID_PART_ITERATOR_CODIM0_HH
 #define DUNE_GRID_PART_ITERATOR_CODIM0_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
-
-// system
 #include <map>
+#include <memory>
 
-// dune-common
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
 
-// dune-geometry
 #include <dune/geometry/type.hh>
 
-// dune-grid
 #include <dune/grid/common/grid.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace Iterator {
-
 namespace Local {
 
 /**
@@ -44,15 +31,11 @@ template< class GlobalGridPartImp, int codim, Dune::PartitionIteratorType pitype
 class IndexBased
   : public GlobalGridPartImp::template Codim< codim >::template Partition< pitype >::IteratorType
 {
+  typedef typename GlobalGridPartImp::template Codim< codim >::template Partition< pitype >::IteratorType BaseType;
+  typedef IndexBased< GlobalGridPartImp, codim, pitype > ThisType;
 public:
   typedef GlobalGridPartImp GlobalGridPartType;
-
-  typedef IndexBased< GlobalGridPartType, codim, pitype > ThisType;
-
-  typedef typename GlobalGridPartImp::template Codim< codim >::template Partition< pitype >::IteratorType BaseType;
-
   typedef typename GlobalGridPartType::IndexSetType::IndexType IndexType;
-
   typedef Dune::GeometryType GeometryType;
 
 private:
@@ -63,10 +46,10 @@ public:
 
   typedef typename BaseType::Entity Entity;
 
-  IndexBased(const GlobalGridPartType& globalGridPart,
-             const Dune::shared_ptr< const IndexContainerType > indexContainer,
+  IndexBased(const std::shared_ptr< const GlobalGridPartType > globalGridPart,
+             const std::shared_ptr< const IndexContainerType > indexContainer,
              const bool end = false)
-    : BaseType(end ? globalGridPart.template end< codim, pitype >() : globalGridPart.template begin< codim, pitype >()),
+    : BaseType(end ? globalGridPart->template end< codim, pitype >() : globalGridPart->template begin< codim, pitype >()),
       globalGridPart_(globalGridPart),
       indexContainer_(indexContainer),
       workAtAll_(0)
@@ -87,13 +70,31 @@ public:
     } // if (!end)
   } // IndexBased
 
+  IndexBased(const ThisType& other)
+    : BaseType(other)
+    , globalGridPart_(other.globalGridPart_)
+    , indexContainer_(other.indexContainer_)
+    , workAtAll_(other.workAtAll_)
+  {}
+
+  ThisType& operator=(const ThisType& other)
+  {
+    if (this != &other) {
+      BaseType::operator=(other);
+      globalGridPart_ = other.globalGridPart_;
+      indexContainer_ = other.indexContainer_;
+      workAtAll_ = other.workAtAll_;
+    }
+    return *this;
+  }
+
   ThisType& operator++()
   {
     if (workAtAll_ > 0) {
       BaseType::operator++();
       forward();
     } else
-      BaseType::operator=(globalGridPart_.template end< codim, pitype >());
+      BaseType::operator=(globalGridPart_->template end< codim, pitype >());
     return *this;
   } // ThisType& operator++()
 
@@ -104,7 +105,7 @@ private:
     bool found = false;
     while (!found && (workAtAll_ > 0)) {
       const Entity& entity = BaseType::operator*();
-      const IndexType& index = globalGridPart_.indexSet().index(entity);
+      const IndexType& index = globalGridPart_->indexSet().index(entity);
       const GeometryType& geometryType = entity.type();
       typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
       if (indexMap != indexContainer_->end()) {
@@ -120,21 +121,17 @@ private:
     }
   } // void forward()
 
-  const GlobalGridPartType& globalGridPart_;
-  const Dune::shared_ptr< const IndexContainerType > indexContainer_;
+  std::shared_ptr< const GlobalGridPartType > globalGridPart_;
+  std::shared_ptr< const IndexContainerType > indexContainer_;
   unsigned int workAtAll_;
   std::map< GeometryType, IndexType > last_;
   std::map< GeometryType, typename IndexMapType::const_iterator > end_;
 }; // class IndexBased
 
 } // namespace Local
-
 } // namespace Iterator
-
 } // namespace Part
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_PART_ITERATOR_CODIM0_HH
