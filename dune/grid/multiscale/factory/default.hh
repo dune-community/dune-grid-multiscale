@@ -16,6 +16,7 @@
 
 #include <dune/geometry/type.hh>
 
+#include <dune/grid/sgrid.hh>
 #if HAVE_ALUGRID
 # include <dune/grid/alugrid.hh>
 #endif
@@ -38,6 +39,16 @@ class NeighborRecursionLevel
 public:
   // If you get an error here, add an appropriate specialization of this class below!
   static size_t compute() = delete;
+};
+
+template<>
+class NeighborRecursionLevel< SGrid< 2, 2 > >
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
 };
 
 #if HAVE_ALUGRID
