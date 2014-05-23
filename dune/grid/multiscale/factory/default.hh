@@ -13,6 +13,7 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/static_assert.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -36,8 +37,8 @@ namespace Factory {
 template< class GridImp >
 class NeighborRecursionLevel
 {
+  static_assert(AlwaysFalse< GridImp >::value, "Please add an appropriate specialization for this GridImp!");
 public:
-  // If you get an error here, add an appropriate specialization of this class below!
   static size_t compute() = delete;
 };
 
