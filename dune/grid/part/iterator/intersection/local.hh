@@ -6,17 +6,10 @@
 #ifndef DUNE_GRID_PART_ITERATOR_INTERSECTION_LOCAL_HH
 #define DUNE_GRID_PART_ITERATOR_INTERSECTION_LOCAL_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
-
-// system
 #include <map>
-#include <set>
+#include <vector>
+#include <algorithm>
 
-// dune-common
 #include <dune/common/shared_ptr.hh>
 
 namespace Dune {
@@ -46,7 +39,7 @@ public:
 
   typedef typename GlobalGridPartType::IndexSetType::IndexType IndexType;
 
-  typedef std::set< int > IndexContainerType;
+  typedef std::vector< int > IndexContainerType;
 
   Local(const GlobalGridPartType& globalGridPart,
         const EntityType& entity,
@@ -86,7 +79,7 @@ private:
     while (!found && (workAtAll_ > 0)) {
       const Intersection& intersection = BaseType::operator*();
       const int index = intersection.indexInInside();
-      typename IndexContainerType::const_iterator result = indexContainer_.find(index);
+      const auto result = std::find(indexContainer_.begin(), indexContainer_.end(), index);
       if (result != end_) {
         found = true;
         if (*result == last_)
