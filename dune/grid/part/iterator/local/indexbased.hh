@@ -79,8 +79,8 @@ public:
         // treat only the codim 0 ones
         if (iterator->first.dim() == (GlobalGridPartType::GridType::dimension - codim)) {
           ++workAtAll_;
-          last_.insert(std::pair< GeometryType, IndexType >(iterator->first, iterator->second.rbegin()->first));
-          end_.insert(std::pair< GeometryType, typename IndexMapType::const_iterator >(iterator->first, iterator->second.end()));
+          last_.insert(std::make_pair(iterator->first, iterator->second.rbegin()->first));
+          end_.insert(std::make_pair(iterator->first, iterator->second.end()));
         } // treat only the codim 0 ones
       } // loop over all GeometryTypes
       forward();
