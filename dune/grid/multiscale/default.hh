@@ -160,6 +160,11 @@ public:
     createGridViews();
   } // Default()
 
+  const std::shared_ptr< const GridType >& grid() const
+  {
+    return grid_;
+  }
+
   const std::shared_ptr< const GlobalGridPartType > globalGridPart() const
   {
     return globalGridPart_;
