@@ -1,4 +1,4 @@
-#include "test_common.hh"
+#include <dune/stuff/test/test_common.hh>
 
 #include <iostream>
 #include <fstream>

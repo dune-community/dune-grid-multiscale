@@ -18,13 +18,15 @@ set( ENV{LD_LIBRARY_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib:$ENV{LD_LIBR
 set( ENV{PKG_CONFIG_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}" )
 
 # includes from dune-stuff
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/../dune-stuff/cmake )
+set(CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dune-stuff/cmake/modules)
 include(DuneUtils)
 include(GridUtils)
 
 # needs to come first to include correct config.h
-include_dir(${dune-grid-multiscale_BINARY_DIR})
-include_dir(${dune-grid-multiscale_SOURCE_DIR})
+include(${dune-grid-multiscale_BINARY_DIR})
+include(${dune-grid-multiscale_SOURCE_DIR})
 
 # options, that can be changed by the user in order to customise the module
 set( ENABLE_MPI
@@ -40,6 +42,12 @@ add_definitions( ${CUSTOM_FLAGS} )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_config.h )
 
 add_dune_modules(
+        grid-multiscale
+        fem
+        pdelab
+        typetree
+        localfunctions
+        istl
   grid
   stuff
   common
@@ -47,7 +55,7 @@ add_dune_modules(
 )
 
 # header
-file( GLOB_RECURSE grid-multiscale "${CMAKE_CURRENT_SOURCE_DIR}/dune/*.hh" )
+file( GLOB_RECURSE grid-multiscale "${CMAKE_CURRENT_SOURCE_DIR}/*.hh" )
 set( COMMON_HEADER ${grid-multiscale} ${DUNE_HEADERS} )
 set_source_files_properties( ${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1 )
 
@@ -59,7 +67,6 @@ set( COMMON_LIBS
      ${GRIDLIBS}
 )
 
-add_subdirectory( doc )
-add_subdirectory( examples )
-add_subdirectory( dune )
+add_subdirectory(examples)
+add_subdirectory(tests)
 
