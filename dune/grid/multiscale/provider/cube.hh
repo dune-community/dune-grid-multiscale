@@ -17,8 +17,9 @@
 
 #include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/common/logging.hh>
-#include <dune/stuff/common/parameter/tree.hh>
 #include <dune/stuff/common/print.hh>
+#include <dune/stuff/common/memory.hh>
+#include <dune/stuff/common/type_utils.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
 
@@ -27,218 +28,121 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
+namespace Providers {
 
 
 template< class GridImp >
-class ProviderCube
+class Cube
   : public ProviderInterface< GridImp >
 {
-  typedef Dune::Stuff::GridProviderCube< GridImp > CubeGridProvider;
-  typedef ProviderInterface< GridImp > InterfaceType;
+  typedef ProviderInterface< GridImp >  BaseType;
+  typedef Cube< GridImp >               ThisType;
 public:
-  static const unsigned int dimension = InterfaceType::dimension;
-  static const unsigned int dim = InterfaceType::dimension;
-  typedef typename InterfaceType::ctype           ctype;
-  typedef typename InterfaceType::CoordinateType  CoordinateType;
-  typedef GridImp GridType;
-private:
-  typedef Dune::grid::Multiscale::Factory::Default< GridType > MsGridFactoryType;
-public:
-  typedef typename MsGridFactoryType::MsGridType MsGridType;
-private:
-  typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
+  typedef typename BaseType::GridType   GridType;
+  typedef typename BaseType::MsGridType MsGridType;
 
-public:
+  static const unsigned int             dimDomain = BaseType::dimDomain;
+  typedef typename BaseType::DomainType DomainType;
+
   static std::string static_id()
   {
-    return InterfaceType::static_id() + ".cube";
+    return BaseType::static_id() + ".cube";
   }
 
-  virtual std::string id() const
+  static Stuff::Common::ConfigTree default_config(const std::string sub_name = "")
   {
-    return InterfaceType::static_id() + ".cube";
-  }
-
-  ProviderCube(const std::vector< ctype > lower_left       = std::vector< ctype >({0.0, 0.0, 0.0}),
-               const std::vector< ctype > upper_right      = std::vector< ctype >({1.0, 1.0, 1.0}),
-               const std::vector< size_t > num_elements    = std::vector< size_t >({8, 8, 8}),
-               const std::vector< size_t > num_partittions = std::vector< size_t >({2, 2, 2}),
-               const size_t num_oversampling_layers        = 0,
-               std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
-  {
-    if (lower_left.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "lower_left has to be at least of size " << dim << " (is " << lower_left.size() << ")!");
-    if (upper_right.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "upper_right has to be at least of size " << dim << " (is " << upper_right.size() << ")!");
-    if (num_elements.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "num_elements has to be at least of size " << dim << " (is " << num_elements.size() << ")!");
-    if (num_partittions.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "num_partittions has to be at least of size " << dim << " (is " << num_partittions.size() << ")!");
-    for (size_t ii = 0; ii < dim; ++ii) {
-      if (num_partittions[ii] < num_elements[ii])
-        DUNE_THROW(Dune::RangeError,
-                   num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than num_elements[" << ii
-                   << "] = " << num_elements[ii] << "!)");
+    Stuff::Common::ConfigTree config;
+    config["lower_left"] = "[0.0 0.0 0.0]";
+    config["upper_right"] = "[1.0 1.0 1.0]";
+    config["num_elements"] = "[8 8 8]";
+    config["num_partitions"] = "[2 2 2]";
+    config["oversampling_layers"] = "0";
+    if (sub_name.empty())
+      return config;
+    else {
+      Stuff::Common::ConfigTree tmp;
+      tmp.add(config, sub_name);
+      return tmp;
     }
+  } // ... createSampleDescription(...)
+
+  static std::unique_ptr< ThisType > create(const Stuff::Common::ConfigTree config = default_config(),
+                                            const std::string sub_name = static_id())
+  {
+    // get correct config
+    const Stuff::Common::ConfigTree cfg = config.has_sub(sub_name) ? config.sub(sub_name) : config;
+    const Stuff::Common::ConfigTree default_cfg = default_config();
+    return Stuff::Common::make_unique< ThisType >(
+        cfg.get("lower_left",          default_cfg.get< DomainType >("lower_left"), dimDomain),
+        cfg.get("upper_right",         default_cfg.get< DomainType >("upper_right"), dimDomain),
+        cfg.get("num_elements",        default_cfg.get< std::vector< unsigned int > >(   "num_elements"), dimDomain),
+        cfg.get("num_partitions",      default_cfg.get< std::vector< size_t > >(         "num_partitions"), dimDomain),
+        cfg.get("oversampling_layers", default_cfg.get< size_t >(                        "oversampling_layers")));
+  } // ... create(...)
+
+  Cube(const DomainType lower_left                    = default_config().get< DomainType >("lower_left"),
+       const DomainType upper_right                   = default_config().get< DomainType >("upper_right"),
+       const std::vector< unsigned int > num_elements = default_config().get< std::vector< unsigned int >  >("num_elements"),
+       const std::vector< size_t > num_partittions    = default_config().get< std::vector< size_t >  >("num_partitions", dimDomain),
+       const size_t num_oversampling_layers           = default_config().get< size_t >("oversampling_layers"),
+       std::ostream& out                              = DSC_LOG.devnull(),
+       const std::string prefix                       = "")
+  {
+    if (num_partittions.size() < dimDomain)
+      DUNE_THROW_COLORFULLY(Dune::RangeError,
+                            "num_partittions has to be at least of size " << dimDomain << " (is "
+                            << num_partittions.size() << ")!");
+    for (size_t ii = 0; ii < dimDomain; ++ii) {
+      if (num_partittions[ii] > num_elements[ii])
+        DUNE_THROW_COLORFULLY(Dune::RangeError,
+                              num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than "
+                              << "num_elements[" << ii << "] = " << num_elements[ii] << "!)");
+    }
+    typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
     grid_ = CubeGridProvider(lower_left, upper_right, num_elements).grid();
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
   }
 
-  ProviderCube(const std::shared_ptr< const GridType > grd,
-               const std::vector< ctype > lower_left       = std::vector< ctype >({0.0, 0.0, 0.0}),
-               const std::vector< ctype > upper_right      = std::vector< ctype >({1.0, 1.0, 1.0}),
-               const std::vector< size_t > num_partittions = std::vector< size_t >({2, 2, 2}),
-               const size_t num_oversampling_layers        = 0,
-               std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+  Cube(const std::shared_ptr< const GridType > grd,
+       const DomainType lower_left                 = default_config().get< DomainType >("lower_left"),
+       const DomainType upper_right                = default_config().get< DomainType >("upper_right"),
+       const std::vector< size_t > num_partittions = default_config().get< std::vector< size_t >  >("num_partitions", dimDomain),
+       const size_t num_oversampling_layers        = default_config().get< size_t >("oversampling_layers"),
+       std::ostream& out                           = DSC_LOG.devnull(),
+       const std::string prefix                    = "")
     : grid_(grd)
   {
-    if (lower_left.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "lower_left has to be at least of size " << dim << " (is " << lower_left.size() << ")!");
-    if (upper_right.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "upper_right has to be at least of size " << dim << " (is " << upper_right.size() << ")!");
-    if (num_partittions.size() < dim)
-      DUNE_THROW(Dune::RangeError,
-                 "num_partittions has to be at least of size " << dim << " (is " << num_partittions.size() << ")!");
-    for (size_t ii = 0; ii < dim; ++ii) {
+    if (num_partittions.size() < dimDomain)
+      DUNE_THROW_COLORFULLY(Dune::RangeError,
+                 "num_partittions has to be at least of size " << dimDomain << " (is " << num_partittions.size() << ")!");
+    for (size_t ii = 0; ii < dimDomain; ++ii) {
       if (lower_left[ii] >= upper_right[ii])
-        DUNE_THROW(Dune::RangeError,
+        DUNE_THROW_COLORFULLY(Dune::RangeError,
                    lower_left[ii] << " = lower_left[" << ii << "] has to be smaller than upper_right[" << ii
                    << "] = " << upper_right[ii] << "!)");
     }
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
   }
 
-//  ProviderCube(const ThisType& other)
-//    : BaseType(other)
-//    , msGrid_(other.msGrid_)
-//  {}
-
-//  static Dune::ParameterTree createSampleDescription(const std::string subName = "")
-//  {
-//    Dune::ParameterTree description;
-//    description["lowerLeft"] = "[0.0; 0.0; 0.0]";
-//    description["upperRight"] = "[1.0; 1.0; 1.0]";
-//    description["numElements"] = "[4; 4; 4]";
-//    description["partitions"] = "[2; 2; 2]";
-//    description["oversamplingLayers"] = "2";
-//    if (subName.empty())
-//      return description;
-//    else {
-//      Dune::Stuff::Common::ExtendedParameterTree extendedDescription;
-//      extendedDescription.add(description, subName);
-//      return extendedDescription;
-//    }
-//  } // ... createSampleDescription(...)
-
-//  //! \todo TODO Use BaseType::createFromParamTree() internally to avoid code duplication!
-//  static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
-//  {
-//    // get correct paramTree
-//    Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
-//    if (description.hasSub(subName))
-//      extendedParamTree = description.sub(subName);
-//    else
-//      extendedParamTree = description;
-//    // get lower left
-//    std::vector< ctype > lowerLefts;
-//    if (extendedParamTree.hasVector("lowerLeft")) {
-//      lowerLefts = extendedParamTree.getVector("lowerLeft", ctype(0), dim);
-//      assert(lowerLefts.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("lowerLeft")) {
-//        const ctype lowerLeft = extendedParamTree.get("lowerLeft", ctype(0));
-//        lowerLefts = std::vector< ctype >(dim, lowerLeft);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'lowerLeft' given, defaulting to 0.0!" << std::endl;
-//      lowerLefts = std::vector< ctype >(dim, ctype(0));
-//    }
-//    // get upper right
-//    std::vector< ctype > upperRights;
-//    if (extendedParamTree.hasVector("upperRight")) {
-//      upperRights = extendedParamTree.getVector("upperRight", ctype(1), dim);
-//      assert(upperRights.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("upperRight")) {
-//        const ctype upperRight = extendedParamTree.get("upperRight", ctype(1));
-//        upperRights = std::vector< ctype >(dim, upperRight);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'upperRight' given, defaulting to 1.0!" << std::endl;
-//      upperRights = std::vector< ctype >(dim, ctype(1));
-//    }
-//    // get number of elements
-//    std::vector< unsigned int > tmpNumElements;
-//    if (extendedParamTree.hasVector("numElements")) {
-//      tmpNumElements = extendedParamTree.getVector("numElements", 4u, dim);
-//      assert(tmpNumElements.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("numElements")) {
-//        const unsigned int numElement = extendedParamTree.get("numElements", 4u);
-//        tmpNumElements = std::vector< unsigned int >(dim, numElement);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'numElements' given, defaulting to 4!" << std::endl;
-//      tmpNumElements = std::vector< unsigned int >(dim, 4u);
-//    }
-//    // get partitions
-//    std::vector< unsigned int > tmpPartitions;
-//    if (extendedParamTree.hasVector("partitions")) {
-//      tmpPartitions = extendedParamTree.getVector("partitions", 2u, dim);
-//      assert(tmpPartitions.size() >= dim && "Given vector too short!");
-//    } else if (extendedParamTree.hasKey("partitions")) {
-//        const unsigned int partitions = extendedParamTree.get("partitions", 2u);
-//        tmpPartitions = std::vector< unsigned int >(dim, partitions);
-//    } else {
-//      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 2!" << std::endl;
-//      tmpPartitions = std::vector< unsigned int >(dim, 2u);
-//    }
-//    // get oversampling size
-//    const size_t oversamplingLayers = extendedParamTree.get< size_t >("oversamplingLayers", 0);
-//    // check and save
-//    CoordinateType lowerLeft;
-//    CoordinateType upperRight;
-//    Dune::array< unsigned int, dim > numElements;
-//    for (unsigned int d = 0; d < dim; ++d) {
-//      assert(lowerLefts[d] < upperRights[d]
-//             && "Given 'upperRight' hast to be elementwise larger than given 'lowerLeft'!");
-//      lowerLeft[d] = lowerLefts[d];
-//      upperRight[d] = upperRights[d];
-//      assert(tmpNumElements[d] > 0 && "Given 'numElements' has to be elementwise positive!");
-//      numElements[d] = tmpNumElements[d];
-//      assert(tmpPartitions[d] > 0 && "Given 'partitions' has to be elementwise positive!");
-//    }
-//    return new ThisType(lowerLeft, upperRight, numElements, tmpPartitions, oversamplingLayers);
-//  } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
-
-//  ThisType& operator=(const ThisType& other)
-//  {
-//    if (this != &other) {
-//      BaseType::operator=(other);
-//      msGrid_ = other.msGrid();
-//    }
-//    return this;
-//  } // ThisType& operator=(ThisType& other)
-
-  std::shared_ptr< const GridType > grid() const
+  virtual std::shared_ptr< const GridType > grid() const DS_OVERRIDE
   {
     return grid_;
   }
 
-  std::shared_ptr< const MsGridType > msGrid() const
+  virtual std::shared_ptr< const MsGridType > ms_grid() const DS_OVERRIDE
   {
     return ms_grid_;
   }
 
-  using InterfaceType::visualize;
-
 private:
-  void setup(const std::vector< ctype >& lower_left,
-             const std::vector< ctype >& upper_right,
+  void setup(const DomainType& lower_left,
+             const DomainType& upper_right,
              const std::vector< size_t >& num_partitions,
              const size_t num_oversampling_layers,
              std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
   {
+    typedef Dune::grid::Multiscale::Factory::Default< GridType > MsGridFactoryType;
+
     const size_t neighbor_recursion_level = Factory::NeighborRecursionLevel< GridType >::compute();
     // prepare
     MsGridFactoryType factory(grid_);
@@ -264,20 +168,20 @@ private:
       Stuff::Common::print(center, "entity (" + Stuff::Common::toString(entity_index) + ")", out, prefix);
 #endif // NDEBUG
       // decide on the subdomain this entity shall belong to
-      std::vector< size_t > whichPartition(dim, 0);
-      for (size_t dd = 0; dd < dim; ++dd)
+      std::vector< size_t > whichPartition(dimDomain, 0);
+      for (size_t dd = 0; dd < dimDomain; ++dd)
         whichPartition[dd] = (std::min((size_t)(std::floor(num_partitions[dd]*((center[dd] - lower_left[dd])/(upper_right[dd] - lower_left[dd])))),
                                        num_partitions[dd] - 1));
       size_t subdomain = 0;
-      if (dim == 1)
+      if (dimDomain == 1)
         subdomain = whichPartition[0];
-      else if (dim == 2)
+      else if (dimDomain == 2)
         subdomain = whichPartition[0] + whichPartition[1]*num_partitions[0];
-      else if (dim == 3)
+      else if (dimDomain == 3)
         subdomain = whichPartition[0] + whichPartition[1]*num_partitions[0] + whichPartition[2]*num_partitions[1]*num_partitions[0];
       else
-        DUNE_THROW(Dune::NotImplemented,
-                   "ERROR in " << static_id()<< ": not implemented for grid dimensions other than 1, 2 or 3!");
+        DUNE_THROW_COLORFULLY(Dune::NotImplemented,
+                   "ERROR in " << static_id() << ": not implemented for grid dimDomains other than 1, 2 or 3!");
       // add entity to subdomain
       factory.add(entity, subdomain, prefix + "  ", out);
     } // walk the grid
@@ -290,9 +194,10 @@ private:
 
   std::shared_ptr< const GridType > grid_;
   std::shared_ptr< const MsGridType > ms_grid_;
-}; // class ProviderCube
+}; // class Cube
 
 
+} // namespace Providers
 } // namespace Multiscale
 } // namespace Grid
 } // namespace Dune
