@@ -261,7 +261,7 @@ public:
       //   * vector to hold a map of coupling sizes
       std::vector< std::map< size_t, CodimSizesType > > couplingCodimSizeMaps(size_, std::map< size_t, CodimSizesType >());
       //   * set of local coupling intersections
-      typedef std::set< int > IntersectionInfoSetType;
+      typedef std::vector< int > IntersectionInfoSetType;
       //   * map to hold the above information for each coupling entity
       typedef std::map< IndexType, IntersectionInfoSetType > EntityToIntersectionSetMapType;
       //   * map to hold the above map for each neighboring subdomain
@@ -364,7 +364,7 @@ public:
             //   * and get the entry for this entity
             IntersectionInfoSetType& entityBoundaryInfo = boundaryInfo[entityGlobalIndex];
             //   * and add this local intersection
-            entityBoundaryInfo.insert(intersectionLocalIndex);
+            entityBoundaryInfo.push_back(intersectionLocalIndex);
           } else if (intersection.neighbor()) {
             // then this entity lies inside the domain
             // and has a neighbor
@@ -428,7 +428,7 @@ public:
               //   * get the entry for this entity
               IntersectionInfoSetType& entityCouplingBoundaryInfo = couplingBoundaryInfoMap[entityGlobalIndex];
               //   * and add this local intersection
-              entityCouplingBoundaryInfo.insert(intersectionLocalIndex);
+              entityCouplingBoundaryInfo.push_back(intersectionLocalIndex);
             } else { // if neighbor is contained in this subdomain
               subdomainsEntitiesAreConnected = true;
             } // check if neighbor is in another subdomain
