@@ -6,68 +6,62 @@
 #ifndef DUNE_GRID_MULTISCALE_PROVIDER_HH
 #define DUNE_GRID_MULTISCALE_PROVIDER_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
+#include <memory>
 
-#include <dune/common/exceptions.hh>
-
-#include <dune/grid/sgrid.hh>
-
-#include <dune/stuff/common/color.hh>
+#include <dune/stuff/common/exceptions.hh>
+#include <dune/stuff/common/configtree.hh>
 
 #include "provider/interface.hh"
 #include "provider/cube.hh"
-#include "provider/functionbased.hh"
 
 namespace Dune {
 namespace grid {
 namespace Multiscale {
 
-#if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-template< class GridType = Dune::GridSelector::GridType >
-#else
-template< class GridType = Dune::SGrid< 2, 2 > >
-#endif
-class Providers
+
+template< class GridType >
+class MsGridProviders
 {
+public:
+  typedef ProviderInterface< GridType > InterfaceType;
+
+protected:
+  template< class GridProviderType >
+  static std::unique_ptr< InterfaceType > call_create(const Stuff::Common::ConfigTree& config)
+  {
+    if (config.empty())
+      return GridProviderType::create();
+    else
+      return GridProviderType::create(config);
+  } // ... call_create(...)
+
 public:
   static std::vector< std::string > available()
   {
     return {
-        "grid.multiscale.provider.cube",
-        "grid.multiscale.provider.functionbased"
+      Providers::Cube< GridType >::static_id()
     };
   } // ... available(...)
 
-  static Dune::ParameterTree createSampleDescription(const std::string type, const std::string subname = "")
+  static Stuff::Common::ConfigTree default_config(const std::string type, const std::string sub_name = "")
   {
-  if (type == "grid.multiscale.provider.cube")
-    return ProviderCube< GridType >::createSampleDescription(subname);
-  else if (type == "grid.multiscale.provider.functionbased")
-    return ProviderFunctionbased< GridType >::createSampleDescription(subname);
-  else
-    DUNE_THROW(Dune::RangeError,
-               "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
-               << " unknown multiscale gridprovider '" << type << "' requested!");
-  } // ... createSampleDescription(...)
-
-  static ProviderInterface< GridType >* create(const std::string& type = available()[0],
-                                               const Dune::ParameterTree description = Dune::ParameterTree())
-  {
-    // choose provider
-    if (type == "grid.multiscale.provider.cube")
-      return Dune::grid::Multiscale::ProviderCube< GridType >::create(description);
-    else if (type == "grid.multiscale.provider.functionbased")
-      return Dune::grid::Multiscale::ProviderFunctionbased< GridType >::create(description);
+    if (type == Providers::Cube< GridType >::static_id())
+      return Providers::Cube< GridType >::default_config(sub_name);
     else
-      DUNE_THROW(Dune::RangeError,
-                 "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
-                 << " unknown multiscale gridprovider '" << type << "' requested!");
+      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
+                            "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
+  } // ... default_config(...)
+
+  static std::unique_ptr< InterfaceType > create(const std::string& type = available()[0],
+                                                 const Stuff::Common::ConfigTree config = Stuff::Common::ConfigTree())
+  {
+    if (type == Providers::Cube< GridType >::static_id())
+      return call_create< Providers::Cube< GridType > >(config);
+    else
+      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
+                            "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
   } // ... create(...)
-}; // class Providers
+}; // class MsGridProviders
 
 
 } // namespace Multiscale
