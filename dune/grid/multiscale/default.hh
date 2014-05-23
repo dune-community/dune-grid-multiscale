@@ -200,6 +200,7 @@ public:
 
   const std::shared_ptr< const LocalGridViewType > localGridView(const size_t subdomain) const
   {
+    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
     const std::vector< std::shared_ptr< const LocalGridViewType > >& localGridViews = *localGridViews_;
     return localGridViews[subdomain];
@@ -222,6 +223,7 @@ public:
 
   const std::shared_ptr< const BoundaryGridViewType > boundaryGridView(const size_t subdomain) const
   {
+    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
     const std::map< size_t, std::shared_ptr< const BoundaryGridViewType > >& boundaryGridViews = *boundaryGridViews_;
     typename std::map< size_t, std::shared_ptr< const BoundaryGridViewType > >::const_iterator result = boundaryGridViews.find(subdomain);
@@ -246,6 +248,7 @@ public:
 
   const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t neighbor) const
   {
+    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
     assert(neighbor < size_);
     const std::vector< std::map< size_t, std::shared_ptr< const CouplingGridViewType > > >& couplingGridViewsMaps = *couplingGridViewsMaps_;
