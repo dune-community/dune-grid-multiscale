@@ -374,7 +374,7 @@ public:
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
-    const std::set< int >& info = result->second;
+    const auto& info = result->second;
     // return localized iterator
     return IntersectionIteratorType(BaseType::globalGridPart(), entity, info);
   } // IntersectionIteratorType ibegin(const EntityType& entity) const
@@ -385,7 +385,7 @@ public:
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
-    const std::set< int >& info = result->second;
+    const auto& info = result->second;
     // return localized iterator
     return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
   } // IntersectionIteratorType iend(const EntityType& entity) const
