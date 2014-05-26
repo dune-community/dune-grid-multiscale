@@ -165,12 +165,12 @@ public:
     return grid_;
   }
 
-  const std::shared_ptr< const GlobalGridPartType > globalGridPart() const
+  const std::shared_ptr< const GlobalGridPartType >& globalGridPart() const
   {
     return globalGridPart_;
   }
 
-  const std::shared_ptr< const GlobalGridViewType > globalGridView() const
+  const std::shared_ptr< const GlobalGridViewType >& globalGridView() const
   {
     return globalGridView_;
   }
@@ -185,7 +185,7 @@ public:
     return oversampling_;
   }
 
-  const std::shared_ptr< const LocalGridPartType > localGridPart(const size_t subdomain,
+  const std::shared_ptr< const LocalGridPartType >& localGridPart(const size_t subdomain,
                                                                  const bool oversampling = false) const
   {
     assert(subdomain < size_);
@@ -203,7 +203,7 @@ public:
     }
   } // ... localGridPart(...)
 
-  const std::shared_ptr< const LocalGridViewType > localGridView(const size_t subdomain) const
+  const std::shared_ptr< const LocalGridViewType >& localGridView(const size_t subdomain) const
   {
     DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
@@ -217,7 +217,7 @@ public:
     return (boundaryGridParts.find(subdomain) != boundaryGridParts.end());
   }
 
-  const std::shared_ptr< const BoundaryGridPartType > boundaryGridPart(const size_t subdomain) const
+  const std::shared_ptr< const BoundaryGridPartType >& boundaryGridPart(const size_t subdomain) const
   {
     assert(subdomain < size_);
     const std::map< size_t, std::shared_ptr< const BoundaryGridPartType > >& boundaryGridParts = *boundaryGridParts_;
@@ -226,7 +226,7 @@ public:
     return result->second;
   }
 
-  const std::shared_ptr< const BoundaryGridViewType > boundaryGridView(const size_t subdomain) const
+  const std::shared_ptr< const BoundaryGridViewType >& boundaryGridView(const size_t subdomain) const
   {
     DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
@@ -236,7 +236,7 @@ public:
     return result->second;
   }
 
-  const std::shared_ptr< const CouplingGridPartType > couplingGridPart(const size_t subdomain, const size_t neighbor) const
+  const std::shared_ptr< const CouplingGridPartType >& couplingGridPart(const size_t subdomain, const size_t neighbor) const
   {
     assert(subdomain < size_);
     assert(neighbor < size_);
@@ -251,7 +251,7 @@ public:
     return result->second;
   } // const std::shared_ptr< const CouplingGridPartType > couplingGridPart(const size_t subdomain, const size_t neighbor) const
 
-  const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t neighbor) const
+  const std::shared_ptr< const CouplingGridViewType >& couplingGridView(const size_t subdomain, const size_t neighbor) const
   {
     DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
     assert(subdomain < size_);
@@ -267,7 +267,7 @@ public:
     return result->second;
   } // const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t neighbor) const
 
-  const std::shared_ptr< const EntityToSubdomainMapType > entityToSubdomainMap() const
+  const std::shared_ptr< const EntityToSubdomainMapType >& entityToSubdomainMap() const
   {
     return entityToSubdomainMap_;
   }
