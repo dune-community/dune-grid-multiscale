@@ -99,7 +99,12 @@ public:
                               << "num_elements[" << ii << "] = " << num_elements[ii] << "!)");
     }
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
-    grid_ = CubeGridProvider(lower_left, upper_right, num_elements).grid();
+    auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid();
+    const std::string grid_type = Dune::Stuff::Common::Typename< GridType >::value();
+    if (grid_type == "Dune::ALUConformGrid<2, 2>"
+        || grid_type == "Dune::ALUGrid<2, 2, (Dune::ALUGridElementType)0, (Dune::ALUGridRefinementType)0, Dune::No_Comm>")
+      grd_ptr->globalRefine(1);
+    grid_ = grd_ptr;
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
   }
 
