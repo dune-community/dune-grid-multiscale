@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 #include <dune/common/exceptions.hh>
 
@@ -19,7 +20,6 @@
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/print.hh>
 #include <dune/stuff/common/memory.hh>
-#include <dune/stuff/common/type_utils.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
 
@@ -100,9 +100,8 @@ public:
     }
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
     auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid();
-    const std::string grid_type = Dune::Stuff::Common::Typename< GridType >::value();
-    if (grid_type == "Dune::ALUConformGrid<2, 2>"
-        || grid_type == "Dune::ALUGrid<2, 2, (Dune::ALUGridElementType)0, (Dune::ALUGridRefinementType)0, Dune::No_Comm>")
+    if (std::is_same< GridType, ALUConformGrid< 2, 2 > >::value
+        || std::is_same< GridType, ALUGrid< 2, 2, simplex, conforming > >::value)
       grd_ptr->globalRefine(1);
     grid_ = grd_ptr;
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
