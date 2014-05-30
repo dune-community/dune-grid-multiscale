@@ -93,6 +93,13 @@ public:
     return set_.index(en);
   }
 
+  //! return index of en
+  template< int cc, class EntityType >
+  int index(const EntityType & en) const
+  {
+    return set_.index(en);
+  }
+
   //! return sub index of given entities sub entity with codim and number
   template< int codim, class EntityType >
   int DUNE_DEPRECATED subIndex ( const EntityType &entity, int num ) const
