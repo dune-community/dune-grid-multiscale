@@ -278,7 +278,7 @@ public:
 
   using BaseType::visualize;
 
-  virtual void visualize(const std::string filename = static_id()) const
+  virtual void visualize(const std::string filename, const bool coupling) const
   {
     // vtk writer
     typedef typename MsGridType::GlobalGridViewType GlobalGridViewType;
@@ -335,28 +335,30 @@ public:
         if (numberOfBoundarySegments > 0)
           data["local boundary id"][index] /= double(numberOfBoundarySegments);
         // visualize coupling
-        for (auto nn : ms_grid()->neighborsOf(s)) {
-          const auto coupling_grid_view = ms_grid()->couplingGridPart(s, nn);
-          const std::string coupling_str = "coupling (" + DSC::toString(s) + ", " + DSC::toString(nn) + ")";
-          data[coupling_str] = std::vector< double >(globalGridView.indexSet().size(0), 0.0);
-          const auto entity_it_end = coupling_grid_view->template end< 0 >();
-          for (auto entity_it = coupling_grid_view->template begin< 0 >(); entity_it != entity_it_end; ++entity_it) {
-            const auto& entity = *entity_it;
-            const size_t global_entity_id = globalGridView.indexSet().index(entity);
-            data[coupling_str][global_entity_id] = 1.0;
-            for (auto intersection_it = coupling_grid_view->ibegin(entity);
-                 intersection_it != coupling_grid_view->iend(entity);
-                 ++intersection_it) {
-              const auto& intersection = *intersection_it;
-              if (intersection.neighbor() && !intersection.boundary()) {
-                const auto neighbor_ptr = intersection.outside();
-                const auto& neighbor = *neighbor_ptr;
-                const size_t global_neighbor_id = globalGridView.indexSet().index(neighbor);
-                data[coupling_str][global_neighbor_id] = 0.5;
+        if (coupling) {
+          for (auto nn : ms_grid()->neighborsOf(s)) {
+            const auto coupling_grid_view = ms_grid()->couplingGridPart(s, nn);
+            const std::string coupling_str = "coupling (" + DSC::toString(s) + ", " + DSC::toString(nn) + ")";
+            data[coupling_str] = std::vector< double >(globalGridView.indexSet().size(0), 0.0);
+            const auto entity_it_end = coupling_grid_view->template end< 0 >();
+            for (auto entity_it = coupling_grid_view->template begin< 0 >(); entity_it != entity_it_end; ++entity_it) {
+              const auto& entity = *entity_it;
+              const size_t global_entity_id = globalGridView.indexSet().index(entity);
+              data[coupling_str][global_entity_id] = 1.0;
+              for (auto intersection_it = coupling_grid_view->ibegin(entity);
+                   intersection_it != coupling_grid_view->iend(entity);
+                   ++intersection_it) {
+                const auto& intersection = *intersection_it;
+                if (intersection.neighbor() && !intersection.boundary()) {
+                  const auto neighbor_ptr = intersection.outside();
+                  const auto& neighbor = *neighbor_ptr;
+                  const size_t global_neighbor_id = globalGridView.indexSet().index(neighbor);
+                  data[coupling_str][global_neighbor_id] = 0.5;
+                }
               }
             }
           }
-        }
+        } // if (coupling)
       } // walk the local grid view
     } // walk the subdomains
     if (ms_grid()->oversampling()) {
