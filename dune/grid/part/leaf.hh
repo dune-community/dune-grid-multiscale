@@ -5,12 +5,6 @@
 #ifndef DUNE_GRID_MULTISCALE_GRIDPART_HH
 #define DUNE_GRID_MULTISCALE_GRIDPART_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
-
 // dune-common
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
@@ -18,17 +12,16 @@
 // dune-grid
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/capabilities.hh>
 
 // dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace Leaf {
+
 
 template< class GridImp >
 class Const;
@@ -187,11 +180,64 @@ private:
 }; // class Const
 
 } // namespace Leaf
-
 } // namespace Part
-
 } // namespace grid
+namespace Fem {
+namespace GridPartCapabilities {
 
+
+template< class GridType >
+struct hasGrid< grid::Part::Leaf::Const< GridType > >
+{
+  static const bool v = true;
+};
+
+
+template< class GridType >
+struct hasSingleGeometryType< grid::Part::Leaf::Const< GridType > >
+{
+  static const bool v = Dune::Capabilities::hasSingleGeometryType< GridType >::v;
+  static const unsigned int topologyId = Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId;
+};
+
+
+template< class GridType >
+struct isCartesian< grid::Part::Leaf::Const< GridType > >
+{
+  static const bool v = Dune::Capabilities::isCartesian< GridType >::v;
+};
+
+
+template< class GridType, int codim  >
+struct hasEntity< grid::Part::Leaf::Const< GridType >, codim >
+{
+  static const bool v = Dune::Capabilities::hasEntity< GridType, codim >::v;
+};
+
+
+template< class GridType >
+struct isParallel< grid::Part::Leaf::Const< GridType > >
+{
+  static const bool v = Dune::Capabilities::isParallel< GridType >::v;
+};
+
+
+template< class GridType, int codim >
+struct canCommunicate< grid::Part::Leaf::Const< GridType >, codim >
+{
+  static const bool v = Dune::Capabilities::canCommunicate< GridType, codim >::v;
+};
+
+
+template< class GridType >
+struct isConforming< grid::Part::Leaf::Const< GridType > >
+{
+  static const bool v = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
+};
+
+
+} // namespace GridPartCapabilities
+} // namespace Fem
 } // namespace Dune
 
 #endif // DUNE_GRID_MULTISCALE_GRIDPART_HH
