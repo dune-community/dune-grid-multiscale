@@ -60,7 +60,7 @@ class ProviderInterface
     {
       if (over)
         DUNE_THROW_COLORFULLY(NotImplemented,
-                              "Please add the corresponding method 'localGridView(..., oversampling)' to the multiscale"
+                              "Please add the corresponding method 'localGridView(..., true)' to the multiscale"
                               << " grid first!");
       return msg.localGridView(ss);
     }
