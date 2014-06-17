@@ -144,6 +144,17 @@ class ProviderInterface
     }
   };
 
+  template< class MSG, Stuff::Grid::ChoosePartView part_view >
+  struct LayerChooser< MSG, Stuff::Grid::ChooseLayer::local_oversampled, part_view >
+  {
+    typedef typename ChooseLocalPartView< MSG, part_view >::Type Type;
+
+    static std::shared_ptr< const Type > create(const MSG& ms_grid, const int level)
+    {
+      return ChooseLocalPartView< MSG, part_view >::create(ms_grid, level, true);
+    }
+  };
+
 public:
   typedef typename BaseType::GridType GridType;
   typedef Default< GridType > MsGridType;
