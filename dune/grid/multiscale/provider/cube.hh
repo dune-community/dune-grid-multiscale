@@ -92,12 +92,14 @@ public:
       DUNE_THROW_COLORFULLY(Dune::RangeError,
                             "num_partittions has to be at least of size " << dimDomain << " (is "
                             << num_partittions.size() << ")!");
+#ifndef DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     for (size_t ii = 0; ii < dimDomain; ++ii) {
       if (num_partittions[ii] > num_elements[ii])
         DUNE_THROW_COLORFULLY(Dune::RangeError,
                               num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than "
                               << "num_elements[" << ii << "] = " << num_elements[ii] << "!)");
     }
+#endif // DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
     auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid();
     if (std::is_same< GridType, ALUConformGrid< 2, 2 > >::value
