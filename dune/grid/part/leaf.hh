@@ -62,6 +62,8 @@ struct ConstTraits
 
   //! \brief is true if grid on this view only has conforming intersections
   static const bool conforming = Capabilities::isLeafwiseConforming<GridType>::v;
+
+  typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
 }; // struct LeafTraits
 
 //! \brief Selects the leaf level of a grid
@@ -79,6 +81,8 @@ public:
 
   //! Grid implementation type
   typedef typename Traits::GridType GridType;
+
+  typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
   //! The leaf index set of the grid implementation
   typedef typename Traits::IndexSetType IndexSetType;
@@ -171,6 +175,11 @@ public:
   void communicate(CommDataHandleIF< DataHandleImp, DataType >& data, InterfaceType iftype, CommunicationDirection dir) const
   {
     grid_.communicate(data,iftype,dir);
+  }
+
+  const CollectiveCommunicationType& comm() const
+  {
+    return grid().comm();
   }
 
 private:

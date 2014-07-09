@@ -52,6 +52,8 @@ struct ConstTraits
 
   typedef typename GlobalGridPartType::GridType GridType;
 
+  typedef typename GridType::CollectiveCommunicationType CollectiveCommunicationType;
+
   typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GlobalGridPartType > IndexSetType;
 
   template< int codim >
@@ -87,6 +89,8 @@ public:
   typedef Dune::grid::Part::Interface< Traits > BaseType;
 
   typedef typename Traits::GridType GridType;
+
+  typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
   typedef typename Traits::GlobalGridPartType GlobalGridPartType;
 
@@ -207,6 +211,11 @@ public:
   {
     DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
     globalGridPart_->communicate(data,iftype,dir);
+  }
+
+  const CollectiveCommunicationType& comm() const
+  {
+    return grid().comm();
   }
 
 private:

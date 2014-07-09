@@ -44,6 +44,8 @@ public:
   //! \brief type of Grid implementation
   typedef typename Traits::GridType GridType;
 
+  typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
+
   //! \brief Index set implementation
   typedef typename Traits::IndexSetType IndexSetType;
 
@@ -178,6 +180,12 @@ public:
   {
     CHECK_INTERFACE_IMPLEMENTATION(asImp().boundaryId(intersection));
     return asImp().boundaryId(intersection);
+  }
+
+  const CollectiveCommunicationType& comm() const
+  {
+    CHECK_INTERFACE_IMPLEMENTATION(asImp().comm());
+    return asImp().comm();
   }
 
   //! \brief corresponding communication method for grid part
