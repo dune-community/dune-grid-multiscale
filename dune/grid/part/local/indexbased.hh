@@ -6,24 +6,16 @@
 #ifndef DUNE_GRID_PART_LOCAL_INDEXBASED_HH
 #define DUNE_GRID_PART_LOCAL_INDEXBASED_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
-
-// system
 #include <map>
 #include <set>
 
-// dune-common
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 
-// dune-geometry
 #include <dune/geometry/type.hh>
 
-// dune-grid-multiscale
+#include <dune/grid/common/capabilities.hh>
+
 #include <dune/grid/part/interface.hh>
 #include <dune/grid/part/iterator/local/indexbased.hh>
 #include <dune/grid/part/iterator/intersection/local.hh>
@@ -31,13 +23,9 @@
 #include <dune/grid/part/indexset/local.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace Local {
-
 namespace IndexBased {
 
 template< class GlobalGridPartImp >
@@ -52,7 +40,24 @@ struct ConstTraits
 
   typedef typename GlobalGridPartType::GridType GridType;
 
-  typedef typename GridType::CollectiveCommunicationType CollectiveCommunicationType;
+private:
+  template< class G, bool is_parallel = true >
+  class ChooseCollectiveCommunication
+  {
+  public:
+    typedef typename G::CollectiveCommunicationType Type;
+  };
+
+  template< class G >
+  class ChooseCollectiveCommunication< G, false >
+  {
+  public:
+    typedef double Type;
+  };
+
+public:
+  typedef typename ChooseCollectiveCommunication< GridType, Capabilities::isParallel< GridType >::v >::Type
+      CollectiveCommunicationType;
 
   typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GlobalGridPartType > IndexSetType;
 
@@ -73,18 +78,19 @@ struct ConstTraits
   typedef Dune::grid::Part::Iterator::Intersection::Wrapper::FakeDomainBoundary< GlobalGridPartType > IntersectionIteratorType;
 }; // class ConstTraits
 
+
 /**
  *  \todo Wrap entity, so that entity.ileaf{begin,end}() returns i{begin,end}(entity)
  *  \todo Implement boundaryId(intersection) by adding a std::map< intersectionIndex, boundaryId >!
  */
 template< class GlobalGridPartImp >
 class Const
-  : public Dune::grid::Part::Interface< Dune::grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > >
+  : public grid::Part::Interface< grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > >
 {
 public:
   typedef Const< GlobalGridPartImp > ThisType;
 
-  typedef Dune::grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > Traits;
+  typedef grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > Traits;
 
   typedef Dune::grid::Part::Interface< Traits > BaseType;
 
@@ -207,10 +213,13 @@ public:
   }
 
   template< class DataHandleImp ,class DataType >
-  void communicate(CommDataHandleIF< DataHandleImp, DataType > & data, InterfaceType iftype, CommunicationDirection dir) const
+  void communicate(CommDataHandleIF< DataHandleImp, DataType >& /*data*/,
+                   InterfaceType /*iftype*/,
+                   CommunicationDirection /*dir*/) const
   {
-    DUNE_THROW(Dune::NotImplemented, "As long as I am not sure what this does or is used for I will not implement this!");
-    globalGridPart_->communicate(data,iftype,dir);
+    DUNE_THROW(Dune::NotImplemented,
+               "As long as I am not sure what this does or is used for I will not implement this!");
+//    globalGridPart_->communicate(data,iftype,dir);
   }
 
   const CollectiveCommunicationType& comm() const
