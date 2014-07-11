@@ -14,7 +14,10 @@
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/sgrid.hh>
+#include <dune/grid/io/file/dgfparser.hh>
+#if HAVE_ALUGRID
+# include <dune/grid/alugrid.hh>
+#endif
 
 #include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/common/logging.hh>
@@ -102,9 +105,11 @@ public:
 #endif // DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
     auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid();
+#if HAVE_ALUGRID
     if (std::is_same< GridType, ALUConformGrid< 2, 2 > >::value
         || std::is_same< GridType, ALUGrid< 2, 2, simplex, conforming > >::value)
       grd_ptr->globalRefine(1);
+#endif // HAVE_ALUGRID
     grid_ = grd_ptr;
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
   }
