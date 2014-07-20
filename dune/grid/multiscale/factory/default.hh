@@ -291,7 +291,7 @@ public:
         if (subdomainToEntityMapIt == subdomainToEntityMap_.end()) {
           std::stringstream msg;
           msg << "Error in " << id()<< ": numbering of subdomains has to be consecutive upon calling finalize()!";
-          DUNE_THROW(Dune::InvalidStateException, msg.str());
+          DUNE_THROW(InvalidStateException, msg.str());
         } else {
           // compute number of codim 0 entities
           const GeometryMapType& subdomainGeometryMap = *(subdomainToEntityMapIt->second);
