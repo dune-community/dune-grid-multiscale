@@ -535,14 +535,14 @@ public:
           // get the boundary info map
           typename CouplingIntersectionMapType::const_iterator result = couplingBoundaryInfo.find(neighbor);
           assert(result != couplingBoundaryInfo.end() && "This should not happen (see above)!");
-          const std::shared_ptr< const EntityToIntersectionSetMapType > couplingBoundaryInfo = result->second;
+          const std::shared_ptr< const EntityToIntersectionSetMapType > coupling_boundary_info = result->second;
           // and create the coupling grid part
           couplingGridPartsMap.insert(std::pair< size_t, std::shared_ptr< const CouplingGridPartType > >(
                                         neighbor,
                                         std::shared_ptr< const CouplingGridPartType >(
                                           new CouplingGridPartType(globalGridPart_,
                                                                    couplingGeometryMap,
-                                                                   couplingBoundaryInfo,
+                                                                   coupling_boundary_info,
                                                                    localGridParts[subdomain],
                                                                    localGridParts[neighbor]))));
 #ifndef NDEBUG
@@ -859,7 +859,7 @@ private:
 
   // friends
   template< int, int >
-  friend class Add;
+  friend struct Add;
 
   // members
   const std::shared_ptr< const GridType > grid_;

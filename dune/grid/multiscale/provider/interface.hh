@@ -342,11 +342,11 @@ public:
             data[coupling_str] = std::vector< double >(globalGridView.indexSet().size(0), 0.0);
             const auto entity_it_end = coupling_grid_view->template end< 0 >();
             for (auto entity_it = coupling_grid_view->template begin< 0 >(); entity_it != entity_it_end; ++entity_it) {
-              const auto& entity = *entity_it;
-              const size_t global_entity_id = globalGridView.indexSet().index(entity);
+              const auto& coupling_entity = *entity_it;
+              const size_t global_entity_id = globalGridView.indexSet().index(coupling_entity);
               data[coupling_str][global_entity_id] = 1.0;
-              for (auto intersection_it = coupling_grid_view->ibegin(entity);
-                   intersection_it != coupling_grid_view->iend(entity);
+              for (auto intersection_it = coupling_grid_view->ibegin(coupling_entity);
+                   intersection_it != coupling_grid_view->iend(coupling_entity);
                    ++intersection_it) {
                 const auto& intersection = *intersection_it;
                 if (intersection.neighbor() && !intersection.boundary()) {
