@@ -9,7 +9,7 @@
 #include <memory>
 
 #include <dune/stuff/common/exceptions.hh>
-#include <dune/stuff/common/configtree.hh>
+#include <dune/stuff/common/configuration.hh>
 
 #include "provider/interface.hh"
 #include "provider/cube.hh"
@@ -27,7 +27,7 @@ public:
 
 protected:
   template< class GridProviderType >
-  static std::unique_ptr< InterfaceType > call_create(const Stuff::Common::ConfigTree& config)
+  static std::unique_ptr< InterfaceType > call_create(const Stuff::Common::Configuration& config)
   {
     if (config.empty())
       return GridProviderType::create();
@@ -43,7 +43,7 @@ public:
     };
   } // ... available(...)
 
-  static Stuff::Common::ConfigTree default_config(const std::string type, const std::string sub_name = "")
+  static Stuff::Common::Configuration default_config(const std::string type, const std::string sub_name = "")
   {
     if (type == Providers::Cube< GridType >::static_id())
       return Providers::Cube< GridType >::default_config(sub_name);
@@ -53,7 +53,7 @@ public:
   } // ... default_config(...)
 
   static std::unique_ptr< InterfaceType > create(const std::string& type = available()[0],
-                                                 const Stuff::Common::ConfigTree config = Stuff::Common::ConfigTree())
+                                                 const Stuff::Common::Configuration config = Stuff::Common::Configuration())
   {
     if (type == Providers::Cube< GridType >::static_id())
       return call_create< Providers::Cube< GridType > >(config);

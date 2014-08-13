@@ -54,9 +54,9 @@ public:
     return BaseType::static_id() + ".cube";
   }
 
-  static Stuff::Common::ConfigTree default_config(const std::string sub_name = "")
+  static Stuff::Common::Configuration default_config(const std::string sub_name = "")
   {
-    Stuff::Common::ConfigTree config;
+    Stuff::Common::Configuration config;
     config["lower_left"] = "[0.0 0.0 0.0]";
     config["upper_right"] = "[1.0 1.0 1.0]";
     config["num_elements"] = "[8 8 8]";
@@ -65,18 +65,18 @@ public:
     if (sub_name.empty())
       return config;
     else {
-      Stuff::Common::ConfigTree tmp;
+      Stuff::Common::Configuration tmp;
       tmp.add(config, sub_name);
       return tmp;
     }
   } // ... createSampleDescription(...)
 
-  static std::unique_ptr< ThisType > create(const Stuff::Common::ConfigTree config = default_config(),
+  static std::unique_ptr< ThisType > create(const Stuff::Common::Configuration config = default_config(),
                                             const std::string sub_name = static_id())
   {
     // get correct config
-    const Stuff::Common::ConfigTree cfg = config.has_sub(sub_name) ? config.sub(sub_name) : config;
-    const Stuff::Common::ConfigTree default_cfg = default_config();
+    const Stuff::Common::Configuration cfg = config.has_sub(sub_name) ? config.sub(sub_name) : config;
+    const Stuff::Common::Configuration default_cfg = default_config();
     return Stuff::Common::make_unique< ThisType >(
         cfg.get("lower_left",          default_cfg.get< DomainType >("lower_left"), dimDomain),
         cfg.get("upper_right",         default_cfg.get< DomainType >("upper_right"), dimDomain),

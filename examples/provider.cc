@@ -21,7 +21,7 @@
 #include <dune/common/timer.hh>
 
 // dune-stuff
-#include <dune/stuff/common/parameter/tree.hh>
+#include <dune/stuff/common/configuration.hh>
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/filesystem.hh>
 #include <dune/stuff/common/string.hh>
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
     // parameter
     const std::string filename = id + ".param";
     ensureParamFile(filename);
-    Dune::Stuff::Common::ExtendedParameterTree paramTree(argc, argv, filename);
+    Dune::Stuff::Common::Configuration paramTree(argc, argv, filename);
 
     // logger
     Dune::Stuff::Common::Logger().create(Dune::Stuff::Common::LOG_INFO |

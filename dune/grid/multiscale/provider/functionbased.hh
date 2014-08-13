@@ -23,7 +23,7 @@
 
 #include <dune/stuff/grid/provider.hh>
 #include <dune/stuff/common/logging.hh>
-#include <dune/stuff/common/parameter/tree.hh>
+#include <dune/stuff/common/configuration.hh>
 #include <dune/stuff/functions.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
@@ -134,7 +134,7 @@ public:
     if (subName.empty())
       return description;
     else {
-      Dune::Stuff::Common::ExtendedParameterTree extendedDescription;
+      Dune::Stuff::Common::Configuration extendedDescription;
       extendedDescription.add(description, subName);
       return extendedDescription;
     }
@@ -144,7 +144,7 @@ public:
   static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
   {
     // get correct paramTree
-    Dune::Stuff::Common::ExtendedParameterTree extendedParamTree;
+    Dune::Stuff::Common::Configuration extendedParamTree;
     if (description.hasSub(subName))
       extendedParamTree = description.sub(subName);
     else
