@@ -94,15 +94,15 @@ public:
        const std::string prefix                       = "")
   {
     if (num_partittions.size() < dimDomain)
-      DUNE_THROW_COLORFULLY(Dune::RangeError,
-                            "num_partittions has to be at least of size " << dimDomain << " (is "
-                            << num_partittions.size() << ")!");
+      DUNE_THROW(Dune::RangeError,
+                 "num_partittions has to be at least of size " << dimDomain << " (is "
+                 << num_partittions.size() << ")!");
 #ifndef DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     for (size_t ii = 0; ii < dimDomain; ++ii) {
       if (num_partittions[ii] > num_elements[ii])
-        DUNE_THROW_COLORFULLY(Dune::RangeError,
-                              num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than "
-                              << "num_elements[" << ii << "] = " << num_elements[ii] << "!)");
+        DUNE_THROW(Dune::RangeError,
+                   num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than "
+                   << "num_elements[" << ii << "] = " << num_elements[ii] << "!)");
     }
 #endif // DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
@@ -126,11 +126,11 @@ public:
     : grid_(grd)
   {
     if (num_partittions.size() < dimDomain)
-      DUNE_THROW_COLORFULLY(Dune::RangeError,
+      DUNE_THROW(Dune::RangeError,
                  "num_partittions has to be at least of size " << dimDomain << " (is " << num_partittions.size() << ")!");
     for (size_t ii = 0; ii < dimDomain; ++ii) {
       if (lower_left[ii] >= upper_right[ii])
-        DUNE_THROW_COLORFULLY(Dune::RangeError,
+        DUNE_THROW(Dune::RangeError,
                    lower_left[ii] << " = lower_left[" << ii << "] has to be smaller than upper_right[" << ii
                    << "] = " << upper_right[ii] << "!)");
     }
@@ -193,7 +193,7 @@ private:
       else if (dimDomain == 3)
         subdomain = whichPartition[0] + whichPartition[1]*num_partitions[0] + whichPartition[2]*num_partitions[1]*num_partitions[0];
       else
-        DUNE_THROW_COLORFULLY(Dune::NotImplemented,
+        DUNE_THROW(Dune::NotImplemented,
                    "ERROR in " << static_id() << ": not implemented for grid dimDomains other than 1, 2 or 3!");
       // add entity to subdomain
       factory.add(entity, subdomain, prefix + "  ", out);

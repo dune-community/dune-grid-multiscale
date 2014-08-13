@@ -61,9 +61,9 @@ class ProviderInterface
     static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss, const bool over)
     {
       if (over)
-        DUNE_THROW_COLORFULLY(NotImplemented,
-                              "Please add the corresponding method 'localGridView(..., true)' to the multiscale"
-                              << " grid first!");
+        DUNE_THROW(NotImplemented,
+                   "Please add the corresponding method 'localGridView(..., true)' to the multiscale"
+                   << " grid first!");
       return msg.localGridView(ss);
     }
   };
@@ -220,20 +220,20 @@ public:
                                                               const bool oversampling = false) const
   {
     if (subdomain >= num_subdomains())
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
-                            << num_subdomains() << " subdomains!\n"
-                            << "Check 'num_subdomains()' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
+                 << num_subdomains() << " subdomains!\n"
+                 << "Check 'num_subdomains()' first!");
     return ChooseLocalPartView< MsGridType, type >::create(*(ms_grid()), subdomain, oversampling);
   } // ... local(...)
 
   bool is_boundary(const size_t subdomain) const
   {
     if (subdomain >= num_subdomains())
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
-                            << num_subdomains() << " subdomains!\n"
-                            << "Check 'num_subdomains()' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
+                 << num_subdomains() << " subdomains!\n"
+                 << "Check 'num_subdomains()' first!");
     return ms_grid()->boundary(subdomain);
   } // ... is_boundary(...)
 
@@ -241,9 +241,9 @@ public:
   std::shared_ptr< const typename Boundary< type >::Type > boundary(const size_t subdomain) const
   {
     if (!is_boundary(subdomain))
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "Subdomain " << subdomain << " does not lie at the boundary!"
-                            << "Check 'is_boundary(subdomain)' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "Subdomain " << subdomain << " does not lie at the boundary!"
+                 << "Check 'is_boundary(subdomain)' first!");
     return ChooseBoundaryPartView< MsGridType, type >::create(*(ms_grid()), subdomain);
   } // ... local(...)
 
@@ -256,19 +256,19 @@ public:
   std::shared_ptr< const typename Coupling< type >::Type > coupling(const size_t subdomain, const size_t neighbor) const
   {
     if (subdomain >= num_subdomains())
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
-                            << num_subdomains() << " subdomains!\n"
-                            << "Check 'num_subdomains()' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
+                 << num_subdomains() << " subdomains!\n"
+                 << "Check 'num_subdomains()' first!");
     if (neighbor >= num_subdomains())
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "You requsted subdomain number " << neighbor << " of a multiscale grid with only "
-                            << num_subdomains() << " subdomains!\n"
-                            << "Check 'num_subdomains()' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "You requsted subdomain number " << neighbor << " of a multiscale grid with only "
+                 << num_subdomains() << " subdomains!\n"
+                 << "Check 'num_subdomains()' first!");
     if (ms_grid()->neighborsOf(subdomain).count(neighbor) == 0)
-      DUNE_THROW_COLORFULLY(Stuff::Exceptions::wrong_input_given,
-                            "Subdomains " << subdomain << " and " << neighbor << " are not neighbors!"
-                            << "Check 'neighbors(subdomain)' first!");
+      DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+                 "Subdomains " << subdomain << " and " << neighbor << " are not neighbors!"
+                 << "Check 'neighbors(subdomain)' first!");
     return ChooseCouplingPartView< MsGridType, type >::create(*(ms_grid()), subdomain, neighbor);
   } // ... local(...)
 
