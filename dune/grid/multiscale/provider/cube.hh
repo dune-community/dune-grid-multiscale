@@ -106,7 +106,7 @@ public:
     }
 #endif // DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
     typedef Dune::Stuff::Grid::Providers::Cube< GridType > CubeGridProvider;
-    auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid();
+    auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid_ptr();
 #if HAVE_ALUGRID
     if (std::is_same< GridType, ALUConformGrid< 2, 2 > >::value
         || std::is_same< GridType, ALUGrid< 2, 2, simplex, conforming > >::value)
