@@ -3,6 +3,11 @@
 # Copyright holders: Felix Albrecht
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-SUBDIRS = local intersection
+enable_testing()
 
-include $(top_srcdir)/am/global-rules
+#HEADERCHECK( ${grid-multiscale} )
+#DEPENDENCYCHECK( ${grid-multiscale} )
+
+BEGIN_TESTCASES()
+
+END_TESTCASES()

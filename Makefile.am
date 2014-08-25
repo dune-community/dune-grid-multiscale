@@ -8,12 +8,7 @@
 # we need the module file to be able to build via dunecontrol
 EXTRA_DIST=dune.module
 
-SUBDIRS = m4 dune doc
-
-if BUILD_DOCS
-# TODO: set up documentation tree automatically
-#SUBDIRS += doc
-endif
+SUBDIRS = m4
 
 # don't follow the full GNU-standard
 # we need automake 1.5
