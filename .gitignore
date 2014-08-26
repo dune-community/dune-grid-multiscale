@@ -15,12 +15,6 @@ config.sub
 configure
 depcomp
 dependencies.m4
-doc/Makefile
-doc/Makefile.in
-doc/doxygen/Doxyfile
-doc/doxygen/Doxyfile.in
-doc/doxygen/Makefile
-doc/doxygen/Makefile.in
 dune-grid-multiscale.pc
 dune/Makefile
 dune/Makefile.in
@@ -40,9 +34,8 @@ m4/Makefile
 m4/Makefile.in
 missing
 stamp-h1
-doc/doxygen/html
-doc/doxygen/doxyerr.log
-doc/doxygen/doxygen-tag
-doc/doxygen/doxygen.log
 *.m
 demos
+build-*
+CMakeCache.txt
+CMakeFiles
