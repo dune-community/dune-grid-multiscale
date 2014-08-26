@@ -70,7 +70,6 @@ if(CMAKE_WITH_AUTOTOOLS)
        ${GRIDLIBS}
   )
 
-  add_subdirectory(examples)
   add_subdirectory(test)
 
 else(CMAKE_WITH_AUTOTOOLS)
