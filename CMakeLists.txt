@@ -93,6 +93,8 @@ else(CMAKE_WITH_AUTOTOOLS)
 
   include(DuneUtils)
 
+  add_subdirectory(test EXCLUDE_FROM_ALL)
+
   # pass most important options when "make distcheck" is used
   set(DISTCHECK_CONFIGURE_FLAGS  --with-dune-common=${DUNE_COMMON_ROOT} --with-dune-grid=${DUNE_GRID_ROOT}  CXX="${CXX}" CC="${CC}")
   # include not needed for CMake
