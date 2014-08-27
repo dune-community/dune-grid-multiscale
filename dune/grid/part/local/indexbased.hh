@@ -16,7 +16,8 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-#include <dune/grid/part/interface.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+
 #include <dune/grid/part/iterator/local/indexbased.hh>
 #include <dune/grid/part/iterator/intersection/local.hh>
 #include <dune/grid/part/iterator/intersection/wrapper.hh>
@@ -28,54 +29,40 @@ namespace Part {
 namespace Local {
 namespace IndexBased {
 
+
 template< class GlobalGridPartImp >
 class Const;
 
+
 template< class GlobalGridPartImp >
-struct ConstTraits
+class ConstTraits
 {
-  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
-
-  typedef Dune::grid::Part::Local::IndexBased::Const< GlobalGridPartImp > GridPartType;
-
-  typedef typename GlobalGridPartType::GridType GridType;
-
-private:
-  template< class G, bool is_parallel = true >
-  class ChooseCollectiveCommunication
-  {
-  public:
-    typedef typename G::CollectiveCommunicationType Type;
-  };
-
-  template< class G >
-  class ChooseCollectiveCommunication< G, false >
-  {
-  public:
-    typedef double Type;
-  };
-
 public:
-  typedef typename ChooseCollectiveCommunication< GridType, Capabilities::isParallel< GridType >::v >::Type
-      CollectiveCommunicationType;
+  typedef GlobalGridPartImp GlobalGridPartType;
 
-  typedef typename Dune::grid::Part::IndexSet::Local::IndexBased< GlobalGridPartType > IndexSetType;
+  typedef Const< GlobalGridPartImp > GridPartType;
+  typedef typename GlobalGridPartType::GridType GridType;
+  typedef typename IndexSet::Local::IndexBased< GlobalGridPartType > IndexSetType;
+  typedef typename GlobalGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+  typedef typename GlobalGridPartType::TwistUtilityType TwistUtilityType;
+
+  static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
+  static const InterfaceType indexSetInterfaceType = GlobalGridPartType::indexSetInterfaceType;
+
+  typedef Iterator::Intersection::Wrapper::FakeDomainBoundary< GlobalGridPartType > IntersectionIteratorType;
 
   template< int codim >
   struct Codim
+    : public GlobalGridPartType::template Codim< codim >
   {
     template< PartitionIteratorType pitype >
     struct Partition
     {
-      typedef typename Dune::grid::Part::Iterator::Local::IndexBased< GlobalGridPartType, codim, pitype > IteratorType;
+      typedef typename Iterator::Local::IndexBased< GlobalGridPartType, codim, pitype > IteratorType;
     };
   };
 
-  static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
-
-  static const bool conforming = GlobalGridPartType::conforming;
-
-  typedef Dune::grid::Part::Iterator::Intersection::Wrapper::FakeDomainBoundary< GlobalGridPartType > IntersectionIteratorType;
+  static const bool conforming = GlobalGridPartType::Traits::conforming;
 }; // class ConstTraits
 
 
@@ -85,14 +72,14 @@ public:
  */
 template< class GlobalGridPartImp >
 class Const
-  : public grid::Part::Interface< grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > >
+  : public Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > >
 {
 public:
   typedef Const< GlobalGridPartImp > ThisType;
 
   typedef grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > Traits;
 
-  typedef Dune::grid::Part::Interface< Traits > BaseType;
+  typedef Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > > BaseType;
 
   typedef typename Traits::GridType GridType;
 
@@ -234,20 +221,23 @@ private:
   const IndexSetType indexSet_;
 }; // class Const
 
+
 template< class GlobalGridPartImp >
 class ConstCoupling;
+
 
 template< class GlobalGridPartImp >
 struct ConstCouplingTraits
   : public ConstTraits< GlobalGridPartImp >
 {
-  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
+  typedef GlobalGridPartImp GlobalGridPartType;
 
   typedef Dune::grid::Part::Local::IndexBased::ConstCoupling< GlobalGridPartImp > GridPartType;
 
   //! localized intersection iterator
   typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
 }; // class ConstCouplingTraits
+
 
 template< class GlobalGridPartImp >
 class ConstCoupling
@@ -330,20 +320,23 @@ private:
   const Dune::shared_ptr< const OutsideType > outside_;
 }; // class ConstCoupling
 
+
 template< class GlobalGridPartImp >
 class ConstBoundary;
+
 
 template< class GlobalGridPartImp >
 struct ConstBoundaryTraits
   : public ConstTraits< GlobalGridPartImp >
 {
-  typedef Dune::grid::Part::Interface< typename GlobalGridPartImp::Traits > GlobalGridPartType;
+  typedef GlobalGridPartImp GlobalGridPartType;
 
   typedef Dune::grid::Part::Local::IndexBased::ConstBoundary< GlobalGridPartImp > GridPartType;
 
   //! localized intersection iterator
   typedef Dune::grid::Part::Iterator::Intersection::Local< GlobalGridPartType > IntersectionIteratorType;
 }; // class ConstBoundaryTraits
+
 
 template< class GlobalGridPartImp >
 class ConstBoundary
@@ -418,14 +411,11 @@ private:
   const Dune::shared_ptr< const InsideType > inside_;
 }; // class ConstBoundary
 
+
 } // namespace IndexBased
-
 } // namespace Local
-
 } // namespace Part
-
 } // namespace grid
-
 namespace Fem {
 namespace GridPartCapabilities {
 
