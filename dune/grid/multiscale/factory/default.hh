@@ -183,7 +183,7 @@ public:
   void prepare()
   {
     if (!prepared_) {
-      globalGridPart_ = std::shared_ptr< const GlobalGridPartType >(new GlobalGridPartType(*grid_));
+      globalGridPart_ = std::make_shared< const GlobalGridPartType >(const_cast< GridType& >(*grid_));
       entityToSubdomainMap_ = std::shared_ptr< EntityToSubdomainMapType >(new EntityToSubdomainMapType());
       prepared_ = true;
     } // if (!prepared_)
