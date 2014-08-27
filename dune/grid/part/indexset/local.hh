@@ -17,16 +17,10 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dune/grid/part/indexset/default.hh>
-
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace IndexSet {
-
 namespace Local {
 
 /**
@@ -252,13 +246,9 @@ const std::string IndexBased< GlobalGridPartType >::id = "grid.part.indexset.loc
 
 
 } // namespace Local
-
 } // namespace IndexSet
-
 } // namespace Part
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH
