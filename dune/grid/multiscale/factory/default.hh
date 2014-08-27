@@ -19,12 +19,13 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dune/grid/sgrid.hh>
-#if HAVE_ALUGRID
-# include <dune/grid/alugrid.hh>
-#endif
+#include <dune/stuff/common/disable_warnings.hh>
+# include <dune/grid/sgrid.hh>
+# if HAVE_ALUGRID
+#   include <dune/grid/alugrid.hh>
+# endif
+#include <dune/stuff/common/reenable_warnings.hh>
 
-#include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 #include <dune/grid/multiscale/default.hh>
 
