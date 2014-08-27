@@ -6,25 +6,17 @@
 #ifndef DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH
 #define DUNE_GRID_MULTISCALE_gridPart_INDEXSET_LOCAL_HH
 
-#ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
-#endif // ifdef HAVE_CMAKE_CONFIG
-
-// system
 #include <map>
 #include <vector>
 #include <sstream>
 
-// dune-common
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/shared_ptr.hh>
 
-// dune-geometry
 #include <dune/geometry/type.hh>
 
-// dune-grid-multiscale
 #include <dune/grid/part/indexset/default.hh>
 
 namespace Dune {
@@ -80,7 +72,7 @@ public:
          iterator != indexContainer_->end();
          ++iterator) {
       const GeometryType& geometryType = iterator->first;
-      const IndexType size = iterator->second.size();
+      const IndexType size = boost::numeric_cast< IndexType >(iterator->second.size());
       const unsigned int codim = dimension - geometryType.dim();
       geometryTypesByCodim_[codim].push_back(geometryType);
       sizeByGeometryType_.insert(std::pair< GeometryType, IndexType >(geometryType, size));
