@@ -15,9 +15,10 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
+#include <dune/fem/gridpart/leafgridpart.hh>
+
 #include <dune/stuff/common/color.hh>
 
-#include <dune/grid/part/leaf.hh>
 #include <dune/grid/part/local/indexbased.hh>
 
 namespace Dune {
@@ -50,7 +51,7 @@ public:
 
   typedef typename GridType::ctype ctype;
 
-  typedef Dune::grid::Part::Leaf::Const< GridType > GlobalGridPartType;
+  typedef Fem::LeafGridPart< GridType > GlobalGridPartType;
 
   typedef typename GlobalGridPartType::GridViewType GlobalGridViewType;
 
