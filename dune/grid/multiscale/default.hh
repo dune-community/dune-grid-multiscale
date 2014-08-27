@@ -13,7 +13,12 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/stuff/common/disable_warnings.hh>
+# include <dune/grid/io/file/vtk/vtkwriter.hh>
+# if HAVE_ALUGRID
+#   include <dune/grid/alugrid.hh>
+# endif
+#include <dune/stuff/common/reenable_warnings.hh>
 
 #include <dune/stuff/common/color.hh>
 
@@ -368,6 +373,15 @@ private:
   std::shared_ptr< std::vector< std::map< size_t, std::shared_ptr< const CouplingGridViewType > > > > couplingGridViewsMaps_;
   std::shared_ptr< const GlobalGridViewType > globalGridView_;
 }; // class Default
+
+
+//#if HAVE_ALUGRID
+
+
+extern template class Default< ALUGrid< 2, 2, simplex, conforming > >;
+
+
+//#endif // HAVE_ALUGRID
 
 } // namespace Multiscale
 } // namespace grid
