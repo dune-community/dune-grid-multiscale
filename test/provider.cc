@@ -5,7 +5,11 @@
 
 #include <dune/stuff/test/main.hh> // <- has to come first
 
-#include <dune/grid/sgrid.hh>
+#include <dune/stuff/common/disable_warnings.hh>
+# include <dune/grid/sgrid.hh>
+#include <dune/stuff/common/reenable_warnings.hh>
+
+#include <dune/stuff/common/string.hh>
 
 #include <dune/grid/multiscale/provider/cube.hh>
 
@@ -83,68 +87,68 @@ protected:
   typedef typename ProviderType::MsGridType MsGridType;
 
   CubeProvider()
-    : ms_grid_(ProviderType::create())
+    : ms_grid_(ProviderType::create()->ms_grid())
   {}
 
-  std::shared_ptr< MsGridType > ms_grid_;
+  std::shared_ptr< const MsGridType > ms_grid_;
 }; // class CubeProvider
 
 
 TEST_F(CubeProvider, global_gridpart)
 {
-  DSC_LOG_INFO << "inspecting global grid part:" << std::endl;
   const auto& globalGridPart = *(ms_grid_->globalGridPart());
   Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
-      ::Codim< MultiscaleGridProviderType::dim, 0 >
-      ::entities(globalGridPart, globalGridPart, "  ", DSC_LOG_DEBUG);
+      ::Codim< GridType::dimension, 0 >
+      ::entities(globalGridPart, globalGridPart, "  ", DSC_LOG_INFO);
 }
 
 TEST_F(CubeProvider, local_grid_parts)
 {
-  DSC_LOG_INFO << "inspecting local grid parts:" << std::endl;
+  const auto& globalGridPart = *(ms_grid_->globalGridPart());
   for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
     DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
     const auto& localGridPart = *(ms_grid_->localGridPart(subdomain));
     Inspect< MsGridType::GlobalGridPartType, MsGridType::LocalGridPartType, Dune::Stuff::Common::LogStream >
-        ::Codim< MultiscaleGridProviderType::dim, 0 >
-        ::entities(globalGridPart, localGridPart, "  ", DSC_LOG_DEBUG);
+        ::Codim< GridType::dimension, 0 >
+        ::entities(globalGridPart, localGridPart, "  ", DSC_LOG_INFO);
   }
 }
 
 TEST_F(CubeProvider, boundary_grid_parts)
 {
-    DSC_LOG_INFO << "inspecting boundary grid parts:" << std::endl;
+  const auto& globalGridPart = *(ms_grid_->globalGridPart());
     for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
       if (ms_grid_->boundary(subdomain)) {
         DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
         const auto& boundaryGridPart = *(ms_grid_->boundaryGridPart(subdomain));
         Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
-            ::Codim< MultiscaleGridProviderType::dim, 0 >
-            ::entities(globalGridPart, boundaryGridPart, "  ", DSC_LOG_DEBUG);
+            ::Codim< GridType::dimension, 0 >
+            ::entities(globalGridPart, boundaryGridPart, "  ", DSC_LOG_INFO);
       }
     }
 }
 
 TEST_F(CubeProvider, coupling_grid_parts)
 {
+  const auto& globalGridPart = *(ms_grid_->globalGridPart());
   for (size_t ss = 0; ss < ms_grid_->size(); ++ss) {
     for (auto nn : ms_grid_->neighborsOf(ss)) {
-      const auto coupling_grid_part = ms_grid_->couplingGridPart(ss, nn);
+      const auto& coupling_grid_part = *(ms_grid_->couplingGridPart(ss, nn));
       DSC_LOG_INFO << "testing coupling grid part: " << ss << ", " << nn << std::endl;
       // walk the grid part
-      for (typename CouplingGridPartType::template Codim< 0 >::IteratorType entityIterator = coupling_grid_part.template begin< 0 >();
-           entityIterator != coupling_grid_part.template end< 0 >();
+      for (auto entityIterator = coupling_grid_part.begin< 0 >();
+           entityIterator != coupling_grid_part.end< 0 >();
            ++entityIterator) {
-        const typename CouplingGridPartType::template Codim< 0 >::EntityType& entity = *entityIterator;
+        const auto& entity = *entityIterator;
         const unsigned int entityIndex = coupling_grid_part.indexSet().index(entity);
         DSC_LOG_INFO << "entity " << entityIndex << ", neighbors " << std::flush;
         // walk the intersections
-        for (typename CouplingGridPartType::IntersectionIteratorType intersectionIterator = couplingGridPart.ibegin(entity);
-             intersectionIterator != couplingGridPart.iend(entity);
+        for (auto intersectionIterator = coupling_grid_part.ibegin(entity);
+             intersectionIterator != coupling_grid_part.iend(entity);
              ++intersectionIterator) {
-          const typename CouplingGridPartType::IntersectionIteratorType::Intersection& intersection = *intersectionIterator;
-          const typename CouplingGridPartType::IntersectionIteratorType::Intersection::EntityPointer neighborPtr = intersection.outside();
-          const typename CouplingGridPartType::template Codim< 0 >::EntityType& neighbor = *neighborPtr;
+          const auto& intersection = *intersectionIterator;
+          const auto neighborPtr = intersection.outside();
+          const auto& neighbor = *neighborPtr;
           const unsigned int neighborIndex = globalGridPart.indexSet().index(neighbor);
           DSC_LOG_INFO << neighborIndex << " ";
         } // walk the intersections
@@ -158,19 +162,15 @@ TEST_F(CubeProvider, timings)
 {
   // time grid parts
   DSC_LOG_INFO << "timing grid parts:" << std::endl;
-  typedef MsGridType::GlobalGridPartType GlobalGridPartType;
-  const Dune::shared_ptr< const GlobalGridPartType > globalGridPart = ms_grid_->globalGridPart();
+  const auto globalGridPart = ms_grid_->globalGridPart();
   measureTiming(*globalGridPart, DSC_LOG_INFO, "global");
-  typedef MsGridType::CouplingGridPartType CouplingGridPartType;
-  const unsigned int neighbor = *(ms_grid_->neighborsOf(0)->begin());
-  const Dune::shared_ptr< const CouplingGridPartType > couplingGridPart = ms_grid_->couplingGridPart(0, neighbor);
-  measureTiming(*couplingGridPart, DSC_LOG_INFO, "coupling (subdomain 0 with " + Dune::Stuff::Common::String::convertTo(neighbor) + ")");
-  typedef MsGridType::LocalGridPartType LocalGridPartType;
-  const Dune::shared_ptr< const LocalGridPartType > firstLocalGridPart = ms_grid_->localGridPart(0);
+  const unsigned int neighbor = *(ms_grid_->neighborsOf(0).begin());
+  const auto couplingGridPart = ms_grid_->couplingGridPart(0, neighbor);
+  measureTiming(*couplingGridPart, DSC_LOG_INFO, "coupling (subdomain 0 with " + DSC::toString(neighbor) + ")");
+  const auto firstLocalGridPart = ms_grid_->localGridPart(0);
   measureTiming(*firstLocalGridPart, DSC_LOG_INFO, "local (subdomain 0)");
   for (unsigned int subdomain = 1; subdomain < ms_grid_->size(); ++subdomain) {
-    const Dune::shared_ptr< const LocalGridPartType > localGridPart = ms_grid_->localGridPart(subdomain);
-    measureTiming(*localGridPart, DSC_LOG_DEBUG, "local (subdomain " + Dune::Stuff::Common::String::convertTo(subdomain) + ")");
+    const auto localGridPart = ms_grid_->localGridPart(subdomain);
+    measureTiming(*localGridPart, DSC_LOG_DEBUG, "local (subdomain " + DSC::toString(subdomain) + ")");
   }
 }
-
