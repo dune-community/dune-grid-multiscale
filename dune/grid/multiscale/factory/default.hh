@@ -10,6 +10,8 @@
 #include <vector>
 #include <map>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
@@ -615,7 +617,7 @@ private:
     // add if needed
     if (indexMap.find(globalIndex) == indexMap.end()) {
       const size_t codim = dim - geometryType.dim();
-      const IndexType localIndex = localCodimSizes[codim];
+      const IndexType localIndex = boost::numeric_cast< IndexType >(localCodimSizes[codim]);
       indexMap.insert(std::pair< IndexType, IndexType >(globalIndex, localIndex));
       // increase count for this codim
       ++(localCodimSizes[codim]);
