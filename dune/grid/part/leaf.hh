@@ -5,17 +5,16 @@
 #ifndef DUNE_GRID_MULTISCALE_GRIDPART_HH
 #define DUNE_GRID_MULTISCALE_GRIDPART_HH
 
-// dune-common
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/deprecated.hh>
 
-// dune-grid
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/capabilities.hh>
 
-// dune-grid-multiscale
 #include <dune/grid/part/interface.hh>
+
+#include <dune/fem/gridpart/common/capabilities.hh>
 
 namespace Dune {
 namespace grid {
