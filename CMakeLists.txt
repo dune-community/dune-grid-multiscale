@@ -74,6 +74,9 @@ if(CMAKE_WITH_AUTOTOOLS)
 
 else(CMAKE_WITH_AUTOTOOLS)
 
+  set(CMAKE_COLOR_MAKEFILE ON)
+  set(CMAKE_VERBOSE_MAKEFILE ON)
+
   #circumvent not building docs
   set(BUILD_DOCS 1)
 
@@ -93,21 +96,29 @@ else(CMAKE_WITH_AUTOTOOLS)
 
   include(DuneUtils)
 
-  add_subdirectory(test EXCLUDE_FROM_ALL)
+  link_directories( "/usr/lib" ${CCGNU_LIBRARY_DIRS} )
 
-  # pass most important options when "make distcheck" is used
-  set(DISTCHECK_CONFIGURE_FLAGS  --with-dune-common=${DUNE_COMMON_ROOT} --with-dune-grid=${DUNE_GRID_ROOT}  CXX="${CXX}" CC="${CC}")
-  # include not needed for CMake
-  # include $(top_srcdir)/am/top-rules
-  # include not needed for CMake
-  # include $(top_srcdir)/am/global-rules
-  #foreach(i dune doc)
-  #  if(${i} STREQUAL "test")
-  #    set(opt EXCLUDE_FROM_ALL)
-  #  endif(${i} STREQUAL "test")
-  #  add_subdirectory(${i} ${opt})
-  #  unset(opt)
-  #endforeach(i ${SUBDIRS})
+  if (ALUGRID_FOUND)
+    add_definitions("-DENABLE_ALUGRID=1")
+    include_directories(${ALUGRID_INCLUDES})
+  endif (ALUGRID_FOUND)
+
+  # header
+  file(GLOB_RECURSE grid-multiscale "${CMAKE_CURRENT_SOURCE_DIR}/*.hh")
+  set(COMMON_HEADER ${grid-multiscale} ${DUNE_HEADERS})
+  set_source_files_properties(${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1)
+
+  add_subdirectory(dune)
+
+  #disable most warnings from dependent modules
+  foreach(_mod ${ALL_DEPENDENCIES})
+    dune_module_to_uppercase(_upper_case "${_mod}")
+    if(${_mod}_INCLUDE_DIRS)
+      foreach( _idir ${${_mod}_INCLUDE_DIRS} )
+        add_definitions("-isystem ${_idir}")
+      endforeach( _idir )
+    endif(${_mod}_INCLUDE_DIRS)
+  endforeach(_mod DEPENDENCIES)
 
   # finalize the dune project, e.g., generate config.h etc.
   finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
