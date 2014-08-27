@@ -164,7 +164,7 @@ TEST_F(CubeProvider, timings)
   DSC_LOG_INFO << "timing grid parts:" << std::endl;
   const auto globalGridPart = ms_grid_->globalGridPart();
   measureTiming(*globalGridPart, DSC_LOG_INFO, "global");
-  const unsigned int neighbor = *(ms_grid_->neighborsOf(0).begin());
+  const auto neighbor = *(ms_grid_->neighborsOf(0).begin());
   const auto couplingGridPart = ms_grid_->couplingGridPart(0, neighbor);
   measureTiming(*couplingGridPart, DSC_LOG_INFO, "coupling (subdomain 0 with " + DSC::toString(neighbor) + ")");
   const auto firstLocalGridPart = ms_grid_->localGridPart(0);
