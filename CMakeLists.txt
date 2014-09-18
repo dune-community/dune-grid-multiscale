@@ -130,6 +130,7 @@ else(CMAKE_WITH_AUTOTOOLS)
   set(COMMON_LIBS ${DUNE_DEFAULT_LIBS})
 
   add_subdirectory(test EXCLUDE_FROM_ALL)
+  add_subdirectory(cmake/modules)
 
   #disable most warnings from dependent modules
   foreach(_mod ${ALL_DEPENDENCIES})
