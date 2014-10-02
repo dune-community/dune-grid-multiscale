@@ -77,7 +77,7 @@ class Const
 public:
   typedef Const< GlobalGridPartImp > ThisType;
 
-  typedef grid::Part::Local::IndexBased::ConstTraits< GlobalGridPartImp > Traits;
+  typedef ConstTraits< GlobalGridPartImp > Traits;
 
   typedef Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > > BaseType;
 
