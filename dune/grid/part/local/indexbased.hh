@@ -116,6 +116,10 @@ public:
       indexSet_(*globalGridPart_, indexContainer_)
   {}
 
+  Const(const ThisType& other) = default;
+
+  Const(ThisType&& source) = default;
+
   const IndexSetType& indexSet() const
   {
     return indexSet_;
@@ -282,6 +286,10 @@ public:
       outside_(outside)
   {}
 
+  ConstCoupling(const ThisType& other) = default;
+
+  ConstCoupling(ThisType&& source) = default;
+
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
     const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
@@ -378,6 +386,10 @@ public:
       intersectionContainer_(intersectionContainer),
       inside_(inside)
   {}
+
+  ConstBoundary(const ThisType& other) = default;
+
+  ConstBoundary(ThisType&& source) = default;
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
