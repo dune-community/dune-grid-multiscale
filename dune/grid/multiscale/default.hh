@@ -161,6 +161,10 @@ public:
     createGridViews();
   } // Default()
 
+  Default(const ThisType& other) = default;
+
+  Default(ThisType&& source) = default;
+
   const std::shared_ptr< const GridType >& grid() const
   {
     return grid_;
