@@ -36,7 +36,7 @@ class ProviderInterface
   {
     typedef typename MSG::GlobalGridViewType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg)
+    static Type create(const MSG& msg)
     {
       return msg.globalGridView();
     }
@@ -47,7 +47,7 @@ class ProviderInterface
   {
     typedef typename MSG::GlobalGridPartType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg)
+    static Type create(const MSG& msg)
     {
       return msg.globalGridPart();
     }
@@ -58,7 +58,7 @@ class ProviderInterface
   {
     typedef typename MSG::LocalGridViewType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss, const bool over)
+    static Type create(const MSG& msg, const size_t ss, const bool over)
     {
       if (over)
         DUNE_THROW(NotImplemented,
@@ -73,7 +73,7 @@ class ProviderInterface
   {
     typedef typename MSG::LocalGridPartType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss, const bool over)
+    static Type create(const MSG& msg, const size_t ss, const bool over)
     {
       return msg.localGridPart(ss, over);
     }
@@ -84,7 +84,7 @@ class ProviderInterface
   {
     typedef typename MSG::BoundaryGridViewType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss)
+    static Type create(const MSG& msg, const size_t ss)
     {
       return msg.boundaryGridView(ss);
     }
@@ -95,7 +95,7 @@ class ProviderInterface
   {
     typedef typename MSG::BoundaryGridPartType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss)
+    static Type create(const MSG& msg, const size_t ss)
     {
       return msg.boundaryGridPart(ss);
     }
@@ -106,7 +106,7 @@ class ProviderInterface
   {
     typedef typename MSG::CouplingGridViewType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss, const size_t nn)
+    static Type create(const MSG& msg, const size_t ss, const size_t nn)
     {
       return msg.couplingGridView(ss, nn);
     }
@@ -117,7 +117,7 @@ class ProviderInterface
   {
     typedef typename MSG::CouplingGridPartType Type;
 
-    static std::shared_ptr< const Type > create(const MSG& msg, const size_t ss, const size_t nn)
+    static Type create(const MSG& msg, const size_t ss, const size_t nn)
     {
       return msg.couplingGridPart(ss, nn);
     }
@@ -128,7 +128,7 @@ class ProviderInterface
   {
     typedef typename Stuff::Grid::Layer< typename MSG::GridType, layer, part_view >::Type Type;
 
-    static std::shared_ptr< const Type > create(const MSG& ms_grid, const int level)
+    static Type create(const MSG& ms_grid, const int level)
     {
       typename MSG::GridType& non_const_grid = const_cast< typename MSG::GridType& >(*(ms_grid.grid()));
       return Stuff::Grid::Layer< typename MSG::GridType, layer, part_view >::create(non_const_grid, level);
@@ -140,7 +140,7 @@ class ProviderInterface
   {
     typedef typename ChooseLocalPartView< MSG, part_view >::Type Type;
 
-    static std::shared_ptr< const Type > create(const MSG& ms_grid, const int level)
+    static Type create(const MSG& ms_grid, const int level)
     {
       return ChooseLocalPartView< MSG, part_view >::create(ms_grid, level, false);
     }
@@ -151,7 +151,7 @@ class ProviderInterface
   {
     typedef typename ChooseLocalPartView< MSG, part_view >::Type Type;
 
-    static std::shared_ptr< const Type > create(const MSG& ms_grid, const int level)
+    static Type create(const MSG& ms_grid, const int level)
     {
       return ChooseLocalPartView< MSG, part_view >::create(ms_grid, level, true);
     }
@@ -159,11 +159,11 @@ class ProviderInterface
 
 public:
   typedef typename BaseType::GridType GridType;
-  typedef Default< GridType > MsGridType;
+  typedef Default< GridType >         MsGridType;
 
   static const unsigned int                         dimDomain = GridImp::dimension;
   typedef typename GridType::ctype                  DomainFieldType;
-  typedef FieldVector< DomainFieldType, dimDomain>  DomainType;
+  typedef FieldVector< DomainFieldType, dimDomain > DomainType;
   typedef typename GridType::template Codim< 0 >::Entity EntityType;
 
   template< Stuff::Grid::ChoosePartView type >
@@ -197,12 +197,12 @@ public:
 
   virtual ~ProviderInterface() {}
 
-  virtual std::shared_ptr< const MsGridType > ms_grid() const = 0;
+  virtual const std::shared_ptr< const MsGridType >& ms_grid() const = 0;
 
   template< Stuff::Grid::ChoosePartView type >
-  std::shared_ptr< const typename Global< type >::Type > global() const
+  typename Global< type >::Type global() const
   {
-    return ChooseGlobalPartView< MsGridType, type >::create(*(ms_grid()));
+    return ChooseGlobalPartView< MsGridType, type >::create(*ms_grid());
   }
 
   size_t num_subdomains() const
@@ -216,15 +216,14 @@ public:
   }
 
   template< Stuff::Grid::ChoosePartView type >
-  std::shared_ptr< const typename Local< type >::Type > local(const size_t subdomain,
-                                                              const bool oversampling = false) const
+  typename Local< type >::Type local(const size_t subdomain, const bool oversampling = false) const
   {
     if (subdomain >= num_subdomains())
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "You requsted subdomain number " << subdomain << " of a multiscale grid with only "
                  << num_subdomains() << " subdomains!\n"
                  << "Check 'num_subdomains()' first!");
-    return ChooseLocalPartView< MsGridType, type >::create(*(ms_grid()), subdomain, oversampling);
+    return ChooseLocalPartView< MsGridType, type >::create(ms_grid(), subdomain, oversampling);
   } // ... local(...)
 
   bool is_boundary(const size_t subdomain) const
@@ -238,13 +237,13 @@ public:
   } // ... is_boundary(...)
 
   template< Stuff::Grid::ChoosePartView type >
-  std::shared_ptr< const typename Boundary< type >::Type > boundary(const size_t subdomain) const
+  typename Boundary< type >::Type boundary(const size_t subdomain) const
   {
     if (!is_boundary(subdomain))
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "Subdomain " << subdomain << " does not lie at the boundary!"
                  << "Check 'is_boundary(subdomain)' first!");
-    return ChooseBoundaryPartView< MsGridType, type >::create(*(ms_grid()), subdomain);
+    return ChooseBoundaryPartView< MsGridType, type >::create(ms_grid(), subdomain);
   } // ... local(...)
 
   std::set< size_t > neighbors(const size_t subdomain) const
@@ -253,7 +252,7 @@ public:
   }
 
   template< Stuff::Grid::ChoosePartView type >
-  std::shared_ptr< const typename Coupling< type >::Type > coupling(const size_t subdomain, const size_t neighbor) const
+  typename Coupling< type >::Type coupling(const size_t subdomain, const size_t neighbor) const
   {
     if (subdomain >= num_subdomains())
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
@@ -269,13 +268,13 @@ public:
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "Subdomains " << subdomain << " and " << neighbor << " are not neighbors!"
                  << "Check 'neighbors(subdomain)' first!");
-    return ChooseCouplingPartView< MsGridType, type >::create(*(ms_grid()), subdomain, neighbor);
+    return ChooseCouplingPartView< MsGridType, type >::create(ms_grid(), subdomain, neighbor);
   } // ... local(...)
 
   template< Stuff::Grid::ChooseLayer layer_type, Stuff::Grid::ChoosePartView part_view_type >
-  std::shared_ptr< const typename LayerChooser< MsGridType, layer_type, part_view_type >::Type > layer(const int level) const
+  typename LayerChooser< MsGridType, layer_type, part_view_type >::Type layer(const int level) const
   {
-    return LayerChooser< MsGridType, layer_type, part_view_type >::create(*(ms_grid()), level);
+    return LayerChooser< MsGridType, layer_type, part_view_type >::create(*ms_grid(), level);
   }
 
   using BaseType::visualize;
@@ -284,7 +283,7 @@ public:
   {
     // vtk writer
     typedef typename MsGridType::GlobalGridViewType GlobalGridViewType;
-    const GlobalGridViewType& globalGridView = *(ms_grid()->globalGridView());
+    const GlobalGridViewType& globalGridView = ms_grid()->globalGridView();
     Dune::VTKWriter< GlobalGridViewType > vtkwriter(globalGridView);
     // data
     std::map< std::string, std::vector< double > > data;
@@ -320,7 +319,7 @@ public:
     // walk the subdomains
     for (unsigned int s = 0; s < ms_grid()->size(); ++s) {
       // walk the local grid view
-      const auto& localGridView = *(ms_grid()->localGridPart(s));
+      const auto localGridView = ms_grid()->localGridPart(s);
       for (auto it = localGridView.template begin< 0 >(); it != localGridView.template end< 0 >(); ++it) {
         const auto& entity = *it;
         const unsigned int index = globalGridView.indexSet().index(entity);
@@ -342,13 +341,13 @@ public:
             const auto coupling_grid_view = ms_grid()->couplingGridPart(s, nn);
             const std::string coupling_str = "coupling (" + DSC::toString(s) + ", " + DSC::toString(nn) + ")";
             data[coupling_str] = std::vector< double >(globalGridView.indexSet().size(0), 0.0);
-            const auto entity_it_end = coupling_grid_view->template end< 0 >();
-            for (auto entity_it = coupling_grid_view->template begin< 0 >(); entity_it != entity_it_end; ++entity_it) {
+            const auto entity_it_end = coupling_grid_view.template end< 0 >();
+            for (auto entity_it = coupling_grid_view.template begin< 0 >(); entity_it != entity_it_end; ++entity_it) {
               const auto& coupling_entity = *entity_it;
               const size_t global_entity_id = globalGridView.indexSet().index(coupling_entity);
               data[coupling_str][global_entity_id] = 1.0;
-              for (auto intersection_it = coupling_grid_view->ibegin(coupling_entity);
-                   intersection_it != coupling_grid_view->iend(coupling_entity);
+              for (auto intersection_it = coupling_grid_view.ibegin(coupling_entity);
+                   intersection_it != coupling_grid_view.iend(coupling_entity);
                    ++intersection_it) {
                 const auto& intersection = *intersection_it;
                 if (intersection.neighbor() && !intersection.boundary()) {
@@ -369,7 +368,7 @@ public:
         const std::string string_id = "oversampled subdomain " + Stuff::Common::toString(ss);
         data[string_id] = std::vector< double >(globalGridView.indexSet().size(0), -1.0);
         typedef typename MsGridType::LocalGridPartType LocalGridPartType;
-        const LocalGridPartType& oversampledGridPart = *(ms_grid()->localGridPart(ss, true));
+        const LocalGridPartType oversampledGridPart = ms_grid()->localGridPart(ss, true);
         for (typename LocalGridPartType::template Codim< 0 >::IteratorType it = oversampledGridPart.template begin< 0 >();
              it != oversampledGridPart.template end< 0 >();
              ++it) {
