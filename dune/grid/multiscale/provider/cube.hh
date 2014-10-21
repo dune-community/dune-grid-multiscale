@@ -137,19 +137,19 @@ public:
     setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
   }
 
-  virtual const GridType& grid() const DS_OVERRIDE
+  virtual const GridType& grid() const override
   {
     return *grid_;
+  }
+
+  virtual const std::shared_ptr< const MsGridType >& ms_grid() const override
+  {
+    return ms_grid_;
   }
 
   std::shared_ptr< const GridType > grid_ptr() const
   {
     return grid_;
-  }
-
-  virtual std::shared_ptr< const MsGridType > ms_grid() const DS_OVERRIDE
-  {
-    return ms_grid_;
   }
 
 private:
