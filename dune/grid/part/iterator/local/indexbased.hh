@@ -26,14 +26,11 @@
 #include <dune/grid/common/grid.hh>
 
 namespace Dune {
-
 namespace grid {
-
 namespace Part {
-
 namespace Iterator {
-
 namespace Local {
+
 
 /**
  *  \brief  Iterates over those entities of a grid part, the indices of which match predefined ones.
@@ -127,14 +124,11 @@ private:
   std::map< GeometryType, typename IndexMapType::const_iterator > end_;
 }; // class IndexBased
 
+
 } // namespace Local
-
 } // namespace Iterator
-
 } // namespace Part
-
 } // namespace grid
-
 } // namespace Dune
 
 #endif // DUNE_GRID_PART_ITERATOR_CODIM0_HH
