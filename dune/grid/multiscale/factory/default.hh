@@ -15,7 +15,6 @@
 #include <dune/common/shared_ptr.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/static_assert.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -30,6 +29,7 @@
 #include <dune/grid/multiscale/default.hh>
 
 #include <dune/stuff/common/logging.hh>
+#include <dune/stuff/common/type_utils.hh>
 
 namespace Dune {
 namespace grid {
