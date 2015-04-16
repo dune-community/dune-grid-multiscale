@@ -16,7 +16,9 @@
 
 #include <dune/grid/common/capabilities.hh>
 
-#include <dune/fem/gridpart/common/gridpart.hh>
+#if HAVE_DUNE_FEM
+# include <dune/fem/gridpart/common/gridpart.hh>
+#endif
 
 #include <dune/grid/part/iterator/local/indexbased.hh>
 #include <dune/grid/part/iterator/intersection/local.hh>
@@ -72,14 +74,14 @@ public:
  */
 template< class GlobalGridPartImp >
 class Const
+#if HAVE_DUNE_FEM
   : public Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > >
+#endif
 {
 public:
   typedef Const< GlobalGridPartImp > ThisType;
 
   typedef ConstTraits< GlobalGridPartImp > Traits;
-
-  typedef Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > > BaseType;
 
   typedef typename Traits::GridType GridType;
 
@@ -136,27 +138,27 @@ public:
   }
 
   template< int codim >
-  typename BaseType::template Codim< codim >::IteratorType begin() const
+  typename Traits::template Codim< codim >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename Traits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_);
   }
 
   template< int codim >
-  typename BaseType::template Codim< codim >::IteratorType end() const
+  typename Traits::template Codim< codim >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename Traits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
   }
 
   template< int codim, PartitionIteratorType pitype >
   typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
-    return typename BaseType::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_, true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
@@ -428,6 +430,9 @@ private:
 } // namespace Local
 } // namespace Part
 } // namespace grid
+
+#if HAVE_DUNE_FEM
+
 namespace Fem {
 namespace GridPartCapabilities {
 
@@ -484,6 +489,9 @@ struct isConforming< grid::Part::Local::IndexBased::Const< GridPartType > >
 
 } // namespace GridPartCapabilities
 } // namespace Fem
+
+#endif // HAVE_DUNE_FEM
+
 } // namespace Dune
 
 #endif // DUNE_GRID_PART_LOCAL_INDEXBASED_HH

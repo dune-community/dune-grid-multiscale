@@ -15,15 +15,21 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-#include <dune/fem/gridpart/leafgridpart.hh>
+#if HAVE_DUNE_FEM
+# include <dune/fem/gridpart/leafgridpart.hh>
+#endif
 
 #include <dune/stuff/common/color.hh>
+#include <dune/stuff/common/type_utils.hh>
 
 #include <dune/grid/part/local/indexbased.hh>
 
 namespace Dune {
 namespace grid {
 namespace Multiscale {
+
+#if HAVE_DUNE_FEM
+
 
 /**
  *  \brief      Default implementation of a Dune::grid::Multiscale::Interface
@@ -372,6 +378,17 @@ private:
   std::shared_ptr< std::vector< std::map< size_t, std::shared_ptr< const CouplingGridViewType > > > > couplingGridViewsMaps_;
   std::shared_ptr< const GlobalGridViewType > globalGridView_;
 }; // class Default
+
+
+#else // HAVE_DUNE_FEM
+
+template< class GridImp >
+class Default
+{
+  static_assert(AlwaysFalse< GridImp >::value, "You are missing dune-fem!");
+};
+
+#endif // HAVE_DUNE_FEM
 
 } // namespace Multiscale
 } // namespace grid

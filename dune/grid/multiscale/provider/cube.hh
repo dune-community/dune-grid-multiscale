@@ -12,19 +12,18 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/stuff/common/disable_warnings.hh>
-# include <dune/grid/common/mcmgmapper.hh>
-# include <dune/grid/io/file/vtk/vtkwriter.hh>
-# include <dune/grid/io/file/dgfparser.hh>
-# if HAVE_ALUGRID
-#   include <dune/grid/alugrid.hh>
-# endif
-#include <dune/stuff/common/reenable_warnings.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/io/file/dgfparser.hh>
+#if HAVE_ALUGRID
+# include <dune/grid/alugrid.hh>
+#endif
 
 #include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/common/logging.hh>
 #include <dune/stuff/common/print.hh>
 #include <dune/stuff/common/memory.hh>
+#include <dune/stuff/common/type_utils.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
 
@@ -34,6 +33,8 @@ namespace Dune {
 namespace grid {
 namespace Multiscale {
 namespace Providers {
+
+#if HAVE_DUNE_FEM
 
 
 template< class GridImp >
@@ -214,6 +215,18 @@ private:
   std::shared_ptr< const MsGridType > ms_grid_;
 }; // class Cube
 
+
+#else // HAVE_DUNE_FEM
+
+
+template< class GridImp >
+class Cube
+{
+  static_assert(AlwaysFalse< GridImp >::value, "Your are missing dune-fem!");
+};
+
+
+#endif // HAVE_DUNE_FEM
 
 } // namespace Providers
 } // namespace Multiscale

@@ -10,12 +10,11 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dune/stuff/common/disable_warnings.hh>
 # include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/stuff/common/reenable_warnings.hh>
 
 #include <dune/stuff/common/exceptions.hh>
 #include <dune/stuff/common/string.hh>
+#include <dune/stuff/common/type_utils.hh>
 #include <dune/stuff/grid/provider/interface.hh>
 
 #include "../default.hh"
@@ -23,6 +22,8 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
+
+#if HAVE_DUNE_FEM
 
 
 template< class GridImp >
@@ -398,6 +399,19 @@ public:
     vtkwriter.write(filename, Dune::VTK::appendedraw);
   } // void visualize(const std::string filename = id()) const
 }; // class ProviderInterface
+
+
+#else // HAVE_DUNE_FEM
+
+
+template< class GridImp >
+class ProviderInterface
+{
+  static_assert(AlwaysFalse< GridImp >::value, "Your are missing dune-fem!");
+};
+
+
+#endif // HAVE_DUNE_FEM
 
 
 } // namespace Multiscale
