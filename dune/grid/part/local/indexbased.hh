@@ -79,33 +79,29 @@ class Const
 #endif
 {
 public:
-  typedef Const< GlobalGridPartImp > ThisType;
-
-  typedef ConstTraits< GlobalGridPartImp > Traits;
-
-  typedef typename Traits::GridType GridType;
-
-  typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
-
-  typedef typename Traits::GlobalGridPartType GlobalGridPartType;
-
-  typedef typename Traits::IndexSetType IndexSetType;
-
-  typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
-
+  typedef Const< GlobalGridPartImp >                                 ThisType;
+  typedef ConstTraits< GlobalGridPartImp >                           Traits;
+private:
+#if HAVE_DUNE_FEM
+  typedef Fem::GridPartInterface< ConstTraits< GlobalGridPartImp > > BaseType;
+  typedef BaseType                                                   BaseTraits;
+#else
+  typedef Traits                                                     BaseTraits;
+#endif
+public:
+  typedef typename Traits::GridType                       GridType;
+  typedef typename Traits::CollectiveCommunicationType    CollectiveCommunicationType;
+  typedef typename Traits::GlobalGridPartType             GlobalGridPartType;
+  typedef typename Traits::IndexSetType                   IndexSetType;
+  typedef typename Traits::IntersectionIteratorType       IntersectionIteratorType ;
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
+  typedef typename GridType::template Codim< 0 >::Entity  EntityType;
 
-  typedef typename GridType::template Codim< 0 >::Entity EntityType;
-
-  typedef typename IndexSetType::IndexType IndexType;
-
-  typedef std::map< IndexType, IndexType > IndexMapType;
-
-  typedef Dune::GeometryType GeometryType;
-
+  typedef typename IndexSetType::IndexType            IndexType;
+  typedef std::map< IndexType, IndexType >            IndexMapType;
+  typedef Dune::GeometryType                          GeometryType;
   //! container type for the indices
-  typedef std::map< GeometryType, std::map< IndexType, IndexType > > IndexContainerType;
-
+  typedef std::map< GeometryType, IndexMapType >      IndexContainerType;
   //! container type for the boundary information
   typedef std::map< IndexType, std::map< int, int > > BoundaryInfoContainerType;
 
@@ -138,27 +134,30 @@ public:
   }
 
   template< int codim >
-  typename Traits::template Codim< codim >::IteratorType begin() const
+  typename BaseTraits::template Codim< codim >::IteratorType begin() const
   {
-    return typename Traits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename BaseTraits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_);
   }
 
   template< int codim, PartitionIteratorType pitype >
-  typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
+  typename BaseTraits::template Codim< codim >::template Partition< pitype >::IteratorType begin() const
   {
-    return typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_);
+    return typename BaseTraits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_,
+                                                                                                    indexContainer_);
   }
 
   template< int codim >
-  typename Traits::template Codim< codim >::IteratorType end() const
+  typename BaseTraits::template Codim< codim >::IteratorType end() const
   {
-    return typename Traits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename BaseTraits::template Codim< codim >::IteratorType(*globalGridPart_, indexContainer_, true);
   }
 
   template< int codim, PartitionIteratorType pitype >
-  typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
+  typename BaseTraits::template Codim< codim >::template Partition< pitype >::IteratorType end() const
   {
-    return typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_, indexContainer_, true);
+    return typename BaseTraits::template Codim< codim >::template Partition< pitype >::IteratorType(*globalGridPart_,
+                                                                                                    indexContainer_,
+                                                                                                    true);
   }
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
