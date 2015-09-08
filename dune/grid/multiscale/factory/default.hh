@@ -66,8 +66,8 @@ public:
   }
 };
 
-template<>
-class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::conforming, Dune::No_Comm > >
+template< class Comm >
+class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::conforming, Comm > >
 {
 public:
   static size_t compute()
@@ -76,8 +76,8 @@ public:
   }
 };
 
-template<>
-class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::nonconforming, Dune::No_Comm > >
+template< class Comm >
+class NeighborRecursionLevel< Dune::ALUGrid< 2, 2, Dune::simplex, Dune::nonconforming, Comm > >
 {
 public:
   static size_t compute()
