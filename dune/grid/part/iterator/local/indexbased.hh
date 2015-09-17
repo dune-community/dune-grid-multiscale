@@ -124,5 +124,21 @@ private:
 } // namespace Part
 } // namespace grid
 } // namespace Dune
+namespace std {
+
+
+template< class GlobalGridPartImp, int codim, Dune::PartitionIteratorType pitype >
+struct iterator_traits< Dune::grid::Part::Iterator::Local::IndexBased< GlobalGridPartImp, codim, pitype > >
+{
+  typedef ptrdiff_t difference_type;
+  typedef const typename Dune::grid::Part::Iterator::Local::IndexBased< GlobalGridPartImp, codim, pitype >::Entity value_type;
+  typedef value_type *pointer;
+  typedef value_type &reference;
+  typedef forward_iterator_tag iterator_category;
+};
+
+
+} // namespace std
+
 
 #endif // DUNE_GRID_PART_ITERATOR_CODIM0_HH
