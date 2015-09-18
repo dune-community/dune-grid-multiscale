@@ -153,6 +153,11 @@ public:
     return grid_;
   }
 
+  virtual std::unique_ptr< Stuff::Grid::ConstProviderInterface< GridType > > copy() const
+  {
+    DUNE_THROW(NotImplemented, "");
+  }
+
 private:
   void setup(const DomainType& lower_left,
              const DomainType& upper_right,
