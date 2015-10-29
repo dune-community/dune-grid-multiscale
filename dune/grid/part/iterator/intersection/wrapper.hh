@@ -7,9 +7,9 @@
 #define DUNE_GRID_PART_ITERATOR_INTERSECTION_WRAPPER_HH
 
 #ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
+#include "cmake_config.h"
+#elif defined(HAVE_CONFIG_H)
+#include <config.h>
 #endif // ifdef HAVE_CMAKE_CONFIG
 
 // system
@@ -33,44 +33,41 @@ namespace Intersection {
 
 namespace Wrapper {
 
-template< class GlobalGridPartImp >
-class FakeDomainBoundary
-  : public GlobalGridPartImp::IntersectionIteratorType
+template <class GlobalGridPartImp>
+class FakeDomainBoundary : public GlobalGridPartImp::IntersectionIteratorType
 {
 public:
   typedef GlobalGridPartImp GlobalGridPartType;
 
-  typedef FakeDomainBoundary< GlobalGridPartType > ThisType;
+  typedef FakeDomainBoundary<GlobalGridPartType> ThisType;
 
   typedef typename GlobalGridPartType::IntersectionIteratorType BaseType;
 
-  typedef typename GlobalGridPartType::template Codim< 0 >::EntityType EntityType;
+  typedef typename GlobalGridPartType::template Codim<0>::EntityType EntityType;
 
-  typedef std::map< int, int > InfoContainerType;
+  typedef std::map<int, int> InfoContainerType;
 
 private:
   typedef typename BaseType::Intersection BaseIntersectionType;
 
 public:
-  typedef Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType > Intersection;
+  typedef Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary<ThisType, BaseIntersectionType> Intersection;
 
-  FakeDomainBoundary(const GlobalGridPartType& globalGridPart,
-        const EntityType& entity,
-        bool end = false)
-    : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity)),
-      passThrough_(true),
-      intersection_(*this)
-  {}
+  FakeDomainBoundary(const GlobalGridPartType& globalGridPart, const EntityType& entity, bool end = false)
+    : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity))
+    , passThrough_(true)
+    , intersection_(*this)
+  {
+  }
 
-  FakeDomainBoundary(const GlobalGridPartType& globalGridPart,
-        const EntityType& entity,
-        const InfoContainerType infoContainer,
-        bool end = false)
-    : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity)),
-      passThrough_(false),
-      intersection_(*this),
-      infoContainer_(infoContainer)
-  {}
+  FakeDomainBoundary(const GlobalGridPartType& globalGridPart, const EntityType& entity,
+                     const InfoContainerType infoContainer, bool end = false)
+    : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity))
+    , passThrough_(false)
+    , intersection_(*this)
+    , infoContainer_(infoContainer)
+  {
+  }
 
   const Intersection& operator*() const
   {
@@ -85,12 +82,9 @@ public:
   }
 
 private:
-  friend class Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary< ThisType, BaseIntersectionType >;
+  friend class Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary<ThisType, BaseIntersectionType>;
 
-  const BaseIntersectionType& getBaseIntersection() const
-  {
-    return BaseType::operator*();
-  }
+  const BaseIntersectionType& getBaseIntersection() const { return BaseType::operator*(); }
 
   void setIntersectionState() const
   {
@@ -107,8 +101,8 @@ private:
       } else {
         intersection_.setPassThrough(true);
       } // if this intersection is special
-    } // if we are not on an entity of interest
-  } // void setIntersectionState() const
+    }   // if we are not on an entity of interest
+  }     // void setIntersectionState() const
 
   bool passThrough_;
   mutable Intersection intersection_;

@@ -18,16 +18,15 @@ namespace Dune {
 namespace grid {
 namespace Multiscale {
 
-
-template< class GridType >
+template <class GridType>
 class MsGridProviders
 {
 public:
-  typedef ProviderInterface< GridType > InterfaceType;
+  typedef ProviderInterface<GridType> InterfaceType;
 
 protected:
-  template< class GridProviderType >
-  static std::unique_ptr< InterfaceType > call_create(const Stuff::Common::Configuration& config)
+  template <class GridProviderType>
+  static std::unique_ptr<InterfaceType> call_create(const Stuff::Common::Configuration& config)
   {
     if (config.empty())
       return GridProviderType::create();
@@ -36,33 +35,28 @@ protected:
   } // ... call_create(...)
 
 public:
-  static std::vector< std::string > available()
-  {
-    return {
-      Providers::Cube< GridType >::static_id()
-    };
-  } // ... available(...)
+  static std::vector<std::string> available() { return {Providers::Cube<GridType>::static_id()}; } // ... available(...)
 
   static Stuff::Common::Configuration default_config(const std::string type, const std::string sub_name = "")
   {
-    if (type == Providers::Cube< GridType >::static_id())
-      return Providers::Cube< GridType >::default_config(sub_name);
+    if (type == Providers::Cube<GridType>::static_id())
+      return Providers::Cube<GridType>::default_config(sub_name);
     else
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
   } // ... default_config(...)
 
-  static std::unique_ptr< InterfaceType > create(const std::string& type = available()[0],
-                                                 const Stuff::Common::Configuration config = Stuff::Common::Configuration())
+  static std::unique_ptr<InterfaceType>
+      create(const std::string& type = available()[0],
+             const Stuff::Common::Configuration config = Stuff::Common::Configuration())
   {
-    if (type == Providers::Cube< GridType >::static_id())
-      return call_create< Providers::Cube< GridType > >(config);
+    if (type == Providers::Cube<GridType>::static_id())
+      return call_create<Providers::Cube<GridType>>(config);
     else
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
   } // ... create(...)
-}; // class MsGridProviders
-
+};  // class MsGridProviders
 
 } // namespace Multiscale
 } // namespace grid

@@ -7,9 +7,9 @@
 #define DUNE_GRID_PART_INTERSECTION_WRAPPER_HH
 
 #ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
+#include "cmake_config.h"
+#elif defined(HAVE_CONFIG_H)
+#include <config.h>
 #endif // ifdef HAVE_CMAKE_CONFIG
 
 // dune-geometry
@@ -28,7 +28,7 @@ namespace Intersection {
 
 namespace Wrapper {
 
-template< class IntersectionIteratorImp, class WrappedIntersectionImp >
+template <class IntersectionIteratorImp, class WrappedIntersectionImp>
 class FakeDomainBoundary
 {
 public:
@@ -36,7 +36,7 @@ public:
 
   typedef WrappedIntersectionImp WrappedIntersectionType;
 
-  typedef FakeDomainBoundary< IntersectionIteratorType, WrappedIntersectionType > ThisType;
+  typedef FakeDomainBoundary<IntersectionIteratorType, WrappedIntersectionType> ThisType;
 
   static const int dimension = WrappedIntersectionType::dimension;
 
@@ -54,26 +54,18 @@ public:
 
   typedef typename WrappedIntersectionType::LocalGeometry LocalGeometry;
 
-//  typedef Dune::Intersection<const GridImp, Dune::SIntersectionIterator> Intersection;
+  //  typedef Dune::Intersection<const GridImp, Dune::SIntersectionIterator> Intersection;
 
   typedef typename WrappedIntersectionType::ctype ctype;
 
   FakeDomainBoundary(const IntersectionIteratorType& intersectionIterator)
-    : intersectionIterator_(intersectionIterator),
-      passThrough_(true),
-      boundaryId_(-1)
+    : intersectionIterator_(intersectionIterator), passThrough_(true), boundaryId_(-1)
   {
   }
 
-  void setPassThrough(const bool passThrough)
-  {
-    passThrough_ = passThrough;
-  }
+  void setPassThrough(const bool passThrough) { passThrough_ = passThrough; }
 
-  void setBoundaryId(const int boundaryId)
-  {
-    boundaryId_ = boundaryId;
-  }
+  void setBoundaryId(const int boundaryId) { boundaryId_ = boundaryId; }
 
   bool neighbor() const
   {
@@ -99,55 +91,25 @@ public:
       return boundaryId_;
   }
 
-  size_t boundarySegmentIndex() const
-  {
-    return intersectionIterator_.getBaseIntersection().boundarySegmentIndex();
-  }
+  size_t boundarySegmentIndex() const { return intersectionIterator_.getBaseIntersection().boundarySegmentIndex(); }
 
-  EntityPointer inside() const
-  {
-    return intersectionIterator_.getBaseIntersection().inside();
-  }
+  EntityPointer inside() const { return intersectionIterator_.getBaseIntersection().inside(); }
 
-  EntityPointer outside() const
-  {
-    return intersectionIterator_.getBaseIntersection().outside();
-  }
+  EntityPointer outside() const { return intersectionIterator_.getBaseIntersection().outside(); }
 
-  bool conforming() const
-  {
-    return intersectionIterator_.getBaseIntersection().conforming();
-  }
+  bool conforming() const { return intersectionIterator_.getBaseIntersection().conforming(); }
 
-  LocalGeometry geometryInInside() const
-  {
-    return intersectionIterator_.getBaseIntersection().geometryInInside();
-  }
+  LocalGeometry geometryInInside() const { return intersectionIterator_.getBaseIntersection().geometryInInside(); }
 
-  LocalGeometry geometryInOutside() const
-  {
-    return intersectionIterator_.getBaseIntersection().geometryInOutside();
-  }
+  LocalGeometry geometryInOutside() const { return intersectionIterator_.getBaseIntersection().geometryInOutside(); }
 
-  Geometry geometry() const
-  {
-    return intersectionIterator_.getBaseIntersection().geometry();
-  }
+  Geometry geometry() const { return intersectionIterator_.getBaseIntersection().geometry(); }
 
-  Dune::GeometryType type() const
-  {
-    return intersectionIterator_.getBaseIntersection().type();
-  }
+  Dune::GeometryType type() const { return intersectionIterator_.getBaseIntersection().type(); }
 
-  int indexInInside() const
-  {
-    return intersectionIterator_.getBaseIntersection().indexInInside();
-  }
+  int indexInInside() const { return intersectionIterator_.getBaseIntersection().indexInInside(); }
 
-  int indexInOutside() const
-  {
-    return intersectionIterator_.getBaseIntersection().indexInOutside();
-  }
+  int indexInOutside() const { return intersectionIterator_.getBaseIntersection().indexInOutside(); }
 
   GlobalCoordinate outerNormal(const LocalCoordinate& local) const
   {

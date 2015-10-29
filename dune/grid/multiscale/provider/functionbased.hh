@@ -7,9 +7,9 @@
 #define DUNE_GRID_MULTISCALE_PROVIDER_FUNCTIONBASED_HH
 
 #ifdef HAVE_CMAKE_CONFIG
-  #include "cmake_config.h"
-#elif defined (HAVE_CONFIG_H)
-  #include <config.h>
+#include "cmake_config.h"
+#elif defined(HAVE_CONFIG_H)
+#include <config.h>
 #endif // ifdef HAVE_CMAKE_CONFIG
 
 #include <vector>
@@ -34,20 +34,18 @@ namespace Dune {
 namespace grid {
 namespace Multiscale {
 
-
 #if defined HAVE_CONFIG_H || defined HAVE_CMAKE_CONFIG
-template< class GridImp = Dune::GridSelector::GridType >
+template <class GridImp = Dune::GridSelector::GridType>
 #else
-template< class GridImp = Dune::SGrid< 2, 2 > >
+template <class GridImp = Dune::SGrid<2, 2>>
 #endif
-class ProviderFunctionbased
-  : public ProviderInterface< GridImp >
+class ProviderFunctionbased : public ProviderInterface<GridImp>
 {
 public:
-  typedef ProviderFunctionbased< GridImp >              ThisType;
-  typedef Dune::Stuff::GridProviderInterface< GridImp > NonMultiscaleType;
-  typedef ProviderInterface< GridImp >                  InterfaceType;
-  typedef GridImp                                       GridType;
+  typedef ProviderFunctionbased<GridImp> ThisType;
+  typedef Dune::Stuff::GridProviderInterface<GridImp> NonMultiscaleType;
+  typedef ProviderInterface<GridImp> InterfaceType;
+  typedef GridImp GridType;
 
   static const unsigned int dim = NonMultiscaleType::dim;
 
@@ -55,9 +53,10 @@ public:
   typedef typename NonMultiscaleType::CoordinateType CoordinateType;
   typedef double RangeFieldType;
   // until now only implemented for scalar functions
-  typedef Dune::Stuff::FunctionInterface< ctype, dim, RangeFieldType, 1, 1 > FunctionType;
+  typedef Dune::Stuff::FunctionInterface<ctype, dim, RangeFieldType, 1, 1> FunctionType;
+
 private:
-  typedef Dune::grid::Multiscale::Factory::Default< GridType > MsGridFactoryType;
+  typedef Dune::grid::Multiscale::Factory::Default<GridType> MsGridFactoryType;
 
 public:
   typedef typename MsGridFactoryType::MsGridType MsGridType;
@@ -66,13 +65,9 @@ private:
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
 
 public:
-  static const std::string id()
-  {
-    return InterfaceType::id() + ".functionbased";
-  }
+  static const std::string id() { return InterfaceType::id() + ".functionbased"; }
 
-  ProviderFunctionbased(std::shared_ptr<const GridType > grid,
-                        std::shared_ptr<const FunctionType > function,
+  ProviderFunctionbased(std::shared_ptr<const GridType> grid, std::shared_ptr<const FunctionType> function,
                         std::vector<double> partitions)
     : grid_(grid)
   {
@@ -80,28 +75,28 @@ public:
     MsGridFactoryType factory(grid);
     factory.prepare();
     // debug output
-    const std::string prefix = "";
+    const std::string prefix              = "";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().devnull();
     // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
-    const Dune::shared_ptr< const GridPartType> gridPart = factory.globalGridPart();
+    const Dune::shared_ptr<const GridPartType> gridPart = factory.globalGridPart();
     // walk the grid
-    for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart->template begin< 0 >();
-        it != gridPart->template end< 0 >();
-        ++it) {
+    for (typename GridPartType::template Codim<0>::IteratorType it = gridPart->template begin<0>();
+         it != gridPart->template end<0>();
+         ++it) {
       // get center of entity
-      const auto& entity = *it;
+      const auto& entity          = *it;
       const CoordinateType center = entity.geometry().center();
       debug << prefix << "  entity (" << center << "):" << std::endl;
       // decide on the subdomain this entity shall belong to
       unsigned int subdomain = 0;
       int size = partitions.size();
-      for (int ii = 1; ii < size; ii++){
-        if ( ((function->evaluate(center)) > partitions[ii-1]) && ((function->evaluate(center)) < partitions[ii] )){
+      for (int ii = 1; ii < size; ii++) {
+        if (((function->evaluate(center)) > partitions[ii - 1]) && ((function->evaluate(center)) < partitions[ii])) {
           subdomain = ii;
         }
       }
-      if ((function->evaluate(center)) > partitions[size-1]){
+      if ((function->evaluate(center)) > partitions[size - 1]) {
         subdomain = size;
       }
       // add entity to subdomain
@@ -112,24 +107,21 @@ public:
     debug << prefix << "  the grid has " << numberOfSubdomains << " subdomains." << std::endl;
     // finalize
     factory.finalize(0, prefix + "  ", debug, false);
-    //debug << std::flush;
+    // debug << std::flush;
 
     // be done with it
     msGrid_ = factory.createMsGrid();
   }
 
-  ProviderFunctionbased(const ThisType& other)
-    : NonMultiscaleType(other)
-    , msGrid_(other.msGrid_)
-  {}
+  ProviderFunctionbased(const ThisType& other) : NonMultiscaleType(other), msGrid_(other.msGrid_) {}
 
   static Dune::ParameterTree createSampleDescription(const std::string subName = "")
   {
-    typedef Stuff::GridProviders< GridType > Providers;
-    typedef Stuff::Functions< ctype, dim, RangeFieldType, 1, 1 > Functions;
+    typedef Stuff::GridProviders<GridType> Providers;
+    typedef Stuff::Functions<ctype, dim, RangeFieldType, 1, 1> Functions;
     Dune::ParameterTree description;
-    description["provider"] = Providers::available()[0];
-    description["function"] = Functions::available()[0];
+    description["provider"]   = Providers::available()[0];
+    description["function"]   = Functions::available()[0];
     description["partitions"] = "[0.5; 1.0]";
     if (subName.empty())
       return description;
@@ -139,7 +131,6 @@ public:
       return extendedDescription;
     }
   } // ... createSampleDescription(...)
-
 
   static ThisType* create(const Dune::ParameterTree& description, const std::string subName = id())
   {
@@ -153,29 +144,30 @@ public:
     // get grid provider
     NonMultiscaleType gridProvider;
     if (extendedParamTree.hasKey("provider")) {
-        typedef Stuff::GridProviders< GridType > Providers;
-        gridProvider = extendedParamTree.get("provider", Providers::available()[0]);
+      typedef Stuff::GridProviders<GridType> Providers;
+      gridProvider = extendedParamTree.get("provider", Providers::available()[0]);
     } else {
-        DUNE_THROW(Dune::IOError, "Error: no key 'provider' given in " << id() << std::endl);
+      DUNE_THROW(Dune::IOError, "Error: no key 'provider' given in " << id() << std::endl);
     }
-    std::shared_ptr< GridType > grid(gridProvider->grid());
+    std::shared_ptr<GridType> grid(gridProvider->grid());
     // get function
     FunctionType function;
     if (extendedParamTree.hasKey("function")) {
-        typedef Stuff::Functions< ctype, dim, RangeFieldType, 1, 1 > Functions;
-        gridProvider = extendedParamTree.get("function", Functions::available()[0]);
+      typedef Stuff::Functions<ctype, dim, RangeFieldType, 1, 1> Functions;
+      gridProvider = extendedParamTree.get("function", Functions::available()[0]);
     } else {
-        DUNE_THROW(Dune::IOError, "Error: no key 'function' given in " << id() << std::endl);
+      DUNE_THROW(Dune::IOError, "Error: no key 'function' given in " << id() << std::endl);
     }
     // get partitions
-    std::vector< RangeFieldType > partitions;
+    std::vector<RangeFieldType> partitions;
     if (extendedParamTree.hasVector("partitions")) {
-      partitions = extendedParamTree.getVector< RangeFieldType >("partitions", 1);
+      partitions = extendedParamTree.getVector<RangeFieldType>("partitions", 1);
     } else if (extendedParamTree.hasKey("partitions")) {
-      partitions = std::vector< RangeFieldType >(1, extendedParamTree.get("partitions", 1u));
+      partitions = std::vector<RangeFieldType>(1, extendedParamTree.get("partitions", 1u));
     } else {
-      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 1!" << std::endl;
-      partitions = std::vector< RangeFieldType >(1, 1u);
+      std::cout << "WARNING in " << id() << ": neither vector nor key 'partitions' given, defaulting to 1!"
+                << std::endl;
+      partitions = std::vector<RangeFieldType>(1, 1u);
     }
     return new ThisType(grid, function, partitions);
   } // static ThisType createFromParamTree(const Dune::ParameterTree& paramTree, const std::string subName = id())
@@ -184,28 +176,21 @@ public:
   {
     if (this != &other) {
       NonMultiscaleType::operator=(other);
-      msGrid_ = other.msGrid();
+      msGrid_                    = other.msGrid();
     }
     return this;
   } // ThisType& operator=(ThisType& other)
 
-  virtual const Dune::shared_ptr< const GridType > grid() const
-  {
-    return grid_;
-  }
+  virtual const Dune::shared_ptr<const GridType> grid() const { return grid_; }
 
-  virtual const Dune::shared_ptr< const MsGridType > msGrid() const
-  {
-    return msGrid_;
-  }
+  virtual const Dune::shared_ptr<const MsGridType> msGrid() const { return msGrid_; }
 
   using InterfaceType::visualize;
 
 private:
-  Dune::shared_ptr< const GridType > grid_;
-  Dune::shared_ptr< const MsGridType > msGrid_;
+  Dune::shared_ptr<const GridType> grid_;
+  Dune::shared_ptr<const MsGridType> msGrid_;
 }; // class ProviderFunctionbased
-
 
 } // namespace Multiscale
 } // namespace Grid
