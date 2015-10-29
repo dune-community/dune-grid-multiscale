@@ -51,13 +51,6 @@ public:
 };
 
 #if HAVE_ALUGRID
-template <>
-class NeighborRecursionLevel<ALUConformGrid<2, 2>>
-{
-public:
-  static size_t compute() { return 3; }
-};
-
 template <class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming, Comm>>
 {
