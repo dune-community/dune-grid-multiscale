@@ -28,8 +28,9 @@ include(AddALUGridCompileFlags)
 dune_project()
 include(DuneUtils)
 
-file( GLOB_RECURSE gridmultiscale "${CMAKE_CURRENT_SOURCE_DIR}/*.hh" )
-set( COMMON_HEADER ${gridmultiscale} ${DUNE_HEADERS} )
+file( GLOB_RECURSE gridmultiscaleheader "${CMAKE_CURRENT_SOURCE_DIR}/*.hh" )
+file( GLOB_RECURSE gridmultiscalesources "${CMAKE_CURRENT_SOURCE_DIR}/*.cc" )
+set( COMMON_HEADER ${gridmultiscaleheader} ${DUNE_HEADERS} )
 # add header of dependent modules for header listing
 foreach(_mod ${ALL_DEPENDENCIES})
 file(GLOB_RECURSE HEADER_LIST "${CMAKE_CURRENT_SOURCE_DIR}/../${_mod}/*.hh")
@@ -55,7 +56,7 @@ set( COMMON_LIBS
 
 add_subdirectory(test EXCLUDE_FROM_ALL)
 
-add_format(${test_sources} ${gridmultiscale})
+add_format(${gridmultiscaleheader} ${gridmultiscalesources})
 
 # finalize the dune project, e.g., generate config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
