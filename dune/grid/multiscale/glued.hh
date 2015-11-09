@@ -82,6 +82,7 @@ private:
 
 public:
   Glued(MacroGridProviderType& macro_grid_provider, const size_t num_local_refinements = 0,
+        const bool prepare_glues     = false,
         const ctype& allowed_overlap = 10 * Stuff::Common::FloatCmp::DefaultEpsilon<ctype>::value())
     : macro_grid_(macro_grid_provider)
     , allowed_overlap_(allowed_overlap)
@@ -95,7 +96,8 @@ public:
         assert(local_grid_provider);
         local_grid_provider->grid().globalRefine(boost::numeric_cast<int>(num_local_refinements));
       }
-    setup_glues();
+    if (prepare_glues)
+      setup_glues();
   } // Glued(...)
 
   const MacroGridViewType& macro_grid_view() const { return macro_leaf_view_; }
@@ -239,7 +241,6 @@ private:
     for (auto&& macro_entity : elements(macro_leaf_view_)) {
       const auto macro_entity_index = macro_index_set.index(macro_entity);
       auto& entity_glues            = glues_[macro_entity_index];
-      const auto local_entity_level = local_grids_[macro_entity_index]->grid().maxLevel();
       // walk the neighbors ...
       const auto macro_intersection_it_end = macro_leaf_view_.iend(macro_entity);
       for (auto macro_intersection_it = macro_leaf_view_.ibegin(macro_entity);
@@ -249,11 +250,10 @@ private:
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
           const auto macro_neighbor       = macro_intersection.outside();
           const auto macro_neighbor_index = macro_index_set.index(macro_neighbor);
-          const auto local_neighbor_level = local_grids_[macro_neighbor_index]->grid().maxLevel();
-          // set up glue between these macro element, but only for the highest local refinement levels
-          // the other levels are set up on the fly, if required
-          entity_glues[macro_neighbor_index][local_entity_level][local_neighbor_level] =
-              create_glue(macro_entity, macro_neighbor, macro_intersection, local_entity_level, local_neighbor_level);
+          for (auto local_entity_level : DSC::valueRange(local_grids_[macro_entity_index]->grid().maxLevel() + 1))
+            for (auto local_neighbor_level : DSC::valueRange(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1))
+              entity_glues[macro_neighbor_index][local_entity_level][local_neighbor_level] = create_glue(
+                  macro_entity, macro_neighbor, macro_intersection, local_entity_level, local_neighbor_level);
         }
       } // ... walk the neighbors
     }
