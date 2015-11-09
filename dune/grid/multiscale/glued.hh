@@ -219,7 +219,7 @@ private:
     // create extractors and merger as shared_ptr, so glue will handle memory
     auto entity_extractor   = std::make_shared<LocalExtractorType>(local_entity_view, entity_descriptor);
     auto neighbor_extractor = std::make_shared<LocalExtractorType>(local_neighbor_view, neighbor_descriptor);
-    auto contact_merger     = std::make_shared<ContactMerge<dimWorld, ctype>>(allowed_overlap_);
+    auto contact_merger     = std::make_shared<GridGlue::ContactMerge<dimWorld, ctype>>(allowed_overlap_);
     // create glue
     auto glue = std::make_shared<GlueType>(entity_extractor, neighbor_extractor, contact_merger);
     glue->build();
