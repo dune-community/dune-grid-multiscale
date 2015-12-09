@@ -58,6 +58,13 @@ public:
   static size_t compute() { return 3; }
 };
 
+template <class Comm, ALUGridRefinementType tp>
+class NeighborRecursionLevel<Dune::ALUGrid<3, 3, Dune::simplex, tp, Comm>>
+{
+public:
+  static size_t compute() { return 9; } // just a guess!
+};
+
 template <class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming, Comm>>
 {
