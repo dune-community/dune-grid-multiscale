@@ -71,6 +71,13 @@ class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconform
 public:
   static size_t compute() { return 1; }
 };
+
+template <class Comm, ALUGridRefinementType tp>
+class NeighborRecursionLevel<Dune::ALUGrid<3, 3, Dune::simplex, tp, Comm>>
+{
+public:
+  static size_t compute() { return 9; } // just a guess!
+};
 #endif
 
 template <class GridImp>
