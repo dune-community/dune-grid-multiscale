@@ -20,6 +20,7 @@
 
 #include <dune/stuff/common/disable_warnings.hh>
 # include <dune/grid/sgrid.hh>
+# include <dune/grid/yaspgrid.hh>
 # if HAVE_ALUGRID
 #   include <dune/grid/alugrid.hh>
 # endif
@@ -52,6 +53,26 @@ public:
   static size_t compute()
   {
     return 1;
+  }
+};
+
+template<>
+class NeighborRecursionLevel< SGrid< 3, 3 > >
+{
+public:
+  static size_t compute()
+  {
+    return 3;
+  }
+};
+
+template<>
+class NeighborRecursionLevel< YaspGrid< 3 > >
+{
+public:
+  static size_t compute()
+  {
+    return 3;
   }
 };
 
