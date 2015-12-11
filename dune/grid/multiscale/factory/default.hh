@@ -67,6 +67,26 @@ public:
 };
 
 template<>
+class NeighborRecursionLevel< YaspGrid< 1 > >
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
+
+template<>
+class NeighborRecursionLevel< YaspGrid< 2 > >
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
+
+template<>
 class NeighborRecursionLevel< YaspGrid< 3 > >
 {
 public:
