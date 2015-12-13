@@ -47,6 +47,16 @@ public:
 };
 
 template<>
+class NeighborRecursionLevel< SGrid< 1, 1 > >
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
+
+template<>
 class NeighborRecursionLevel< SGrid< 2, 2 > >
 {
 public:
