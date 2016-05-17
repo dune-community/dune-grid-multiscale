@@ -252,32 +252,40 @@ public:
     // data
     std::map<std::string, std::vector<double>> data;
     data["subdomain"]          = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
-    data["global entity id"]   = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
-    data["global boundary id"] = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
-    data["local boundary id"]  = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
+    data["global_entity_id"]   = std::vector<double>(globalGridView.indexSet().size(0), -1.);
+    data["global_boundary_id"] = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
+    data["local_boundary_id"]  = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
+    if (coupling) {
+      for (unsigned int s = 0; s < ms_grid()->size(); ++s) {
+        data[DSC::toString(s) + " __local_entity_id"]   = std::vector<double>(globalGridView.indexSet().size(0), -1.);
+        data[DSC::toString(s) + "__boundary_entity_id"] = std::vector<double>(globalGridView.indexSet().size(0), -1.);
+        for (auto nn : ms_grid()->neighborsOf(s)) {
+          data[DSC::toString(s) + "_" + DSC::toString(nn) + "__coupling"]
+              = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
+          data[DSC::toString(s) + "_" + DSC::toString(nn) + "__coupling_entity_id"]
+              = std::vector<double>(globalGridView.indexSet().size(0), -1.);
+        }
+      }
+    }
     // walk the global grid view
-    for (typename GlobalGridViewType::template Codim<0>::Iterator it = globalGridView.template begin<0>();
-         it != globalGridView.template end<0>();
-         ++it) {
-      const typename GlobalGridViewType::template Codim<0>::Entity& entity = *it;
-      const typename GlobalGridViewType::IndexSet::IndexType index         = globalGridView.indexSet().index(entity);
-      data["subdomain"][index]                                             = ms_grid()->subdomainOf(index);
-      data["global entity id"][index]                                      = double(index);
+    for (auto it = globalGridView.template begin<0>(); it != globalGridView.template end<0>(); ++it) {
+      const auto& entity = *it;
+      const size_t index = globalGridView.indexSet().index(entity);
+      data["subdomain"][index]        = ms_grid()->subdomainOf(index);
+      data["global_entity_id"][index] = double(index);
       // compute global boundary id
-      data["global boundary id"][index] = 0.0;
+      data["global_boundary_id"][index] = 0.0;
       int numberOfBoundarySegments      = 0;
       bool isOnBoundary = false;
-      for (typename GlobalGridViewType::IntersectionIterator intersectionIt = globalGridView.ibegin(entity);
-           intersectionIt != globalGridView.iend(entity);
-           ++intersectionIt) {
+      for (auto intersectionIt = globalGridView.ibegin(entity); intersectionIt != globalGridView.iend(entity); ++intersectionIt) {
         if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
           isOnBoundary = true;
           numberOfBoundarySegments += 1;
-          data["global boundary id"][index] += double(intersectionIt->boundaryId());
+          data["global_boundary_id"][index] += double(intersectionIt->boundaryId());
         }
       }
       if (isOnBoundary) {
-        data["global boundary id"][index] /= double(numberOfBoundarySegments);
+        data["global_boundary_id"][index] /= double(numberOfBoundarySegments);
       } // compute global boundary id
     }   // walk the global grid view
     // walk the subdomains
@@ -287,27 +295,29 @@ public:
       for (auto it = localGridView.template begin<0>(); it != localGridView.template end<0>(); ++it) {
         const auto& entity       = *it;
         const unsigned int index = globalGridView.indexSet().index(entity);
+        data[DSC::toString(s) + " __local_entity_id"][index] = localGridView.indexSet().index(entity);
         // compute local boundary id
         unsigned int numberOfBoundarySegments = 0u;
         for (auto intersectionIt = localGridView.ibegin(entity); intersectionIt != localGridView.iend(entity);
              ++intersectionIt) {
           if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
             numberOfBoundarySegments += 1u;
-            data["local boundary id"][index] += double(intersectionIt->boundaryId());
+            data["local_boundary_id"][index] += double(intersectionIt->boundaryId());
           }
         }
         if (numberOfBoundarySegments > 0)
-          data["local boundary id"][index] /= double(numberOfBoundarySegments);
+          data["local_boundary_id"][index] /= double(numberOfBoundarySegments);
         // visualize coupling
         if (coupling) {
           for (auto nn : ms_grid()->neighborsOf(s)) {
             const auto coupling_grid_view  = ms_grid()->couplingGridPart(s, nn);
-            const std::string coupling_str = "coupling (" + DSC::toString(s) + ", " + DSC::toString(nn) + ")";
-            data[coupling_str]             = std::vector<double>(globalGridView.indexSet().size(0), 0.0);
+            const std::string coupling_str = DSC::toString(s) + "_" + DSC::toString(nn) + "__coupling";
             const auto entity_it_end = coupling_grid_view.template end<0>();
             for (auto entity_it = coupling_grid_view.template begin<0>(); entity_it != entity_it_end; ++entity_it) {
               const auto& coupling_entity          = *entity_it;
               const size_t global_entity_id        = globalGridView.indexSet().index(coupling_entity);
+              data[DSC::toString(s) + "__boundary_entity_id"][global_entity_id]
+                                                   = coupling_grid_view.indexSet().index(coupling_entity);
               data[coupling_str][global_entity_id] = 1.0;
               for (auto intersection_it = coupling_grid_view.ibegin(coupling_entity);
                    intersection_it != coupling_grid_view.iend(coupling_entity);
@@ -322,30 +332,40 @@ public:
               }
             }
           }
+          // visualize boundary
+          if (ms_grid()->boundary(s)) {
+            const auto coupling_grid_view  = ms_grid()->boundaryGridPart(s);
+            const auto entity_it_end = coupling_grid_view.template end<0>();
+            for (auto entity_it = coupling_grid_view.template begin<0>(); entity_it != entity_it_end; ++entity_it) {
+              const auto& entity       = *it;
+              const unsigned int index = globalGridView.indexSet().index(entity);
+              data[DSC::toString(s) + "__boundary_entity_id"][index] = localGridView.indexSet().index(entity);
+            }
+          }
         } // if (coupling)
       }   // walk the local grid view
     }     // walk the subdomains
     if (ms_grid()->oversampling()) {
       // walk the oversampled grid parts
       for (size_t ss = 0; ss < ms_grid()->size(); ++ss) {
-        const std::string string_id = "oversampled subdomain " + Stuff::Common::toString(ss);
+        const std::string string_id = Stuff::Common::toString(ss) + "__oversampled";
         data[string_id]             = std::vector<double>(globalGridView.indexSet().size(0), -1.0);
         typedef typename MsGridType::LocalGridPartType LocalGridPartType;
         const LocalGridPartType oversampledGridPart = ms_grid()->localGridPart(ss, true);
         for (typename LocalGridPartType::template Codim<0>::IteratorType it = oversampledGridPart.template begin<0>();
              it != oversampledGridPart.template end<0>();
              ++it) {
-          const typename LocalGridPartType::template Codim<0>::EntityType& entity = *it;
-          const typename GlobalGridViewType::IndexSet::IndexType index            = globalGridView.indexSet().index(entity);
-          data[string_id][index]                                                  = 0.0;
+          const auto& entity = *it;
+          const size_t index = globalGridView.indexSet().index(entity);
+          data[string_id][index] = 0.0;
           // compute local boundary id
           unsigned int numberOfBoundarySegments = 0u;
-          for (typename LocalGridPartType::IntersectionIteratorType intersectionIt = oversampledGridPart.ibegin(entity);
+          for (auto intersectionIt = oversampledGridPart.ibegin(entity);
                intersectionIt != oversampledGridPart.iend(entity);
                ++intersectionIt) {
             if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
               numberOfBoundarySegments += 1u;
-              data[string_id][index] += double(intersectionIt->boundaryId());
+              data[string_id][index]   += double(intersectionIt->boundaryId());
             }
           }
           if (numberOfBoundarySegments > 0) {
