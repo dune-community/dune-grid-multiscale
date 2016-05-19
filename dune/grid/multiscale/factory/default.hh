@@ -18,10 +18,13 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dune/grid/sgrid.hh>
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#endif
+#include <dune/stuff/common/disable_warnings.hh>
+# include <dune/grid/sgrid.hh>
+# include <dune/grid/yaspgrid.hh>
+# if HAVE_ALUGRID
+#   include <dune/grid/alugrid.hh>
+# endif
+#include <dune/stuff/common/reenable_warnings.hh>
 
 #include <dune/grid/part/local/indexbased.hh>
 #include <dune/grid/multiscale/default.hh>
@@ -43,6 +46,7 @@ public:
   static size_t compute() = delete;
 };
 
+// SGrid
 template <>
 class NeighborRecursionLevel<SGrid<2, 2>>
 {
@@ -50,6 +54,29 @@ public:
   static size_t compute() { return 1; }
 };
 
+template <>
+class NeighborRecursionLevel<SGrid<3, 3>>
+{
+public:
+  static size_t compute() { return 3; }
+};
+
+// YaspGrid
+template <>
+class NeighborRecursionLevel<YaspGrid<2>>
+{
+public:
+  static size_t compute() { return 1; }
+};
+
+template <>
+class NeighborRecursionLevel<YaspGrid<3>>
+{
+public:
+  static size_t compute() { return 3; }
+};
+
+// ALUGrid
 #if HAVE_ALUGRID
 template <class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming, Comm>>
@@ -63,13 +90,6 @@ class NeighborRecursionLevel<Dune::ALUGrid<3, 3, Dune::simplex, tp, Comm>>
 {
 public:
   static size_t compute() { return 9; } // just a guess!
-};
-
-template <class Comm>
-class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::nonconforming, Comm>>
-{
-public:
-  static size_t compute() { return 1; }
 };
 
 template <class Comm, ALUGridRefinementType tp>
