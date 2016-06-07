@@ -44,6 +44,7 @@ public:
   typedef typename MacroGridProviderType::LeafGridViewType MacroGridViewType;
   typedef LocalGridImp LocalGridType;
   typedef Stuff::Grid::ProviderInterface<LocalGridType> LocalGridProviderType;
+  typedef typename LocalGridProviderType::LeafGridViewType MicroGridViewType;
 
   typedef typename MacroGridType::ctype ctype;
   static const size_t dimDomain = MacroGridType::dimension;
@@ -112,6 +113,13 @@ public:
   } // Glued(...)
 
   const MacroGridViewType& macro_grid_view() const { return macro_leaf_view_; }
+
+  MicroGridViewType micro_grid_view() const
+  {
+    prepare_global_grid();
+    assert(global_grid_);
+    return global_grid_->leaf_view();
+  }
 
   const LocalGridProviderType& local_grid(const MacroEntityType& macro_entity) const
   {
@@ -311,11 +319,96 @@ private:
     }
   } // ... setup_glues(...)
 
+  void prepare_global_grid() const
+  {
+    if (global_grid_)
+      return;
+    const auto& macro_index_set = macro_leaf_view_.indexSet();
+    std::vector<FieldVector<ctype, dimDomain>> vertices;
+    std::vector<std::vector<std::vector<unsigned int>>> entity_to_vertex_ids(local_grids_.size());
+    std::vector<std::vector<GeometryType>> geometry_types(local_grids_.size());
+    // walk the grid for the first time
+    for (auto&& macro_entity :
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                               elements
+#else
+                               DSC::entityRange
+#endif
+                                               (macro_leaf_view_)) {
+      const auto local_leaf_view = local_grid(macro_entity).leaf_view();
+      const auto& local_index_set = local_leaf_view.indexSet();
+      const size_t macro_index = macro_index_set.index(macro_entity);
+      entity_to_vertex_ids[macro_index] = std::vector<std::vector<unsigned int>>(local_index_set.size(0));
+      geometry_types[macro_index] = std::vector<GeometryType>(local_index_set.size(0));
+      for (auto&& micro_entity :
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                                 elements
+#else
+                                 DSC::entityRange
+#endif
+                                                 (local_leaf_view)) {
+        const size_t micro_index = local_index_set.index(micro_entity);
+        const auto num_vertices = micro_entity.
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+
+                                                subEntities(dimDomain);
+#else
+                                                template count<dimDomain>();
+#endif
+        entity_to_vertex_ids[macro_index][micro_index] = std::vector<unsigned int>(num_vertices);
+        geometry_types[macro_index][micro_index] = micro_entity.geometry().type();
+        for (unsigned int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
+          const unsigned int global_vertex_id
+              = find_insert_vertex(vertices,
+                                   micro_entity.template subEntity<dimDomain>(local_vertex_id)
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                                                                                              .
+#else
+                                                                                              ->
+#endif
+                                                                                                geometry().center());
+          entity_to_vertex_ids[macro_index][micro_index][local_vertex_id] = global_vertex_id;
+        }
+      } // walk the local grid
+    } // walk the macro grid
+    GridFactory<LocalGridType> global_factory;
+    for (const auto& vertex : vertices)
+      global_factory.insertVertex(vertex);
+    size_t II = 0;
+    size_t JJ = 0;
+    try {
+      for (size_t ii = 0; ii < local_grids_.size(); ++ii, II = ii)
+        for (size_t jj = 0; jj < entity_to_vertex_ids[ii].size(); ++jj, JJ = jj)
+            global_factory.insertElement(geometry_types[ii][jj], entity_to_vertex_ids[ii][jj]);
+    } catch (GridError& ee) {
+      DUNE_THROW(GridError,
+                 "It was not possible to insert an element into the grid factory!\n\n"
+                 << "GridType: " << Stuff::Common::Typename<LocalGridType>::value() << "\n"
+                 << "GeometryType: " << geometry_types[II][JJ] << "\n"
+                 << "\n"
+                 << "This was the original error: " << ee.what());
+    } // try
+    global_grid_ = std::make_shared<Stuff::Grid::Providers::Default<LocalGridType>>(global_factory.createGrid());
+  } // ... prepare_global_grid(...)
+
+  size_t find_insert_vertex(std::vector<FieldVector<ctype, dimDomain>>& vertices,
+                            FieldVector<ctype, dimDomain>&& vertex) const
+  {
+    // check if vertex is already contained
+    for (size_t ii = 0; ii < vertices.size(); ++ii)
+      if (DSC::FloatCmp::eq(vertex, vertices[ii]))
+        return ii;
+    // if not, add it
+    vertices.emplace_back(std::move(vertex));
+    return vertices.size() - 1;
+  } // ... find_insert_vertex(...)
+
   MacroGridProviderType& macro_grid_;
   const ctype allowed_overlap_;
   MacroGridViewType macro_leaf_view_;
   std::vector<std::shared_ptr<LocalGridProviderType>> local_grids_;
   mutable std::vector<std::map<size_t, std::map<int, std::map<int, std::shared_ptr<GlueType>>>>> glues_;
+  mutable std::shared_ptr<LocalGridProviderType> global_grid_;
 }; // class Glued
 
 } // namespace Multiscale
