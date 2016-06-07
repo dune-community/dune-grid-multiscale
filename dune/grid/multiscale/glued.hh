@@ -11,8 +11,14 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <dune/common/version.hh>
+
 #include <dune/grid/common/gridfactory.hh>
-#include <dune/grid/common/rangegenerators.hh>
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+# include <dune/grid/common/rangegenerators.hh>
+#else
+# include <dune/stuff/common/ranges.hh>
+#endif
 
 #include <dune/grid-glue/extractors/codim1extractor.hh>
 #include <dune/grid-glue/extractors/extractorpredicate.hh>
@@ -61,7 +67,12 @@ private:
 
     virtual bool contains(const LocalEntityType& element, unsigned int face) const override final
     {
-      const auto local_intersection           = element.template subEntity<1>(face);
+      const auto local_intersection_ptr       = element.template subEntity<1>(face);
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+      const auto& local_intersection          = local_intersection_ptr;
+#else
+      const auto& local_intersection          = *local_intersection_ptr;
+#endif
       const auto& local_intersection_geometry = local_intersection.geometry();
       // Check if all corners of the local intersection lie within the macro intersection.
       for (auto ii : DSC::valueRange(local_intersection_geometry.corners()))
@@ -152,10 +163,22 @@ private:
   {
     try {
       GridFactory<LocalGridType> subdomain_factory;
-      const auto num_vertices = macro_entity.subEntities(dimDomain);
+      const auto num_vertices = macro_entity.
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+
+                                             subEntities(dimDomain);
+#else
+                                             template count<dimDomain>();
+#endif
       std::vector<unsigned int> vertex_ids(num_vertices, 0);
       for (unsigned int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
-        const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id).geometry().center();
+        const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id)
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                                                                                       .
+#else
+                                                                                       ->
+#endif
+                                                                                         geometry().center();
         subdomain_factory.insertVertex(vertex);
         vertex_ids[local_vertex_id] = local_vertex_id;
       }
@@ -175,11 +198,23 @@ private:
   template <class MacroEntityType>
   static std::shared_ptr<LocalGridProviderType> create_grid_of_cube(const MacroEntityType& macro_entity)
   {
-    const auto num_vertices = macro_entity.subEntities(dimDomain);
+    const auto num_vertices = macro_entity.
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+
+                                           subEntities(dimDomain);
+#else
+                                           template count<dimDomain>();
+#endif
     FieldVector<ctype, dimDomain> lower_left(std::numeric_limits<ctype>::max());
     FieldVector<ctype, dimDomain> upper_right(std::numeric_limits<ctype>::min());
     for (unsigned int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
-      const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id).geometry().center();
+      const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id)
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                                                                                     .
+#else
+                                                                                     ->
+#endif
+                                                                                       geometry().center();
       for (size_t dd = 0; dd < dimDomain; ++dd) {
         lower_left[dd]  = std::min(lower_left[dd], vertex[dd]);
         upper_right[dd] = std::max(upper_right[dd], vertex[dd]);
@@ -191,7 +226,13 @@ private:
   void setup_local_grids()
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
-    for (auto&& macro_entity : elements(macro_leaf_view_)) {
+    for (auto&& macro_entity :
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                               elements
+#else
+                               DSC::entityRange
+#endif
+                                               (macro_leaf_view_)) {
       auto macro_entity_index = macro_index_set.index(macro_entity);
       if (macro_entity.type().isSimplex())
         local_grids_[macro_entity_index] = create_grid_of_simplex(macro_entity);
@@ -238,7 +279,13 @@ private:
   void setup_glues()
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
-    for (auto&& macro_entity : elements(macro_leaf_view_)) {
+    for (auto&& macro_entity :
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                               elements
+#else
+                               DSC::entityRange
+#endif
+                                               (macro_leaf_view_)) {
       const auto macro_entity_index = macro_index_set.index(macro_entity);
       auto& entity_glues            = glues_[macro_entity_index];
       // walk the neighbors ...
@@ -248,7 +295,12 @@ private:
            ++macro_intersection_it) {
         const auto& macro_intersection = *macro_intersection_it;
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
-          const auto macro_neighbor       = macro_intersection.outside();
+          const auto macro_neighbor_ptr   = macro_intersection.outside();
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+          const auto& macro_neighbor      = macro_neighbor_ptr;
+#else
+          const auto& macro_neighbor      = *macro_neighbor_ptr;
+#endif
           const auto macro_neighbor_index = macro_index_set.index(macro_neighbor);
           for (auto local_entity_level : DSC::valueRange(local_grids_[macro_entity_index]->grid().maxLevel() + 1))
             for (auto local_neighbor_level : DSC::valueRange(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1))
