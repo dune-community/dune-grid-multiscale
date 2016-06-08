@@ -35,6 +35,7 @@ namespace Dune {
 namespace grid {
 namespace Multiscale {
 
+
 template <class MacroGridImp, class LocalGridImp>
 class Glued
 {
@@ -137,19 +138,19 @@ public:
 
   /**
    * \brief Returns (and creates, if it does not exist) the coupling glue between the local grid view of level
-   *        macro_entity_level on macro_entity and the local grid view of level macro_neighbor_level on macro_neighbor.
+   *        local_level_macro_entity on macro_entity and the local grid view of level local_level_macro_neighbor on macro_neighbor.
    * \note  Access is not implemented efficiently. This could be improved by using std::map::find instead of
    *        std::map::operator[].
    */
-  const GlueType& coupling(const MacroEntityType& macro_entity, const int macro_entity_level,
-                           const MacroEntityType& macro_neighbor, const int macro_neighbor_level) const
+  const GlueType& coupling(const MacroEntityType& macro_entity, const int local_level_macro_entity,
+                           const MacroEntityType& macro_neighbor, const int local_level_macro_neighbor) const
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
     assert(macro_index_set.contains(macro_entity));
     assert(macro_index_set.contains(macro_neighbor));
     const auto entity_index   = macro_index_set.index(macro_entity);
     const auto neighbor_index = macro_index_set.index(macro_neighbor);
-    if (glues_[entity_index][neighbor_index][macro_entity_level][macro_neighbor_level] == nullptr) {
+    if (glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor] == nullptr) {
       // find the corresponding macro intersection ...
       const auto macro_intersection_it_end = macro_leaf_view_.iend(macro_entity);
       for (auto macro_intersection_it = macro_leaf_view_.ibegin(macro_entity);
@@ -158,11 +159,11 @@ public:
         const auto& macro_intersection = *macro_intersection_it;
         if (macro_intersection.neighbor() && !macro_intersection.boundary())
           if (macro_index_set.index(macro_intersection.outside()) == neighbor_index)
-            glues_[entity_index][neighbor_index][macro_entity_level][macro_neighbor_level] =
-                create_glue(macro_entity, macro_neighbor, macro_intersection, macro_entity_level, macro_neighbor_level);
+            glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor] =
+                create_glue(macro_entity, macro_neighbor, macro_intersection, local_level_macro_entity, local_level_macro_neighbor);
       } // ... find the corresponding macro intersection
     }
-    return *(glues_[entity_index][neighbor_index][macro_entity_level][macro_neighbor_level]);
+    return *(glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor]);
   } // ... coupling(...)
 
 private:
@@ -410,6 +411,7 @@ private:
   mutable std::vector<std::map<size_t, std::map<int, std::map<int, std::shared_ptr<GlueType>>>>> glues_;
   mutable std::shared_ptr<LocalGridProviderType> global_grid_;
 }; // class Glued
+
 
 } // namespace Multiscale
 } // namespace grid
