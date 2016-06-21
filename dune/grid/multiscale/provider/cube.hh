@@ -83,12 +83,12 @@ public:
         cfg.get("oversampling_layers", default_cfg.get<size_t>("oversampling_layers")));
   } // ... create(...)
 
-  Cube(const DomainType lower_left = default_config().get<DomainType>("lower_left"),
-       const DomainType upper_right                 = default_config().get<DomainType>("upper_right"),
-       const std::vector<unsigned int> num_elements = default_config().get<std::vector<unsigned int>>("num_elements"),
-       const std::vector<size_t> num_partittions = default_config().get<std::vector<size_t>>("num_partitions",
+  Cube(const DomainType lower_left = default_config().template get<DomainType>("lower_left"),
+       const DomainType upper_right                 = default_config().template get<DomainType>("upper_right"),
+       const std::vector<unsigned int> num_elements = default_config().template get<std::vector<unsigned int>>("num_elements"),
+       const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
                                                                                              dimDomain),
-       const size_t num_oversampling_layers = default_config().get<size_t>("oversampling_layers"),
+       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers"),
        std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
   {
     if (num_partittions.size() < dimDomain)
@@ -118,11 +118,11 @@ public:
   }
 
   Cube(const std::shared_ptr<const GridType> grd,
-       const DomainType lower_left               = default_config().get<DomainType>("lower_left"),
-       const DomainType upper_right              = default_config().get<DomainType>("upper_right"),
-       const std::vector<size_t> num_partittions = default_config().get<std::vector<size_t>>("num_partitions",
+       const DomainType lower_left               = default_config().template get<DomainType>("lower_left"),
+       const DomainType upper_right              = default_config().template get<DomainType>("upper_right"),
+       const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
                                                                                              dimDomain),
-       const size_t num_oversampling_layers = default_config().get<size_t>("oversampling_layers"),
+       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers"),
        std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
     : grid_(grd)
   {
