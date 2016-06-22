@@ -166,6 +166,24 @@ public:
     return *(glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor]);
   } // ... coupling(...)
 
+  void visualize(const std::string& filename = "grid.multiscale.glued") const
+  {
+    macro_grid_.visualize(filename + ".macro");
+    const auto& macro_index_set = macro_leaf_view_.indexSet();
+    for (auto&& macro_entity :
+#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
+                               elements
+#else
+                               DSC::entityRange
+#endif
+                                               (macro_leaf_view_)) {
+      auto macro_entity_index = macro_index_set.index(macro_entity);
+      local_grids_[macro_entity_index]->visualize(filename + ".local." + DSC::toString(macro_entity_index));
+    }
+    prepare_global_grid();
+    global_grid_->visualize(filename + ".global");
+  } // ... visualize(...)
+
 private:
   template <class MacroEntityType>
   static std::shared_ptr<LocalGridProviderType> create_grid_of_simplex(const MacroEntityType& macro_entity)
