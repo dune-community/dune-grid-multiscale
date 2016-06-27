@@ -20,6 +20,7 @@
 #else
 # include <dune/stuff/common/ranges.hh>
 #endif
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/grid-glue/extractors/codim1extractor.hh>
 #include <dune/grid-glue/extractors/extractorpredicate.hh>
@@ -30,6 +31,7 @@
 #include <dune/stuff/common/memory.hh>
 #include <dune/stuff/common/timedlogging.hh>
 #include <dune/stuff/common/ranges.hh>
+#include <dune/stuff/common/vector.hh>
 #include <dune/stuff/grid/intersection.hh>
 #include <dune/stuff/grid/provider/cube.hh>
 #include <dune/stuff/grid/provider/interface.hh>
@@ -38,6 +40,11 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
+
+
+// forward
+template <class MacroGridType, class LocalGridType>
+class GluedVTKWriter;
 
 
 template <class MacroGridImp, class LocalGridImp>
@@ -125,6 +132,12 @@ public:
     return macro_grid_view().indexSet().size(0);
   }
 
+  size_t subdomain(const MacroEntityType& macro_entity) const
+  {
+    assert(macro_leaf_view_.indexSet().contains(macro_entity));
+    return macro_leaf_view_.indexSet().index(macro_entity);
+  }
+
   bool boundary(const MacroEntityType& macro_entity) const
   {
     assert(macro_leaf_view_.indexSet().contains(macro_entity));
@@ -133,6 +146,8 @@ public:
 
   MicroGridViewType global_grid_view()
   {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_grid_view");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     assert(global_grid_);
     return global_grid_->leaf_view();
@@ -140,6 +155,8 @@ public:
 
   const std::vector<std::vector<size_t>>& local_to_global_indices()
   {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.local_to_global_indices");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     assert(local_to_global_indices_);
     return *local_to_global_indices_;
@@ -147,6 +164,8 @@ public:
 
   const std::vector<std::pair<size_t, size_t>>& global_to_local_indices()
   {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_to_local_indices");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     assert(global_to_local_indices_);
     return *global_to_local_indices_;
@@ -290,12 +309,12 @@ public:
   {
     auto logger = Stuff::Common::TimedLogger().get("grid-multiscale.glued.visualize");
     macro_grid_.visualize(filename + ".macro");
-    prepare_global_grid();
-    global_grid_->visualize(filename + ".global");
-    std::map<std::string, std::vector<double>> global_visualizations;
-    const auto global_leaf_view = global_grid_->leaf_view();
-    const size_t global_size = global_leaf_view.indexSet().size(0);
+    GluedVTKWriter<MacroGridType, LocalGridType> vtk_writer(*this);
     const auto& macro_index_set = macro_leaf_view_.indexSet();
+    std::vector<std::vector<double>> subdomain_visualization(macro_index_set.size(0));
+    std::vector<std::vector<double>> boundary_visualization(macro_index_set.size(0));
+    std::vector<std::vector<double>> inside_outside_coupling_visualization(macro_index_set.size(0));
+    std::vector<std::vector<double>> outside_inside_coupling_visualization(macro_index_set.size(0));
     // walk the macro grid
     for (auto&& macro_entity :
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
@@ -306,15 +325,18 @@ public:
                                                (macro_leaf_view_)) {
       const size_t macro_entity_index = macro_index_set.index(macro_entity);
       logger.debug() << "macro_entity: " << macro_entity_index << " ";
-      const std::string macro_entity_index_str = DSC::toString(macro_entity_index);
       const auto local_level = max_local_level(macro_entity);
       const auto local_grid_view = local_grids_[macro_entity_index]->level_view(local_level);
+      subdomain_visualization[macro_entity_index] = std::vector<double>(local_grid_view.indexSet().size(0),
+                                                                        macro_entity_index);
+      boundary_visualization[macro_entity_index] = std::vector<double>(local_grid_view.indexSet().size(0), -1);
+      if (inside_outside_coupling_visualization[macro_entity_index].empty())
+        inside_outside_coupling_visualization[macro_entity_index] = std::vector<double>(local_grid_view.indexSet().size(0), -1);
+      if (outside_inside_coupling_visualization[macro_entity_index].empty())
+        outside_inside_coupling_visualization[macro_entity_index] = std::vector<double>(local_grid_view.indexSet().size(0), -1);
       // local boundary entities
       if (boundary(macro_entity)) {
         logger.debug() << "(boundary entity)" << std::endl;
-        global_visualizations["boundary_entities_of_subdomain_" + macro_entity_index_str]
-            = std::vector<double>(global_size, -1.);
-        auto& boundary_entities_visualization = global_visualizations["boundary_entities_of_subdomain_" + macro_entity_index_str];
         const auto& boundary_entity_ptrs_with_local_intersections
             = local_boundary_entities(macro_entity, local_level);
         logger.debug() << "  local grid has " << boundary_entity_ptrs_with_local_intersections.size() << "/"
@@ -325,8 +347,7 @@ public:
           if (!local_intersections.empty()) {
             const auto& local_entity = *local_entity_ptr;
             const size_t local_entity_index = local_grid_view.indexSet().index(local_entity);
-            const size_t global_entity_index = local_to_global_indices_->operator[](macro_entity_index)[local_entity_index];
-            boundary_entities_visualization[global_entity_index] = macro_entity_index;
+            boundary_visualization[macro_entity_index][local_entity_index] = macro_entity_index;
           }
         }
       } else {
@@ -341,42 +362,60 @@ public:
           const size_t macro_neighbor_index = macro_leaf_view_.indexSet().index(macro_neighbor);
           const auto local_neighbor_level = max_local_level(macro_neighbor);
           const auto local_neighbor_grid_view = local_grids_[macro_neighbor_index]->level_view(local_neighbor_level);
-          const std::string macro_neighbor_index_str = DSC::toString(macro_neighbor_index);
+          if (inside_outside_coupling_visualization[macro_neighbor_index].empty())
+            inside_outside_coupling_visualization[macro_neighbor_index] = std::vector<double>(local_neighbor_grid_view.indexSet().size(0), -1);
+          if (outside_inside_coupling_visualization[macro_neighbor_index].empty())
+            outside_inside_coupling_visualization[macro_neighbor_index] = std::vector<double>(local_neighbor_grid_view.indexSet().size(0), -1);
+          // walk the coupling, where this is the inside
           size_t num_coupling_intersections = 0;
-          const auto& coupling_glue = coupling(macro_entity, local_level,
-                                               macro_neighbor, local_neighbor_level);
-          global_visualizations["coupling_of_" + macro_entity_index_str + "_and_" + macro_neighbor_index_str]
-              = std::vector<double>(global_size, -1.);
-          auto& coupling_visualization
-              = global_visualizations["coupling_of_" + macro_entity_index_str + "_and_" + macro_neighbor_index_str];
-          // walk the coupling
-          const auto coupling_intersection_it_end = coupling_glue.template iend<0>();
-          for (auto coupling_intersection_it = coupling_glue.template ibegin<0>();
-               coupling_intersection_it != coupling_intersection_it_end;
-               ++coupling_intersection_it) {
+          const auto& in_out_coupling_glue = coupling(macro_entity, local_level, macro_neighbor, local_neighbor_level);
+          const auto in_out_coupling_intersection_it_end = in_out_coupling_glue.template iend<0>();
+          for (auto in_out_coupling_intersection_it = in_out_coupling_glue.template ibegin<0>();
+               in_out_coupling_intersection_it != in_out_coupling_intersection_it_end;
+               ++in_out_coupling_intersection_it) {
             ++num_coupling_intersections;
-            const auto& coupling_intersection = *coupling_intersection_it;
+            const auto& coupling_intersection = *in_out_coupling_intersection_it;
             const auto local_entity_ptr = coupling_intersection.inside();
             const auto& local_entity = *local_entity_ptr;
             const size_t local_entity_index = local_grid_view.indexSet().index(local_entity);
-            const size_t global_index_local_entity
-                = local_to_global_indices_->operator[](macro_entity_index)[local_entity_index];
-            coupling_visualization[global_index_local_entity] = macro_entity_index;
+            inside_outside_coupling_visualization[macro_entity_index][local_entity_index] = macro_entity_index;
             const auto local_neighbor_ptr = coupling_intersection.outside();
             const auto& local_neighbor = *local_neighbor_ptr;
             const size_t local_neighbor_index = local_neighbor_grid_view.indexSet().index(local_neighbor);
-            const size_t global_index_local_neighbor
-                = local_to_global_indices_->operator[](macro_neighbor_index)[local_neighbor_index];
-            coupling_visualization[global_index_local_neighbor] = macro_neighbor_index;
+            inside_outside_coupling_visualization[macro_neighbor_index][local_neighbor_index] = macro_neighbor_index;
           }
+          // walk the coupling, where this is the outside
+          size_t out_in_num_coupling_intersections = 0;
+          const auto& out_in_coupling_glue = coupling(macro_neighbor, local_neighbor_level, macro_entity, local_level);
+          const auto out_in_coupling_intersection_it_end = out_in_coupling_glue.template iend<0>();
+          for (auto out_in_coupling_intersection_it = out_in_coupling_glue.template ibegin<0>();
+               out_in_coupling_intersection_it != out_in_coupling_intersection_it_end;
+               ++out_in_coupling_intersection_it) {
+            ++out_in_num_coupling_intersections;
+            const auto& coupling_intersection = *out_in_coupling_intersection_it;
+            const auto local_entity_ptr = coupling_intersection.inside();
+            const auto& local_entity = *local_entity_ptr;
+            const size_t local_entity_index = local_grid_view.indexSet().index(local_entity);
+            outside_inside_coupling_visualization[macro_neighbor_index][local_entity_index] = macro_neighbor_index;
+            const auto local_neighbor_ptr = coupling_intersection.outside();
+            const auto& local_neighbor = *local_neighbor_ptr;
+            const size_t local_neighbor_index = local_neighbor_grid_view.indexSet().index(local_neighbor);
+            outside_inside_coupling_visualization[macro_entity_index][local_neighbor_index] = macro_entity_index;
+          }
+          if (num_coupling_intersections != out_in_num_coupling_intersections)
+            DUNE_THROW(Stuff::Exceptions::internal_error,
+                       "The coupling glue is broken!\n"
+                       << "macro entity (local level):   " << macro_entity_index << " (" << local_level << ")\n"
+                       << "macro neighbor (local level): " << macro_neighbor_index << " (" << local_neighbor_level
+                       << ")");
           logger.debug() << "  " << num_coupling_intersections << " coupling intersections with neighbor " << macro_neighbor_index << std::endl;
         }
       }
-      local_grids_[macro_entity_index]->visualize(filename + ".local." + DSC::toString(macro_entity_index));
     } // walk the macro grid
-    Dune::VTKWriter< typename LocalGridType::LeafGridView > vtk_writer(global_leaf_view);
-    for (const auto& item : global_visualizations)
-      vtk_writer.addCellData(item.second, item.first);
+    vtk_writer.addCellData(subdomain_visualization, "subdomains");
+    vtk_writer.addCellData(boundary_visualization, "local boundary entities");
+    vtk_writer.addCellData(inside_outside_coupling_visualization, "local coupling entities (inside/outside)");
+    vtk_writer.addCellData(outside_inside_coupling_visualization, "local coupling entities (outside/inside)");
     vtk_writer.write(filename, VTK::appendedraw);
   } // ... visualize(...)
 
@@ -639,11 +678,10 @@ private:
         local_entity_center[0] = local_entity.geometry().center();
         const auto global_entity_ptr_unique_ptrs = global_search(local_entity_center);
         // the search has to be successfull, since the global grid has been constructed to exactly contain each local entity
-        assert(global_entity_ptr_ptrs.size() == 1);
+        assert(global_entity_ptr_unique_ptrs.size() == 1);
         const auto& global_entity_ptr_unique_ptr = global_entity_ptr_unique_ptrs.at(0);
         assert(global_entity_ptr_unique_ptr);
         const auto& global_entity_ptr = *global_entity_ptr_unique_ptr;
-        assert(global_entity_ptr);
         const auto& global_entity = *global_entity_ptr;
         const size_t global_entity_index = global_grid_view.indexSet().index(global_entity);
         // store information
@@ -677,6 +715,112 @@ private:
   std::unique_ptr<std::vector<std::vector<size_t>>> local_to_global_indices_;
   std::unique_ptr<std::vector<std::pair<size_t, size_t>>> global_to_local_indices_;
 }; // class Glued
+
+
+/**
+ * \todo Allow for other data types than double (which means implementing the caching of arbitrary vectors).
+ */
+template <class MacroGridType, class LocalGridType>
+class GluedVTKWriter
+{
+  typedef typename LocalGridType::LevelGridView LocalGridViewType;
+
+  // we only need this class to access a protected pwrite method of VTKWriter
+  class LocalVTKWriter
+    : public VTKWriter<LocalGridViewType>
+  {
+    typedef VTKWriter<LocalGridViewType> BaseType;
+  public:
+    LocalVTKWriter(const LocalGridViewType& local_grid_view, const size_t subdomain, const size_t num_subdomains)
+      : BaseType(local_grid_view)
+      , commRank_(boost::numeric_cast<int>(subdomain))
+      , commSize_(boost::numeric_cast<int>(num_subdomains))
+    {}
+
+    void write_locally(const std::string& name, VTK::OutputType ot)
+    {
+      BaseType::pwrite(name, "", "", ot, commRank_, commSize_);
+    }
+
+  private:
+    const int commRank_;
+    const int commSize_;
+  }; // class LocalVTKWriter
+
+public:
+  typedef Glued<MacroGridType, LocalGridType> GluedGridType;
+
+  GluedVTKWriter(const GluedGridType& glued_grid, const int local_level = -1)
+    : glued_grid_(glued_grid)
+    , local_levels_(glued_grid_.num_subdomains(), -1)
+  {
+    // set each local level to its respective max
+    if (local_level < 0)
+      for (auto&& macro_entity : DSC::entityRange(glued_grid_.macro_grid_view()))
+        local_levels_[glued_grid_.subdomain(macro_entity)] = glued_grid_.max_local_level(macro_entity);
+    prepare_local_vtk_writers();
+  } // GluedVTKWriter(...)
+
+  GluedVTKWriter(const GluedGridType& glued_grid, const std::vector<int>& local_levels)
+    : glued_grid_(glued_grid)
+    , local_levels_(local_levels)
+  {
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      if (local_levels_[ss] < 0)
+        local_levels_[ss] = glued_grid_.max_local_level(ss);
+    prepare_local_vtk_writers();
+  }
+
+  template<class V>
+  void addCellData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
+  {
+    if (vectors.size() != glued_grid_.num_subdomains())
+      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+                 "vectors.size(): " << vectors.size() << "\n"
+                 << "glued_grid_.num_subdomains(): " << glued_grid_.num_subdomains());
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      local_vtk_writers_[ss]->addCellData(vectors[ss], name, ncomps);
+  } // ... addCellData(...)
+
+  template<class V>
+  void addVertexData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
+  {
+    if (vectors.size() != glued_grid_.num_subdomains())
+      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+                 "vectors.size(): " << vectors.size() << "\n"
+                 << "glued_grid_.num_subdomains(): " << glued_grid_.num_subdomains());
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      local_vtk_writers_[ss]->addVertexData(vectors[ss], name, ncomps);
+  } // ... addVertexData(...)
+
+  void clear()
+  {
+    for (auto& local_vtk_writer : local_vtk_writers_)
+      local_vtk_writer.clear();
+  }
+
+  void write(const std::string& name, VTK::OutputType type = VTK::ascii)
+  {
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      local_vtk_writers_[ss]->write_locally(name, type);
+  }
+
+private:
+  void prepare_local_vtk_writers()
+  {
+    for (auto&& macro_entity : DSC::entityRange(glued_grid_.macro_grid_view())) {
+      const size_t subdomain = glued_grid_.subdomain(macro_entity);
+      local_vtk_writers_.emplace_back(
+            new LocalVTKWriter(glued_grid_.local_grid(macro_entity).level_view(local_levels_[subdomain]),
+                               subdomain,
+                               glued_grid_.num_subdomains()));
+    }
+  } // ... prepare_local_vtk_writers(...)
+
+  const GluedGridType& glued_grid_;
+  std::vector<int> local_levels_;
+  std::vector<std::unique_ptr<LocalVTKWriter>> local_vtk_writers_;
+}; // class GluedVTKWriter
 
 
 } // namespace Multiscale
