@@ -51,19 +51,21 @@ template <class MacroGridImp, class LocalGridImp>
 class Glued
 {
 public:
-  typedef MacroGridImp MacroGridType;
-  typedef Stuff::Grid::ProviderInterface<MacroGridType> MacroGridProviderType;
-  typedef typename MacroGridProviderType::LeafGridViewType MacroGridViewType;
-  typedef LocalGridImp LocalGridType;
-  typedef Stuff::Grid::ProviderInterface<LocalGridType> LocalGridProviderType;
-  typedef typename LocalGridProviderType::LeafGridViewType MicroGridViewType;
+  typedef MacroGridImp                                      MacroGridType;
+  typedef Stuff::Grid::ProviderInterface<MacroGridType>     MacroGridProviderType;
+  typedef typename MacroGridProviderType::LeafGridViewType  MacroGridViewType;
+  typedef typename MacroGridType::template Codim<0>::Entity MacroEntityType;
+
+  typedef LocalGridImp                                             LocalGridType;
+  typedef Stuff::Grid::ProviderInterface<LocalGridType>            LocalGridProviderType;
+
+  typedef typename LocalGridType::LevelGridView                        MicroGridViewType;
+  typedef typename MicroGridViewType::template Codim<0>::Entity        MicroEntityType;
+  typedef typename MicroGridViewType::template Codim<0>::EntityPointer MicroEntityPointerType;
 
   typedef typename MacroGridType::ctype ctype;
   static const size_t dimDomain = MacroGridType::dimension;
   static const size_t dimWorld  = MacroGridType::dimensionworld;
-
-  typedef typename MacroGridType::template Codim<0>::Entity MacroEntityType;
-  typedef typename LocalGridType::template Codim<0>::EntityPointer MicroEntityPointerType;
 
 private:
   typedef typename LocalGridProviderType::LevelGridViewType LocalViewType;
@@ -149,8 +151,7 @@ public:
     auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_grid_view");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
-    assert(global_grid_);
-    return global_grid_->leaf_view();
+    return global_grid_->level_view(global_grid_->grid().maxLevel());
   }
 
   const std::vector<std::vector<size_t>>& local_to_global_indices()
@@ -158,7 +159,6 @@ public:
     auto logger = DSC::TimedLogger().get("grid-multiscale.glued.local_to_global_indices");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
-    assert(local_to_global_indices_);
     return *local_to_global_indices_;
   }
 
