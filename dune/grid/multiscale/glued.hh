@@ -305,10 +305,12 @@ public:
     return boundary_entity_ptrs_with_local_intersections;
   } // ... local_boundary_entities(...)
 
-  void visualize(const std::string& filename = "grid.multiscale.glued")
+  template< class... Args >
+  void visualize(const std::string& filename = "grid.multiscale.glued",
+                 Args&& ...args)
   {
     auto logger = Stuff::Common::TimedLogger().get("grid-multiscale.glued.visualize");
-    macro_grid_.visualize(filename + ".macro");
+    macro_grid_.visualize(filename + ".macro", std::forward< Args >(args)...);
     GluedVTKWriter<MacroGridType, LocalGridType> vtk_writer(*this);
     const auto& macro_index_set = macro_leaf_view_.indexSet();
     std::vector<std::vector<double>> subdomain_visualization(macro_index_set.size(0));
