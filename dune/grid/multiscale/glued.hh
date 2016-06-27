@@ -339,7 +339,7 @@ public:
         logger.debug() << "(boundary entity)" << std::endl;
         const auto& boundary_entity_ptrs_with_local_intersections
             = local_boundary_entities(macro_entity, local_level);
-        logger.debug() << "  local grid has " << boundary_entity_ptrs_with_local_intersections.size() << "/"
+        logger.debug() << "  " << boundary_entity_ptrs_with_local_intersections.size() << "/"
                        << local_grid_view.indexSet().size(0) << " boundary entities" << std::endl;
         for (const auto& element : boundary_entity_ptrs_with_local_intersections) {
           const auto& local_entity_ptr = element.first;
@@ -350,9 +350,10 @@ public:
             boundary_visualization[macro_entity_index][local_entity_index] = macro_entity_index;
           }
         }
-      } else {
+      } else
         logger.debug() << "(inner entity)" << std::endl;
-        for (auto&& macro_intersection : DSC::intersectionRange(macro_leaf_view_, macro_entity)) {
+      for (auto&& macro_intersection : DSC::intersectionRange(macro_leaf_view_, macro_entity)) {
+        if (!macro_intersection.boundary() && macro_intersection.neighbor()) {
           const auto macro_neighbor_ptr = macro_intersection.outside();
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
           const auto& macro_neighbor = macro_neighbor_ptr;
