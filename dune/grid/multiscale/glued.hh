@@ -717,9 +717,6 @@ private:
 }; // class Glued
 
 
-/**
- * \todo Allow for other data types than double (which means implementing the caching of arbitrary vectors).
- */
 template <class MacroGridType, class LocalGridType>
 class GluedVTKWriter
 {
@@ -771,7 +768,7 @@ public:
     prepare_local_vtk_writers();
   }
 
-  template<class V>
+  template <class V>
   void addCellData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
   {
     if (vectors.size() != glued_grid_.num_subdomains())
@@ -782,7 +779,18 @@ public:
       local_vtk_writers_[ss]->addCellData(vectors[ss], name, ncomps);
   } // ... addCellData(...)
 
-  template<class V>
+  template <class VTKFunctionType>
+  void addCellData(const std::vector<std::shared_ptr<VTKFunctionType>>& functions)
+  {
+    if (functions.size() != glued_grid_.num_subdomains())
+      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+                 "funcitons.size(): " << functions.size() << "\n"
+                 << "glued_grid_.num_subdomains(): " << glued_grid_.num_subdomains());
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      local_vtk_writers_[ss]->addCellData(functions[ss]);
+  } // ... addCellData(...)
+
+  template <class V>
   void addVertexData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
   {
     if (vectors.size() != glued_grid_.num_subdomains())
@@ -791,6 +799,17 @@ public:
                  << "glued_grid_.num_subdomains(): " << glued_grid_.num_subdomains());
     for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
       local_vtk_writers_[ss]->addVertexData(vectors[ss], name, ncomps);
+  } // ... addVertexData(...)
+
+  template <class VTKFunctionType>
+  void addVertexData(const std::vector<std::shared_ptr<VTKFunctionType>>& functions)
+  {
+    if (functions.size() != glued_grid_.num_subdomains())
+      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+                 "funcitons.size(): " << functions.size() << "\n"
+                 << "glued_grid_.num_subdomains(): " << glued_grid_.num_subdomains());
+    for (size_t ss = 0; ss < glued_grid_.num_subdomains(); ++ss)
+      local_vtk_writers_[ss]->addVertexData(functions[ss]);
   } // ... addVertexData(...)
 
   void clear()
