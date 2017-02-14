@@ -88,8 +88,8 @@ public:
        const std::vector<unsigned int> num_elements = default_config().template get<std::vector<unsigned int>>("num_elements"),
        const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
                                                                                              dimDomain),
-       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers"),
-       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers")/*,
+       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
   {
     if (num_partittions.size() < dimDomain)
       DUNE_THROW(Dune::RangeError,
@@ -114,7 +114,7 @@ public:
       grd_ptr->globalRefine(1);
 #endif
     grid_ = grd_ptr;
-    setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
+    setup(lower_left, upper_right, num_partittions, num_oversampling_layers/*, out, prefix*/);
   }
 
   Cube(const std::shared_ptr<const GridType> grd,
@@ -122,8 +122,8 @@ public:
        const DomainType upper_right              = default_config().template get<DomainType>("upper_right"),
        const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
                                                                                              dimDomain),
-       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers"),
-       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers")/*,
+       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
     : grid_(grd)
   {
     if (num_partittions.size() < dimDomain)
@@ -137,7 +137,7 @@ public:
                                   << upper_right[ii]
                                   << "!)");
     }
-    setup(lower_left, upper_right, num_partittions, num_oversampling_layers, out, prefix);
+    setup(lower_left, upper_right, num_partittions, num_oversampling_layers/*, out, prefix*/);
   }
 
   virtual const GridType& grid() const override { return *grid_; }
@@ -153,7 +153,7 @@ public:
 
 private:
   void setup(const DomainType& lower_left, const DomainType& upper_right, const std::vector<size_t>& num_partitions,
-             const size_t num_oversampling_layers, std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+             const size_t num_oversampling_layers/*, std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
   {
     typedef Dune::grid::Multiscale::Factory::Default<GridType> MsGridFactoryType;
 
@@ -161,13 +161,13 @@ private:
     // prepare
     MsGridFactoryType factory(grid_);
     factory.prepare();
-#ifndef NDEBUG
-    // debug output
-    out << prefix << static_id() << ":" << std::endl;
-    Stuff::Common::print(lower_left, "lower_left", out, prefix);
-    Stuff::Common::print(upper_right, "upper_right", out, prefix);
-    Stuff::Common::print(num_partitions, "num_partitions", out, prefix);
-#endif // NDEBUG
+//#ifndef NDEBUG
+//    // debug output
+//    out << prefix << static_id() << ":" << std::endl;
+//    Stuff::Common::print(lower_left, "lower_left", out, prefix);
+//    Stuff::Common::print(upper_right, "upper_right", out, prefix);
+//    Stuff::Common::print(num_partitions, "num_partitions", out, prefix);
+//#endif // NDEBUG
     // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
     const auto global_grid_part = factory.globalGridPart();
@@ -177,10 +177,10 @@ private:
       // get center of entity
       const auto& entity = *entity_it;
       const auto center  = entity.geometry().center();
-#ifndef NDEBUG
-      const size_t entity_index = global_grid_part->indexSet().index(entity);
-      Stuff::Common::print(center, "entity (" + Stuff::Common::toString(entity_index) + ")", out, prefix);
-#endif // NDEBUG
+//#ifndef NDEBUG
+//      const size_t entity_index = global_grid_part->indexSet().index(entity);
+//      Stuff::Common::print(center, "entity (" + Stuff::Common::toString(entity_index) + ")", out, prefix);
+//#endif // NDEBUG
       // decide on the subdomain this entity shall belong to
       std::vector<size_t> whichPartition(dimDomain, 0);
       for (size_t dd = 0; dd < dimDomain; ++dd)
@@ -200,10 +200,10 @@ private:
         DUNE_THROW(Dune::NotImplemented,
                    "ERROR in " << static_id() << ": not implemented for grid dimDomains other than 1, 2 or 3!");
       // add entity to subdomain
-      factory.add(entity, subdomain, prefix + "  ", out);
+      factory.add(entity, subdomain/*, prefix + "  ", out*/);
     } // walk the grid
     // finalize
-    factory.finalize(num_oversampling_layers, neighbor_recursion_level, prefix + "  ", out);
+    factory.finalize(num_oversampling_layers, neighbor_recursion_level/*, prefix + "  ", out*/);
     //    debug << std::flush;
     // be done with it
     ms_grid_ = factory.createMsGrid();
