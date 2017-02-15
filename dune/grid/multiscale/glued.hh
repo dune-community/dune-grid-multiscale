@@ -59,6 +59,9 @@ public:
   typedef LocalGridImp                                             LocalGridType;
   typedef Stuff::Grid::ProviderInterface<LocalGridType>            LocalGridProviderType;
 
+#if HAVE_DUNE_FEM
+  typedef typename LocalGridProviderType::LevelGridPartType            MicroGridPartType;
+#endif
   typedef typename LocalGridType::LevelGridView                        MicroGridViewType;
   typedef typename MicroGridViewType::template Codim<0>::Entity        MicroEntityType;
   typedef typename MicroGridViewType::template Codim<0>::EntityPointer MicroEntityPointerType;
@@ -153,6 +156,16 @@ public:
     prepare_global_grid();
     return global_grid_->level_view(global_grid_->grid().maxLevel());
   }
+
+#if HAVE_DUNE_FEM
+  MicroGridPartType global_grid_part()
+  {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_grid_part");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
+    prepare_global_grid();
+    return MicroGridPartType(global_grid_->grid(), global_grid_->grid().maxLevel());
+  }
+#endif // HAVE_DUNE_FEM
 
   const std::vector<std::vector<size_t>>& local_to_global_indices()
   {
