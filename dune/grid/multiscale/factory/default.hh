@@ -463,7 +463,7 @@ public:
            ++subdomainIterator) {
         // report
         const size_t subdomain     = subdomainIterator->first;
-        const size_t subdomainSize = subdomainSizes[subdomain];
+//        const size_t subdomainSize = subdomainSizes[subdomain];
 //#ifndef NDEBUG
 //        out << prefix << "  subdomain " << subdomain << " (of size " << subdomainSize << ")... " << std::flush;
 //#endif

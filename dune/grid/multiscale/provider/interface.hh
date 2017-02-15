@@ -243,7 +243,7 @@ public:
 
   using BaseType::visualize;
 
-  virtual void visualize(const std::string filename, const bool coupling) const
+  virtual void visualize(const std::string filename, const bool with_coupling) const
   {
     // vtk writer
     typedef typename MsGridType::GlobalGridViewType GlobalGridViewType;
@@ -299,7 +299,7 @@ public:
         if (numberOfBoundarySegments > 0)
           data["local boundary id"][index] /= double(numberOfBoundarySegments);
         // visualize coupling
-        if (coupling) {
+        if (with_coupling) {
           for (auto nn : ms_grid()->neighborsOf(s)) {
             const auto coupling_grid_view  = ms_grid()->couplingGridPart(s, nn);
             const std::string coupling_str = "coupling (" + DSC::toString(s) + ", " + DSC::toString(nn) + ")";
@@ -322,7 +322,7 @@ public:
               }
             }
           }
-        } // if (coupling)
+        } // if (with_coupling)
       }   // walk the local grid view
     }     // walk the subdomains
     if (ms_grid()->oversampling()) {

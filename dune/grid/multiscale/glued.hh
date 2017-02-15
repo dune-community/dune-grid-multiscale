@@ -307,12 +307,12 @@ public:
     return coupling(macro_entity, max_local_level(macro_entity), macro_neighbor, max_local_level(macro_neighbor));
   }
 
-  const int max_local_level(const MacroEntityType& macro_entity) const
+  int max_local_level(const MacroEntityType& macro_entity) const
   {
     return local_grid(macro_entity).grid().maxLevel();
   }
 
-  const int max_local_level(const size_t macro_entity_index) const
+  int max_local_level(const size_t macro_entity_index) const
   {
     return local_grid(macro_entity_index).grid().maxLevel();
   }
@@ -511,7 +511,7 @@ private:
                                              template count<dimDomain>();
 #endif
       std::vector<unsigned int> vertex_ids(num_vertices, 0);
-      for (unsigned int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
+      for (int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
         const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id)
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
                                                                                        .
@@ -547,7 +547,7 @@ private:
 #endif
     FieldVector<ctype, dimDomain> lower_left(std::numeric_limits<ctype>::max());
     FieldVector<ctype, dimDomain> upper_right(std::numeric_limits<ctype>::min());
-    for (unsigned int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
+    for (int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
       const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id)
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
                                                                                      .

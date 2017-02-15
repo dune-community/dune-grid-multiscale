@@ -169,7 +169,7 @@ private:
 //    Stuff::Common::print(num_partitions, "num_partitions", out, prefix);
 //#endif // NDEBUG
     // global grid part
-    typedef typename MsGridType::GlobalGridPartType GridPartType;
+//    typedef typename MsGridType::GlobalGridPartType GridPartType;
     const auto global_grid_part = factory.globalGridPart();
     // walk the grid
     const auto entity_it_end = global_grid_part->template end<0>();
