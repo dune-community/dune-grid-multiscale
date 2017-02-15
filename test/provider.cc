@@ -3,7 +3,7 @@
 // Copyright holders: Felix Albrecht
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#include <dune/stuff/test/main.hh> // <- has to come first
+#include <dune/stuff/test/main.hxx> // <- has to come first
 
 #include <dune/stuff/common/disable_warnings.hh>
 # include <dune/grid/sgrid.hh>
@@ -96,7 +96,7 @@ protected:
 
 TEST_F(CubeProvider, global_gridpart)
 {
-  const auto& globalGridPart = *(ms_grid_->globalGridPart());
+  const auto& globalGridPart = ms_grid_->globalGridPart();
   Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
       ::Codim< GridType::dimension, 0 >
       ::entities(globalGridPart, globalGridPart, "  ", DSC_LOG_INFO);
@@ -104,10 +104,10 @@ TEST_F(CubeProvider, global_gridpart)
 
 TEST_F(CubeProvider, local_grid_parts)
 {
-  const auto& globalGridPart = *(ms_grid_->globalGridPart());
+  const auto& globalGridPart = ms_grid_->globalGridPart();
   for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
     DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
-    const auto& localGridPart = *(ms_grid_->localGridPart(subdomain));
+    const auto& localGridPart = ms_grid_->localGridPart(subdomain);
     Inspect< MsGridType::GlobalGridPartType, MsGridType::LocalGridPartType, Dune::Stuff::Common::LogStream >
         ::Codim< GridType::dimension, 0 >
         ::entities(globalGridPart, localGridPart, "  ", DSC_LOG_INFO);
@@ -116,11 +116,11 @@ TEST_F(CubeProvider, local_grid_parts)
 
 TEST_F(CubeProvider, boundary_grid_parts)
 {
-  const auto& globalGridPart = *(ms_grid_->globalGridPart());
+  const auto& globalGridPart = ms_grid_->globalGridPart();
     for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
       if (ms_grid_->boundary(subdomain)) {
         DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
-        const auto& boundaryGridPart = *(ms_grid_->boundaryGridPart(subdomain));
+        const auto& boundaryGridPart = ms_grid_->boundaryGridPart(subdomain);
         Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
             ::Codim< GridType::dimension, 0 >
             ::entities(globalGridPart, boundaryGridPart, "  ", DSC_LOG_INFO);
@@ -130,10 +130,10 @@ TEST_F(CubeProvider, boundary_grid_parts)
 
 TEST_F(CubeProvider, coupling_grid_parts)
 {
-  const auto& globalGridPart = *(ms_grid_->globalGridPart());
+  const auto& globalGridPart = ms_grid_->globalGridPart();
   for (size_t ss = 0; ss < ms_grid_->size(); ++ss) {
     for (auto nn : ms_grid_->neighborsOf(ss)) {
-      const auto& coupling_grid_part = *(ms_grid_->couplingGridPart(ss, nn));
+      const auto& coupling_grid_part = ms_grid_->couplingGridPart(ss, nn);
       DSC_LOG_INFO << "testing coupling grid part: " << ss << ", " << nn << std::endl;
       // walk the grid part
       for (auto entityIterator = coupling_grid_part.begin< 0 >();
@@ -163,14 +163,14 @@ TEST_F(CubeProvider, timings)
   // time grid parts
   DSC_LOG_INFO << "timing grid parts:" << std::endl;
   const auto globalGridPart = ms_grid_->globalGridPart();
-  measureTiming(*globalGridPart, DSC_LOG_INFO, "global");
+  measureTiming(globalGridPart, DSC_LOG_INFO, "global");
   const auto neighbor = *(ms_grid_->neighborsOf(0).begin());
   const auto couplingGridPart = ms_grid_->couplingGridPart(0, neighbor);
-  measureTiming(*couplingGridPart, DSC_LOG_INFO, "coupling (subdomain 0 with " + DSC::toString(neighbor) + ")");
+  measureTiming(couplingGridPart, DSC_LOG_INFO, "coupling (subdomain 0 with " + DSC::toString(neighbor) + ")");
   const auto firstLocalGridPart = ms_grid_->localGridPart(0);
-  measureTiming(*firstLocalGridPart, DSC_LOG_INFO, "local (subdomain 0)");
+  measureTiming(firstLocalGridPart, DSC_LOG_INFO, "local (subdomain 0)");
   for (unsigned int subdomain = 1; subdomain < ms_grid_->size(); ++subdomain) {
     const auto localGridPart = ms_grid_->localGridPart(subdomain);
-    measureTiming(*localGridPart, DSC_LOG_DEBUG, "local (subdomain " + DSC::toString(subdomain) + ")");
+    measureTiming(localGridPart, DSC_LOG_DEBUG, "local (subdomain " + DSC::toString(subdomain) + ")");
   }
 }
