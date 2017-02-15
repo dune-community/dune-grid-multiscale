@@ -162,13 +162,15 @@ public:
     return *local_to_global_indices_;
   }
 
-  const MicroEntityType& local_to_global_entity(const size_t subdomain, const MicroEntityType& local_entity)
+  MicroEntityPointerType local_to_global_entity(const size_t subdomain, const MicroEntityType& local_entity)
   {
     return local_to_global_entity(subdomain, local_grids_[subdomain]->level_view(max_local_level(subdomain)).indexSet().index(local_entity));
   }
 
-  const MicroEntityType& local_to_global_entity(const size_t subdomain, const size_t local_entity_index)
+  MicroEntityPointerType local_to_global_entity(const size_t subdomain, const size_t local_entity_index)
   {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.local_to_global_entity");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     const size_t global_index_of_local_entity = local_to_global_indices_->operator[](subdomain)[local_entity_index];
     const auto global_micro_grid_view = global_grid_view();
@@ -178,23 +180,25 @@ public:
          ++entity_it) {
       const auto& entity = *entity_it;
       if (global_micro_grid_view.indexSet().index(entity) == global_index_of_local_entity)
-        return entity;
+        return entity_it;
     }
     DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                "subdomain: " << subdomain << "\n"
                << "local_entity_index: " << local_entity_index << "\n"
                << "global_index_of_local_entity: " << global_index_of_local_entity);
-    return *global_micro_grid_view.template begin<0>();
+    return global_micro_grid_view.template begin<0>();
   } // ... local_to_global_entity(...)
 
-  const MicroEntityType& global_to_local_entity(const MicroEntityType& micro_entity)
+  MicroEntityPointerType global_to_local_entity(const MicroEntityType& micro_entity)
   {
     prepare_global_grid();
     return global_to_local_entity(global_grid_view().indexSet().index(micro_entity));
   }
 
-  const MicroEntityType& global_to_local_entity(const size_t micro_entity_index)
+  MicroEntityPointerType global_to_local_entity(const size_t micro_entity_index)
   {
+    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_to_local_entity");
+    logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     auto subdomain_and_local_entity_index = global_to_local_indices_->operator[](micro_entity_index);
     const auto subdomain = subdomain_and_local_entity_index.first;
@@ -206,13 +210,13 @@ public:
          ++entity_it) {
       const auto& entity = *entity_it;
       if (local_grid_view.indexSet().index(entity) == local_index_of_global_entity)
-        return entity;
+        return MicroEntityPointerType(entity_it);
     }
     DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                "micro_entity_index: " << micro_entity_index << "\n"
                "subdomain: " << subdomain << "\n"
                << "local_index_of_global_entity: " << local_index_of_global_entity);
-    return *local_grid_view.template begin<0>();
+    return MicroEntityPointerType(local_grid_view.template begin<0>());
   } // ... global_to_local_entity(...)
 
   const std::vector<std::pair<size_t, size_t>>& global_to_local_indices()
