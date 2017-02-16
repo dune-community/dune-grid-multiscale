@@ -69,6 +69,7 @@ auto intersection_range(Args&& ...args) -> decltype(
 #endif
 }
 
+#include <dune/stuff/test/gtest/gtest.h>
 
 #include <dune/grid/multiscale/glued.hh>
 
@@ -174,6 +175,9 @@ struct GluedMultiscaleGrid : public ::testing::Test
     if (!multiscale_grid_)
       multiscale_grid_ = DSC::make_unique<grid::Multiscale::Glued<MacroGridType, LocalGridType>>(*macro_grid_, Switcher::num_local_refinements());
     EXPECT_NE(multiscale_grid_, nullptr);
+    for (auto&& macro_entity : entity_range(multiscale_grid_->macro_grid_view())) {
+      EXPECT_EQ(multiscale_grid_->max_local_level(macro_entity), Switcher::num_local_refinements());
+    }
   } // ... setup()
 
   void couplings_are_of_correct_size()
@@ -208,6 +212,72 @@ struct GluedMultiscaleGrid : public ::testing::Test
 
     multiscale_grid_->visualize(Switcher::id());
   } // ... visualize_is_callable(...)
+
+  void coupling_intersections_are_correctly_oriented()
+  {
+    setup();
+    if (!macro_grid_ || !multiscale_grid_)
+      DUNE_THROW(InvalidStateException, "This should not happen!");
+
+    const auto& macro_grid_view = multiscale_grid_->macro_grid_view();
+    for (auto&& macro_entity : entity_range(macro_grid_view)) {
+      for (auto&& macro_intersection : intersection_range(macro_grid_view, macro_entity)) {
+        if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
+          const auto macro_neighbor_ptr = macro_intersection.outside();
+          const auto& macro_neighbor = *macro_neighbor_ptr;
+          // for level 0 the intersections are not oriented
+          for (int entity_level = 1; entity_level < multiscale_grid_->max_local_level(macro_entity); ++entity_level) {
+            for (int neighbor_level = 1; neighbor_level < multiscale_grid_->max_local_level(macro_neighbor); ++neighbor_level) {
+              const auto local_grid_view = multiscale_grid_->local_grid(macro_entity).level_view(entity_level);
+              const auto& coupling_glue = multiscale_grid_->coupling(macro_entity, entity_level, macro_neighbor, neighbor_level);
+              // walk the coupling
+              const auto coupling_intersection_it_end = coupling_glue.template iend<0>();
+              for (auto coupling_intersection_it = coupling_glue.template ibegin<0>();
+                   coupling_intersection_it != coupling_intersection_it_end;
+                   ++coupling_intersection_it) {
+                const auto& coupling_intersection = *coupling_intersection_it;
+                const auto coupling_intersection_normal = coupling_intersection.centerUnitOuterNormal();
+                const auto local_entity_ptr = coupling_intersection.inside();
+                const auto& local_entity = *local_entity_ptr;
+                typename std::remove_const<decltype(coupling_intersection_normal)>::type local_intersection_normal(0.);
+                // find the intersection of the local inside entity that corresponds to the coupling intersection
+                size_t found = 0;
+                for (auto&& local_intersection : intersection_range(local_grid_view, local_entity)) {
+                  // the coupling intersection may be smaller than the local intersection
+                  int corners_inside = 0;
+                  for (auto ii : DSC::valueRange(coupling_intersection.geometry().corners()))
+                    if (DSG::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
+                      ++corners_inside;
+                  if (corners_inside == coupling_intersection.geometry().corners()) {
+                    // this is the one
+                    ++found;
+                    local_intersection_normal = local_intersection.centerUnitOuterNormal();
+                  }
+                }
+                EXPECT_EQ(1, found) << "This should not happen!\n"
+                                    << "  macro_entity:   " << macro_grid_view.indexSet().index(macro_entity) << "\n"
+                                    << "  macro_neighbor: " << macro_grid_view.indexSet().index(macro_neighbor) << "\n"
+                                    << "  entity_level:   " << entity_level << "\n"
+                                    << "  neighbor_level: " << neighbor_level << "\n"
+                                    << "  coupling_intersection: " << coupling_glue.indexSet().index(coupling_intersection);
+                // now the expected normal is local_intersection_normal
+                // and we would like coupling_intersection_normal to point in the same direction
+                // since they have unit length, they should be identical
+                EXPECT_LE((local_intersection_normal - coupling_intersection_normal).infinity_norm(), 1e-15)
+                   << "  macro_entity:   " << macro_grid_view.indexSet().index(macro_entity) << "\n"
+                   << "  macro_neighbor: " << macro_grid_view.indexSet().index(macro_neighbor) << "\n"
+                   << "  entity_level:   " << entity_level << "\n"
+                   << "  neighbor_level: " << neighbor_level << "\n"
+                   << "  coupling_intersection: " << coupling_glue.indexSet().index(coupling_intersection) << "\n"
+                   << "  local_intersection_normal:    " << local_intersection_normal << "\n"
+                   << "  coupling_intersection_normal: " << coupling_intersection_normal;
+              }
+            }
+          }
+        }
+      }
+    }
+  } // ... coupling_intersections_are_correctly_oriented(...)
 
   std::unique_ptr<Stuff::Grid::Providers::Cube<MacroGridType>> macro_grid_;
   std::unique_ptr<grid::Multiscale::Glued<MacroGridType, LocalGridType>> multiscale_grid_;
