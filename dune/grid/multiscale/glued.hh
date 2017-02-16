@@ -27,6 +27,7 @@
 #include <dune/grid-glue/gridglue.hh>
 #include <dune/grid-glue/merging/contactmerge.hh>
 
+#include <dune/stuff/common/exceptions.hh>
 #include <dune/stuff/common/float_cmp.hh>
 #include <dune/stuff/common/memory.hh>
 #include <dune/stuff/common/timedlogging.hh>
@@ -275,6 +276,14 @@ public:
     const auto& macro_index_set = macro_leaf_view_.indexSet();
     assert(macro_index_set.contains(macro_entity));
     assert(macro_index_set.contains(macro_neighbor));
+    if (local_level_macro_entity > max_local_level(macro_entity))
+      DUNE_THROW(Stuff::Exceptions::you_are_using_this_wrong,
+                    "max_local_level(macro_entity): " << max_local_level(macro_entity) << "\n"
+                 << "   local_level_macro_entity:      " << local_level_macro_entity);
+    if (local_level_macro_neighbor > max_local_level(macro_neighbor))
+      DUNE_THROW(Stuff::Exceptions::you_are_using_this_wrong,
+                    "max_local_level(macro_neighbor): " << max_local_level(macro_neighbor) << "\n"
+                 << "   local_level_macro_neighbor:      " << local_level_macro_neighbor);
     const auto entity_index   = macro_index_set.index(macro_entity);
     const auto neighbor_index = macro_index_set.index(macro_neighbor);
     if (glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor] == nullptr) {
