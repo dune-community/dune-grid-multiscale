@@ -108,6 +108,16 @@ public:
 
 #endif
 
+#if HAVE_DUNE_SPGRID
+//Dune::SPGrid<double, 2, (Dune::SPRefinementStrategy)0u, ompi_communicator_t*>
+template <class ct, Dune::SPRefinementStrategy st, class Comm>
+class NeighborRecursionLevel<Dune::SPGrid<ct, 2, st, Comm>>
+{
+public:
+  static size_t compute() { return 1; } // just a guess!
+};
+#endif
+
 template <class GridImp>
 class Default
 {
