@@ -3,12 +3,16 @@
 // Copyright holders: Felix Schindler
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#include <dune/stuff/test/main.hxx> // <- this one has to come first (includes the config.h)!
+#define DUNE_XT_COMMON_TEST_MAIN_CATCH_EXCEPTIONS 1
+
+#include <dune/xt/common/test/main.hxx> // <- this one has to come first (includes the config.h)!
 
 #include "glued.hh"
 
-template <typename _ctype, bool anything>
-struct ExpectedResults<SGrid<2, 2, _ctype>, SGrid<2, 2, _ctype>, anything>
+template <bool anything>
+struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>,
+                       YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -22,7 +26,7 @@ struct ExpectedResults<SGrid<2, 2, _ctype>, SGrid<2, 2, _ctype>, anything>
 
   static std::string id()
   {
-    return "2d_sgrid_sgrid";
+    return "2d_yaspgrid_yaspgrid";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -57,12 +61,15 @@ struct ExpectedResults<SGrid<2, 2, _ctype>, SGrid<2, 2, _ctype>, anything>
             {{2, 1}, 48},
             {{2, 2}, 0}};
   }
-}; // struct ExpectedResults<SGrid<2, 2, _ctype>, SGrid<2, 2, _ctype>, anything>
+}; // struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, YaspGrid<2,
+// EquidistantOffsetCoordinates<double, 2>>, anything>
 
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
-template <typename _ctype, class Comm, bool anything>
-struct ExpectedResults<SGrid<2, 2, _ctype>, ALUGrid<2, 2, simplex, conforming, Comm>, anything>
+template <class Comm, bool anything>
+struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>,
+                       ALUGrid<2, 2, simplex, conforming, Comm>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -86,7 +93,7 @@ struct ExpectedResults<SGrid<2, 2, _ctype>, ALUGrid<2, 2, simplex, conforming, C
 
   static std::string id()
   {
-    return "2d_sgrid_alugridconforming";
+    return "2d_yaspgrid_alugridconforming";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -139,7 +146,8 @@ struct ExpectedResults<SGrid<2, 2, _ctype>, ALUGrid<2, 2, simplex, conforming, C
     return {};
 #endif
   }
-}; // struct ExpectedResults<SGrid<2, 2, _ctype>, ALUGrid<2, 2, simplex, conforming, Comm>, anything>
+}; // struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, ALUGrid<2, 2, simplex, conforming,
+// Comm>, anything>
 
 template <class Comm, bool anything>
 struct ExpectedResults<ALUGrid<2, 2, simplex, conforming, Comm>, ALUGrid<2, 2, simplex, conforming, Comm>, anything>
@@ -224,10 +232,12 @@ struct ExpectedResults<ALUGrid<2, 2, simplex, conforming, Comm>, ALUGrid<2, 2, s
 
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
-typedef ::testing::Types<std::tuple<typename YaspOrSGrid<2>::type, typename YaspOrSGrid<2>::type>
+typedef ::testing::Types<std::tuple<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>,
+                                    YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>>
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
                          ,
-                         std::tuple<typename YaspOrSGrid<2>::type, ALUGrid<2, 2, simplex, conforming>>,
+                         std::tuple<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>,
+                                    ALUGrid<2, 2, simplex, conforming>>,
                          std::tuple<ALUGrid<2, 2, simplex, conforming>, ALUGrid<2, 2, simplex, conforming>>
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
                          >

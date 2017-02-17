@@ -3,12 +3,16 @@
 // Copyright holders: Felix Schindler
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#include <dune/stuff/test/main.hxx> // <- this one has to come first (includes the config.h)!
+#define DUNE_XT_COMMON_TEST_MAIN_CATCH_EXCEPTIONS 1
+
+#include <dune/xt/common/test/main.hxx> // <- this one has to come first (includes the config.h)!
 
 #include "glued.hh"
 
-template <typename _ctype, bool anything>
-struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
+template <bool anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                       YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -22,7 +26,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
 
   static std::string id()
   {
-    return "3d_sgrid_sgrid";
+    return "3d_yaspgrid_yaspgrid";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -58,12 +62,15 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
             {{2, 1}, 108},
             {{2, 2}, 3456}};
   }
-}; // struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
+}; // struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, YaspGrid<3,
+// EquidistantOffsetCoordinates<double, 3>>, anything>
 
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
-template <typename _ctype, class Comm, bool anything>
-struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype>, anything>
+template <class Comm, bool anything>
+struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>,
+                       YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -87,7 +94,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype
 
   static std::string id()
   {
-    return "3d_alucubeconforminggrid_sgrid";
+    return "3d_alucubeconforminggrid_yaspgrid";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -133,10 +140,13 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype
     return {};
 #endif
   }
-}; // struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
+}; // struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, simplex, nonconforming,
+// Comm>, anything>
 
-template <typename _ctype, class Comm, bool anything>
-struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, Comm>, anything>
+template <class Comm, bool anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                       ALUGrid<3, 3, cube, nonconforming, Comm>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -160,7 +170,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, C
 
   static std::string id()
   {
-    return "3d_alucubenonconforminggrid_sgrid";
+    return "3d_alucubenonconforminggrid_yaspgrid";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -206,10 +216,13 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, C
     return {};
 #endif
   }
-}; // ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, Comm>, anything>
+}; // ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, cube, nonconforming, Comm>,
+// anything>
 
-template <typename _ctype, class Comm, bool anything>
-struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
+template <class Comm, bool anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                       ALUGrid<3, 3, simplex, nonconforming, Comm>,
+                       anything>
 {
   static int num_coarse_refinements()
   {
@@ -233,7 +246,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming
 
   static std::string id()
   {
-    return "3d_alusimplexnonconforminggrid_sgrid";
+    return "3d_alusimplexnonconforminggrid_yaspgrid";
   }
 
   static std::set<int> num_local_couplings_intersections()
@@ -279,7 +292,8 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming
     return {};
 #endif
   }
-}; // struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
+}; // struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, simplex, nonconforming,
+// Comm>, anything>
 
 template <class Comm, bool anything>
 struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
@@ -358,26 +372,29 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
 
-typedef ::testing::Types<std::tuple<typename YaspOrSGrid<3>::type, typename YaspOrSGrid<3>::type>
+typedef ::testing::
+    Types<std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                     YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-                         //                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube,
-                         //                      conforming>> // <- knwon to fail completely
-                         ,
-                         std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube, nonconforming>>
-                         //                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex,
-                         //                      conforming>> // <- knwon to fail completely
-                         ,
-                         std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex, nonconforming>>,
-                         std::tuple<ALUGrid<3, 3, cube, conforming>, typename YaspOrSGrid<3>::type>
-                         //                      , std::tuple<ALUGrid<3, 3, simplex, conforming>, ALUGrid<3, 3, simplex,
-                         //                      nonconforming>> // <- knwon to fail completely
-                         //                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>, ALUGrid<3, 3,
-                         //                      simplex, nonconforming>> // <- knwon to fail completely
-                         ,
-                         std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
+          //                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, cube,
+          //                      conforming>> // <- knwon to fail completely
+          ,
+          std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, cube, nonconforming>>
+          //                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3,
+          //                      simplex,
+          //                      conforming>> // <- knwon to fail completely
+          ,
+          std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, simplex, nonconforming>>,
+          std::tuple<ALUGrid<3, 3, cube, conforming>, YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
+          //                      , std::tuple<ALUGrid<3, 3, simplex, conforming>, ALUGrid<3, 3, simplex,
+          //                      nonconforming>> // <- knwon to fail completely
+          //                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>, ALUGrid<3, 3,
+          //                      simplex, nonconforming>> // <- knwon to fail completely
+          ,
+          std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-                         >
-    GridTypes;
+          >
+        GridTypes;
 
 TYPED_TEST_CASE(GluedMultiscaleGridTest, GridTypes);
 TYPED_TEST(GluedMultiscaleGridTest, setup_works)

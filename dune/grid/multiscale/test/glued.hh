@@ -1,8 +1,6 @@
 #ifndef DUNE_GRID_MULTISCALE_TEST_GLUED_HH
 #define DUNE_GRID_MULTISCALE_TEST_GLUED_HH
 
-#include <dune/common/version.hh>
-
 // alugrid
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
@@ -10,64 +8,12 @@
 #include <dune/grid/alugrid.hh>
 #endif
 
-// yaspgrid or sgrid
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
 #include <dune/grid/yaspgrid.hh>
-#else
-#include <dune/grid/sgrid.hh>
-#endif
-
-template <int dim>
-struct YaspOrSGrid
-{
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-  typedef Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<double, dim>> type;
-#else
-  typedef Dune::SGrid<dim, dim> type;
-#endif
-};
-
-
-// elements or DSC::entityRange
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
 #include <dune/grid/common/rangegenerators.hh>
-#else
-#include <dune/stuff/common/ranges.hh>
-#endif
 
-template <class... Args>
-auto entity_range(Args&&... args) -> decltype(
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-    Dune::elements(std::forward<Args>(args)...)
-#else
-    DSC::entityRange(std::forward<Args>(args)...)
-#endif
-        )
-{
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-  return Dune::elements(std::forward<Args>(args)...);
-#else
-  return DSC::entityRange(std::forward<Args>(args)...);
-#endif
-}
-
-template <class... Args>
-auto intersection_range(Args&&... args) -> decltype(
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-    Dune::intersections(std::forward<Args>(args)...)
-#else
-    DSC::intersectionRange(std::forward<Args>(args)...)
-#endif
-        )
-{
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-  return Dune::intersections(std::forward<Args>(args)...);
-#else
-  return DSC::intersectionRange(std::forward<Args>(args)...);
-#endif
-}
-
-#include <dune/stuff/test/gtest/gtest.h>
+#include <dune/xt/common/memory.hh>
+#include <dune/xt/common/test/gtest/gtest.h>
+#include <dune/xt/grid/gridprovider.hh>
 
 #include <dune/grid/multiscale/glued.hh>
 
@@ -139,17 +85,17 @@ struct GluedMultiscaleGridTest : public ::testing::Test
   void setup()
   {
     if (!macro_grid_)
-      macro_grid_ = DSC::make_unique<Stuff::Grid::Providers::Cube<MacroGridType>>(
-          0., 1., 3, Expectations::num_coarse_refinements());
+      macro_grid_ = std::make_unique<XT::Grid::GridProvider<MacroGridType>>(
+          XT::Grid::make_cube_grid<MacroGridType>(0., 1., 3, Expectations::num_coarse_refinements()));
     ASSERT_NE(macro_grid_, nullptr) << "This should not happen!";
     if (!multiscale_grid_)
-      multiscale_grid_ = DSC::make_unique<grid::Multiscale::Glued<MacroGridType, LocalGridType>>(
+      multiscale_grid_ = std::make_unique<grid::Multiscale::Glued<MacroGridType, LocalGridType>>(
           *macro_grid_,
           Expectations::num_local_refinements(),
           /*prepare_glues=*/false,
           /*allow_for_broken_orientation_of_coupling_intersections=*/true);
     ASSERT_NE(multiscale_grid_, nullptr) << "This should not happen!";
-    for (auto&& macro_entity : entity_range(multiscale_grid_->macro_grid_view())) {
+    for (auto&& macro_entity : Dune::elements(multiscale_grid_->macro_grid_view())) {
       EXPECT_EQ(multiscale_grid_->max_local_level(macro_entity), Expectations::num_local_refinements());
     }
   } // ... setup()
@@ -161,9 +107,9 @@ struct GluedMultiscaleGridTest : public ::testing::Test
     ASSERT_NE(multiscale_grid_, nullptr) << "This should not happen!";
 
     const auto& macro_grid_view = multiscale_grid_->macro_grid_view();
-    for (auto&& macro_entity : entity_range(macro_grid_view)) {
+    for (auto&& macro_entity : Dune::elements(macro_grid_view)) {
       const auto entity_index = macro_grid_view.indexSet().index(macro_entity);
-      for (auto&& macro_intersection : intersection_range(macro_grid_view, macro_entity)) {
+      for (auto&& macro_intersection : Dune::intersections(macro_grid_view, macro_entity)) {
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
           const auto macro_neighbor_ptr = macro_intersection.outside();
           const auto& macro_neighbor = *macro_neighbor_ptr;
@@ -256,8 +202,8 @@ struct GluedMultiscaleGridTest : public ::testing::Test
           << "missing expected results for entity and neighbor level " << std::make_pair(entity_level, neighbor_level)
           << ".\n"
           << "-> PLEASE ADD A RECORD TO\n"
-          << "   ExpectedResults<" << DSC::Typename<MacroGridType>::value() << ", "
-          << DSC::Typename<LocalGridType>::value() << ">!";
+          << "   ExpectedResults<" << XT::Common::Typename<MacroGridType>::value() << ", "
+          << XT::Common::Typename<LocalGridType>::value() << ">!";
       if (search_for_levels_in_expected_results == expected_results.end()) {
         DUNE_THROW(InvalidStateException,
                    "Cannot use ASSERT_EQ above, so we need to exit this way.\n\n"
@@ -271,8 +217,8 @@ struct GluedMultiscaleGridTest : public ::testing::Test
           << "\nTHIS IS A GOOD THING, AN ACTUAL NUMBER OF FAILURES WHICH IS LOWER THAN THE EXPECTED NUMBER OF "
           << "FAILURES IS AN IMPROVEMENT!\n"
           << "-> BE HAPPY AND UPDATE THE RECORD IN!\n"
-          << "   ExpectedResults<" << DSC::Typename<MacroGridType>::value() << ", "
-          << DSC::Typename<LocalGridType>::value() << ">!\n"
+          << "   ExpectedResults<" << XT::Common::Typename<MacroGridType>::value() << ", "
+          << XT::Common::Typename<LocalGridType>::value() << ">!\n"
           << "IF THE UPDATED RECORDS DO NOT INDICATE FAILURES ANYMORE, UPDATE THE TESTS!\n";
     } else {
       if (actual_num_wrongly_oriented_intersections != 0)
@@ -307,8 +253,8 @@ struct GluedMultiscaleGridTest : public ::testing::Test
 
     const auto& macro_grid_view = multiscale_grid_->macro_grid_view();
     size_t failures = 0;
-    for (auto&& macro_entity : entity_range(macro_grid_view)) {
-      for (auto&& macro_intersection : intersection_range(macro_grid_view, macro_entity)) {
+    for (auto&& macro_entity : Dune::elements(macro_grid_view)) {
+      for (auto&& macro_intersection : Dune::intersections(macro_grid_view, macro_entity)) {
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
           const auto macro_neighbor_ptr = macro_intersection.outside();
           const auto& macro_neighbor = *macro_neighbor_ptr;
@@ -334,10 +280,10 @@ struct GluedMultiscaleGridTest : public ::testing::Test
           //            // find the intersection of the local inside entity that corresponds to the coupling
           //            intersection
           //            size_t found = 0;
-          //            for (auto&& local_intersection : intersection_range(local_grid_view, local_entity)) {
+          //            for (auto&& local_intersection : Dune::intersections(local_grid_view, local_entity)) {
           //              // the coupling intersection may be smaller than the local intersection
           //              int corners_inside = 0;
-          //              for (auto ii : DSC::valueRange(coupling_intersection.geometry().corners()))
+          //              for (auto ii : XT::Common::valueRange(coupling_intersection.geometry().corners()))
           //                if (DSG::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
           //                  ++corners_inside;
           //              if (corners_inside == coupling_intersection.geometry().corners()) {
@@ -367,7 +313,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
     return failures;
   } // ... count_wrong_intersections(...)
 
-  std::unique_ptr<Stuff::Grid::Providers::Cube<MacroGridType>> macro_grid_;
+  std::unique_ptr<XT::Grid::GridProvider<MacroGridType>> macro_grid_;
   std::unique_ptr<grid::Multiscale::Glued<MacroGridType, LocalGridType>> multiscale_grid_;
 }; // struct GluedMultiscaleGridTest
 
