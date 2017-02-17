@@ -35,7 +35,10 @@ protected:
   } // ... call_create(...)
 
 public:
-  static std::vector<std::string> available() { return {Providers::Cube<GridType>::static_id()}; } // ... available(...)
+  static std::vector<std::string> available()
+  {
+    return {Providers::Cube<GridType>::static_id()};
+  } // ... available(...)
 
   static Stuff::Common::Configuration default_config(const std::string type, const std::string sub_name = "")
   {
@@ -46,13 +49,14 @@ public:
                  "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
   } // ... default_config(...)
 
-  static std::unique_ptr< InterfaceType > create(const Stuff::Common::Configuration& config)
+  static std::unique_ptr<InterfaceType> create(const Stuff::Common::Configuration& config)
   {
-    return create(config.get< std::string >("type"), config);
+    return create(config.get<std::string>("type"), config);
   }
 
-  static std::unique_ptr<InterfaceType> create(const std::string& type = available()[0],
-                                               const Stuff::Common::Configuration config = Stuff::Common::Configuration())
+  static std::unique_ptr<InterfaceType>
+  create(const std::string& type = available()[0],
+         const Stuff::Common::Configuration config = Stuff::Common::Configuration())
   {
     if (type == Providers::Cube<GridType>::static_id())
       return call_create<Providers::Cube<GridType>>(config);
@@ -60,7 +64,7 @@ public:
       DUNE_THROW(Stuff::Exceptions::wrong_input_given,
                  "'" << type << "' is not a valid " << InterfaceType::static_id() << "!");
   } // ... create(...)
-};  // class MsGridProviders
+}; // class MsGridProviders
 
 } // namespace Multiscale
 } // namespace grid

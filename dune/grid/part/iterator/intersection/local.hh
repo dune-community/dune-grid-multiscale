@@ -40,7 +40,9 @@ public:
 
   typedef std::vector<int> IndexContainerType;
 
-  Local(const GlobalGridPartType& globalGridPart, const EntityType& entity, const IndexContainerType& indexContainer,
+  Local(const GlobalGridPartType& globalGridPart,
+        const EntityType& entity,
+        const IndexContainerType& indexContainer,
         const bool end = false)
     : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity))
     , globalGridPart_(globalGridPart)
@@ -51,12 +53,12 @@ public:
     if (!end) {
       if (indexContainer_.size() > 0) {
         last_ = *(indexContainer_.rbegin());
-        end_  = indexContainer_.end();
+        end_ = indexContainer_.end();
         ++workAtAll_;
       }
       forward();
     } // if (!end)
-  }   // Local
+  } // Local
 
   ThisType& operator++()
   {
@@ -75,7 +77,7 @@ private:
     bool found = false;
     while (!found && (workAtAll_ > 0)) {
       const Intersection& intersection = BaseType::operator*();
-      const int index                  = intersection.indexInInside();
+      const int index = intersection.indexInInside();
       const auto result = std::find(indexContainer_.begin(), indexContainer_.end(), index);
       if (result != end_) {
         found = true;
@@ -84,7 +86,7 @@ private:
       } else
         BaseType::operator++();
     } // while (!found && (workAtAll_ > 0))
-  }   // void forward()
+  } // void forward()
 
   const GlobalGridPartType& globalGridPart_;
   const EntityType& entity_;

@@ -52,7 +52,8 @@ public:
 
   typedef typename BaseType::Entity Entity;
 
-  IndexBased(const GlobalGridPartType& globalGridPart, const Dune::shared_ptr<const IndexContainerType> indexContainer,
+  IndexBased(const GlobalGridPartType& globalGridPart,
+             const Dune::shared_ptr<const IndexContainerType> indexContainer,
              const bool end = false)
     : BaseType(end ? globalGridPart.template end<codim, pitype>() : globalGridPart.template begin<codim, pitype>())
     , globalGridPart_(globalGridPart)
@@ -70,10 +71,10 @@ public:
           last_.insert(std::make_pair(iterator->first, iterator->second.rbegin()->first));
           end_.insert(std::make_pair(iterator->first, iterator->second.end()));
         } // treat only the codim 0 ones
-      }   // loop over all GeometryTypes
+      } // loop over all GeometryTypes
       forward();
     } // if (!end)
-  }   // IndexBased
+  } // IndexBased
 
   ThisType& operator++()
   {
@@ -91,9 +92,9 @@ private:
   {
     bool found = false;
     while (!found && (workAtAll_ > 0)) {
-      const Entity& entity                                 = BaseType::operator*();
-      const IndexType& index                               = globalGridPart_.indexSet().index(entity);
-      const GeometryType& geometryType                     = entity.type();
+      const Entity& entity = BaseType::operator*();
+      const IndexType& index = globalGridPart_.indexSet().index(entity);
+      const GeometryType& geometryType = entity.type();
       typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
       if (indexMap != indexContainer_->end()) {
         const typename IndexMapType::const_iterator result = indexMap->second.find(index);

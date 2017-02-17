@@ -65,9 +65,13 @@ private:
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
 
 public:
-  static const std::string id() { return InterfaceType::id() + ".functionbased"; }
+  static const std::string id()
+  {
+    return InterfaceType::id() + ".functionbased";
+  }
 
-  ProviderFunctionbased(std::shared_ptr<const GridType> grid, std::shared_ptr<const FunctionType> function,
+  ProviderFunctionbased(std::shared_ptr<const GridType> grid,
+                        std::shared_ptr<const FunctionType> function,
                         std::vector<double> partitions)
     : grid_(grid)
   {
@@ -75,7 +79,7 @@ public:
     MsGridFactoryType factory(grid);
     factory.prepare();
     // debug output
-    const std::string prefix              = "";
+    const std::string prefix = "";
     Dune::Stuff::Common::LogStream& debug = Dune::Stuff::Common::Logger().devnull();
     // global grid part
     typedef typename MsGridType::GlobalGridPartType GridPartType;
@@ -85,7 +89,7 @@ public:
          it != gridPart->template end<0>();
          ++it) {
       // get center of entity
-      const auto& entity          = *it;
+      const auto& entity = *it;
       const CoordinateType center = entity.geometry().center();
       debug << prefix << "  entity (" << center << "):" << std::endl;
       // decide on the subdomain this entity shall belong to
@@ -113,15 +117,19 @@ public:
     msGrid_ = factory.createMsGrid();
   }
 
-  ProviderFunctionbased(const ThisType& other) : NonMultiscaleType(other), msGrid_(other.msGrid_) {}
+  ProviderFunctionbased(const ThisType& other)
+    : NonMultiscaleType(other)
+    , msGrid_(other.msGrid_)
+  {
+  }
 
   static Dune::ParameterTree createSampleDescription(const std::string subName = "")
   {
     typedef Stuff::GridProviders<GridType> Providers;
     typedef Stuff::Functions<ctype, dim, RangeFieldType, 1, 1> Functions;
     Dune::ParameterTree description;
-    description["provider"]   = Providers::available()[0];
-    description["function"]   = Functions::available()[0];
+    description["provider"] = Providers::available()[0];
+    description["function"] = Functions::available()[0];
     description["partitions"] = "[0.5; 1.0]";
     if (subName.empty())
       return description;
@@ -176,14 +184,20 @@ public:
   {
     if (this != &other) {
       NonMultiscaleType::operator=(other);
-      msGrid_                    = other.msGrid();
+      msGrid_ = other.msGrid();
     }
     return this;
   } // ThisType& operator=(ThisType& other)
 
-  virtual const Dune::shared_ptr<const GridType> grid() const { return grid_; }
+  virtual const Dune::shared_ptr<const GridType> grid() const
+  {
+    return grid_;
+  }
 
-  virtual const Dune::shared_ptr<const MsGridType> msGrid() const { return msGrid_; }
+  virtual const Dune::shared_ptr<const MsGridType> msGrid() const
+  {
+    return msGrid_;
+  }
 
   using InterfaceType::visualize;
 

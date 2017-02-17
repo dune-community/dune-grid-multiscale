@@ -53,7 +53,7 @@ public:
 
   typedef Default<GridType> ThisType;
 
-  static const unsigned int dim       = GridType::dimension;
+  static const unsigned int dim = GridType::dimension;
   static const unsigned int dimension = GridType::dimension;
 
   typedef typename GridType::ctype ctype;
@@ -83,10 +83,15 @@ public:
   //! map type which maps from an entity index (of the global grid parts index set) to a subdomain
   typedef std::map<IndexType, size_t> EntityToSubdomainMapType;
 
-  static const std::string id() { return "grid.multiscale.default"; }
+  static const std::string id()
+  {
+    return "grid.multiscale.default";
+  }
 
-  Default(const std::shared_ptr<const GridType> grid, const std::shared_ptr<const GlobalGridPartType> globalGridPart,
-          const size_t size, const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
+  Default(const std::shared_ptr<const GridType> grid,
+          const std::shared_ptr<const GlobalGridPartType> globalGridPart,
+          const size_t size,
+          const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
           const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdomainMap,
           const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> localGridParts,
           const std::shared_ptr<const std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>> boundaryGridParts,
@@ -126,8 +131,10 @@ public:
     createGridViews();
   } // Default()
 
-  Default(const std::shared_ptr<const GridType> grid, const std::shared_ptr<const GlobalGridPartType> globalGridPart,
-          const size_t size, const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
+  Default(const std::shared_ptr<const GridType> grid,
+          const std::shared_ptr<const GlobalGridPartType> globalGridPart,
+          const size_t size,
+          const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
           const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdomainMap,
           const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> localGridParts,
           const std::shared_ptr<const std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>> boundaryGridParts,
@@ -173,15 +180,30 @@ public:
 
   Default(ThisType&& source) = default;
 
-  const std::shared_ptr<const GridType>& grid() const { return grid_; }
+  const std::shared_ptr<const GridType>& grid() const
+  {
+    return grid_;
+  }
 
-  GlobalGridPartType globalGridPart() const { return *globalGridPart_; }
+  GlobalGridPartType globalGridPart() const
+  {
+    return *globalGridPart_;
+  }
 
-  GlobalGridViewType globalGridView() const { return *globalGridView_; }
+  GlobalGridViewType globalGridView() const
+  {
+    return *globalGridView_;
+  }
 
-  size_t size() const { return size_; }
+  size_t size() const
+  {
+    return size_;
+  }
 
-  bool oversampling() const { return oversampling_; }
+  bool oversampling() const
+  {
+    return oversampling_;
+  }
 
   LocalGridPartType localGridPart(const size_t subdomain, const bool oversampling = false) const
   {
@@ -279,7 +301,10 @@ public:
   } // const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t
   // neighbor) const
 
-  const std::shared_ptr<const EntityToSubdomainMapType>& entityToSubdomainMap() const { return entityToSubdomainMap_; }
+  const std::shared_ptr<const EntityToSubdomainMapType>& entityToSubdomainMap() const
+  {
+    return entityToSubdomainMap_;
+  }
 
   const NeighborSetType& neighborsOf(const size_t subdomain) const
   {
@@ -317,8 +342,8 @@ private:
       // for the local grid view
       //   * get the local grid part
       const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts = *localGridParts_;
-      const std::shared_ptr<const LocalGridPartType>& localGridPartPtr            = localGridParts[subdomain];
-      const LocalGridPartType& localGridPart                                      = *localGridPartPtr;
+      const std::shared_ptr<const LocalGridPartType>& localGridPartPtr = localGridParts[subdomain];
+      const LocalGridPartType& localGridPart = *localGridPartPtr;
       //   * and create the local grid view
       std::vector<std::shared_ptr<const LocalGridViewType>>& localGridViews = *localGridViews_;
       localGridViews[subdomain] =
@@ -346,27 +371,27 @@ private:
         assert(couplingGridPartsMapIt != couplingGridPartsMap.end()
                && "Error: missing coupling grid part in given 'couplingGridPartsMaps'!");
         const std::shared_ptr<const CouplingGridPartType>& couplingGridPartPtr = couplingGridPartsMapIt->second;
-        const CouplingGridPartType& couplingGridPart                           = *couplingGridPartPtr;
+        const CouplingGridPartType& couplingGridPart = *couplingGridPartPtr;
         // * and create the coupling grid view
         couplingGridViewsMap.insert(std::pair<size_t, std::shared_ptr<const CouplingGridViewType>>(
             neighbor,
             std::shared_ptr<const CouplingGridViewType>(new CouplingGridViewType(couplingGridPart.gridView()))));
       } // walk the neighbors
-    }   // walk the subdomains
+    } // walk the subdomains
     // walk those subdomains that have a boundary grid part
     //   * to create the boundary grid views
     for (typename std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>::const_iterator boundaryGridPartIt =
              boundaryGridParts_->begin();
          boundaryGridPartIt != boundaryGridParts_->end();
          ++boundaryGridPartIt) {
-      const size_t subdomain                                             = boundaryGridPartIt->first;
+      const size_t subdomain = boundaryGridPartIt->first;
       const std::shared_ptr<const BoundaryGridPartType> boundaryGridPart = boundaryGridPartIt->second;
       assert(boundaryGridViews_->find(subdomain) == boundaryGridViews_->end() && "This should not happen!");
       boundaryGridViews_->insert(std::pair<size_t, std::shared_ptr<const BoundaryGridViewType>>(
           subdomain,
           std::shared_ptr<const BoundaryGridViewType>(new BoundaryGridViewType(boundaryGridPart->gridView()))));
     } // walk those subdomains that have a boundary grid part
-  }   // void createGridViews()
+  } // void createGridViews()
 
   const std::shared_ptr<const GridType> grid_;
   const std::shared_ptr<const GlobalGridPartType> globalGridPart_;

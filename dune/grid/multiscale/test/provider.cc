@@ -6,7 +6,7 @@
 #include <dune/stuff/test/main.hxx> // <- has to come first
 
 #include <dune/stuff/common/disable_warnings.hh>
-# include <dune/grid/sgrid.hh>
+#include <dune/grid/sgrid.hh>
 #include <dune/stuff/common/reenable_warnings.hh>
 
 #include <dune/stuff/common/string.hh>
@@ -15,38 +15,43 @@
 
 
 using namespace Dune;
-typedef SGrid< 2, 2 > GridType;
+typedef SGrid<2, 2> GridType;
 
 
-template< class GridPartType >
+template <class GridPartType>
 void measureTiming(const GridPartType& gridPart, Dune::Stuff::Common::LogStream& out, const std::string name = "")
 {
   out << "  walking " << name << " grid part... " << std::flush;
   Dune::Timer timer;
   unsigned int elements = 0;
-  for (typename GridPartType::template Codim< 0 >::IteratorType it = gridPart.template begin< 0 >();
-       it != gridPart.template end< 0 >();
+  for (typename GridPartType::template Codim<0>::IteratorType it = gridPart.template begin<0>();
+       it != gridPart.template end<0>();
        ++it)
     ++elements;
   out << " done (has " << elements << " elements, took " << timer.elapsed() << " sek)" << std::endl;
 } // void measureTiming()
 
 
-template< class GlobalGridPartType, class LocalGridPartType, class OutStreamType >
+template <class GlobalGridPartType, class LocalGridPartType, class OutStreamType>
 struct Inspect
 {
-  template< int dim, int codim >
+  template <int dim, int codim>
   struct Codim
   {
-    static void entities(const GlobalGridPartType& globalGridPart, const LocalGridPartType& localGridPart, const std::string prefix, OutStreamType& out)
+    static void entities(const GlobalGridPartType& globalGridPart,
+                         const LocalGridPartType& localGridPart,
+                         const std::string prefix,
+                         OutStreamType& out)
     {
       // walk all codim entitites
-      for (auto entityIt = localGridPart.template begin< codim >(); entityIt != localGridPart.template end< codim >(); ++entityIt) {
+      for (auto entityIt = localGridPart.template begin<codim>(); entityIt != localGridPart.template end<codim>();
+           ++entityIt) {
         const auto& entity = *entityIt;
         const auto& geometryType = entity.type();
         const auto globalIndex = globalGridPart.indexSet().index(entity);
         const auto localIndex = localGridPart.indexSet().index(entity);
-        out << prefix << geometryType << ", global index " << globalIndex << ", local index " << localIndex << std::endl;
+        out << prefix << geometryType << ", global index " << globalIndex << ", local index " << localIndex
+            << std::endl;
         out << prefix << "  corners: ";
         auto geometry = entity.geometry();
         for (int i = 0; i < (geometry.corners() - 1); ++i)
@@ -54,20 +59,25 @@ struct Inspect
         out << "(" << geometry.corner(geometry.corners() - 1) << ")" << std::endl;
       } // walk all codim entitites
       // increase Codim
-      Inspect< GlobalGridPartType, LocalGridPartType, OutStreamType >::Codim< dim, codim + 1 >::entities(globalGridPart, localGridPart, prefix, out);
+      Inspect<GlobalGridPartType, LocalGridPartType, OutStreamType>::Codim<dim, codim + 1>::entities(
+          globalGridPart, localGridPart, prefix, out);
     }
   }; // struct Codim
 }; // struct Inspect
 
 
-template< class GlobalGridPartType, class LocalGridPartType, class OutStreamType >
-template< int codim >
-struct Inspect< GlobalGridPartType, LocalGridPartType, OutStreamType >::Codim< codim, codim >
+template <class GlobalGridPartType, class LocalGridPartType, class OutStreamType>
+template <int codim>
+struct Inspect<GlobalGridPartType, LocalGridPartType, OutStreamType>::Codim<codim, codim>
 {
-  static void entities(const GlobalGridPartType& globalGridPart, const LocalGridPartType& localGridPart, const std::string prefix, OutStreamType& out)
+  static void entities(const GlobalGridPartType& globalGridPart,
+                       const LocalGridPartType& localGridPart,
+                       const std::string prefix,
+                       OutStreamType& out)
   {
     // walk all codim entitites
-    for (auto entityIt = localGridPart.template begin< codim >(); entityIt != localGridPart.template end< codim >(); ++entityIt) {
+    for (auto entityIt = localGridPart.template begin<codim>(); entityIt != localGridPart.template end<codim>();
+         ++entityIt) {
       const auto& entity = *entityIt;
       const auto& geometryType = entity.type();
       const auto globalIndex = globalGridPart.indexSet().index(entity);
@@ -79,27 +89,26 @@ struct Inspect< GlobalGridPartType, LocalGridPartType, OutStreamType >::Codim< c
 };
 
 
-class CubeProvider
-  : public ::testing::Test
+class CubeProvider : public ::testing::Test
 {
 protected:
-  typedef grid::Multiscale::Providers::Cube< GridType > ProviderType;
+  typedef grid::Multiscale::Providers::Cube<GridType> ProviderType;
   typedef typename ProviderType::MsGridType MsGridType;
 
   CubeProvider()
     : ms_grid_(ProviderType::create()->ms_grid())
-  {}
+  {
+  }
 
-  std::shared_ptr< const MsGridType > ms_grid_;
+  std::shared_ptr<const MsGridType> ms_grid_;
 }; // class CubeProvider
 
 
 TEST_F(CubeProvider, global_gridpart)
 {
   const auto& globalGridPart = ms_grid_->globalGridPart();
-  Inspect< MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream >
-      ::Codim< GridType::dimension, 0 >
-      ::entities(globalGridPart, globalGridPart, "  ", DSC_LOG_INFO);
+  Inspect<MsGridType::GlobalGridPartType, MsGridType::GlobalGridPartType, Dune::Stuff::Common::LogStream>::
+      Codim<GridType::dimension, 0>::entities(globalGridPart, globalGridPart, "  ", DSC_LOG_INFO);
 }
 
 TEST_F(CubeProvider, local_grid_parts)
@@ -108,24 +117,22 @@ TEST_F(CubeProvider, local_grid_parts)
   for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
     DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
     const auto& localGridPart = ms_grid_->localGridPart(subdomain);
-    Inspect< MsGridType::GlobalGridPartType, MsGridType::LocalGridPartType, Dune::Stuff::Common::LogStream >
-        ::Codim< GridType::dimension, 0 >
-        ::entities(globalGridPart, localGridPart, "  ", DSC_LOG_INFO);
+    Inspect<MsGridType::GlobalGridPartType, MsGridType::LocalGridPartType, Dune::Stuff::Common::LogStream>::
+        Codim<GridType::dimension, 0>::entities(globalGridPart, localGridPart, "  ", DSC_LOG_INFO);
   }
 }
 
 TEST_F(CubeProvider, boundary_grid_parts)
 {
   const auto& globalGridPart = ms_grid_->globalGridPart();
-    for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
-      if (ms_grid_->boundary(subdomain)) {
-        DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
-        const auto& boundaryGridPart = ms_grid_->boundaryGridPart(subdomain);
-        Inspect< MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream >
-            ::Codim< GridType::dimension, 0 >
-            ::entities(globalGridPart, boundaryGridPart, "  ", DSC_LOG_INFO);
-      }
+  for (unsigned int subdomain = 0; subdomain < ms_grid_->size(); ++subdomain) {
+    if (ms_grid_->boundary(subdomain)) {
+      DSC_LOG_INFO << "subdomain " << subdomain << std::endl;
+      const auto& boundaryGridPart = ms_grid_->boundaryGridPart(subdomain);
+      Inspect<MsGridType::GlobalGridPartType, MsGridType::BoundaryGridPartType, Dune::Stuff::Common::LogStream>::
+          Codim<GridType::dimension, 0>::entities(globalGridPart, boundaryGridPart, "  ", DSC_LOG_INFO);
     }
+  }
 }
 
 TEST_F(CubeProvider, coupling_grid_parts)
@@ -136,8 +143,7 @@ TEST_F(CubeProvider, coupling_grid_parts)
       const auto& coupling_grid_part = ms_grid_->couplingGridPart(ss, nn);
       DSC_LOG_INFO << "testing coupling grid part: " << ss << ", " << nn << std::endl;
       // walk the grid part
-      for (auto entityIterator = coupling_grid_part.begin< 0 >();
-           entityIterator != coupling_grid_part.end< 0 >();
+      for (auto entityIterator = coupling_grid_part.begin<0>(); entityIterator != coupling_grid_part.end<0>();
            ++entityIterator) {
         const auto& entity = *entityIterator;
         const unsigned int entityIndex = coupling_grid_part.indexSet().index(entity);

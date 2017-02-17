@@ -47,7 +47,7 @@ public:
   typedef typename GlobalGridPartType::TwistUtilityType TwistUtilityType;
 
   static const PartitionIteratorType indexSetPartitionType = GlobalGridPartType::indexSetPartitionType;
-  static const InterfaceType indexSetInterfaceType         = GlobalGridPartType::indexSetInterfaceType;
+  static const InterfaceType indexSetInterfaceType = GlobalGridPartType::indexSetInterfaceType;
 
   typedef Iterator::Intersection::Wrapper::FakeDomainBoundary<GlobalGridPartType> IntersectionIteratorType;
 
@@ -116,11 +116,20 @@ public:
 
   Const(ThisType&& source) = default;
 
-  const IndexSetType& indexSet() const { return indexSet_; }
+  const IndexSetType& indexSet() const
+  {
+    return indexSet_;
+  }
 
-  const GridType& grid() const { return globalGridPart_->grid(); }
+  const GridType& grid() const
+  {
+    return globalGridPart_->grid();
+  }
 
-  const GlobalGridPartType& globalGridPart() const { return *globalGridPart_; }
+  const GlobalGridPartType& globalGridPart() const
+  {
+    return *globalGridPart_;
+  }
 
   template <int codim>
   typename BaseTraits::template Codim<codim>::IteratorType begin() const
@@ -150,7 +159,7 @@ public:
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                    = globalGridPart_->indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
@@ -162,11 +171,11 @@ public:
       // return iterator which just passes everything thrugh
       return IntersectionIteratorType(*globalGridPart_, entity);
     } // if this is an entity at the boundary
-  }   // IntersectionIteratorType ibegin(const EntityType& entity) const
+  } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
   IntersectionIteratorType iend(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                    = globalGridPart_->indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
@@ -186,10 +195,14 @@ public:
     return intersection.boundaryId();
   }
 
-  int level() const { return globalGridPart_->level(); }
+  int level() const
+  {
+    return globalGridPart_->level();
+  }
 
   template <class DataHandleImp, class DataType>
-  void communicate(CommDataHandleIF<DataHandleImp, DataType>& /*data*/, InterfaceType /*iftype*/,
+  void communicate(CommDataHandleIF<DataHandleImp, DataType>& /*data*/,
+                   InterfaceType /*iftype*/,
                    CommunicationDirection /*dir*/) const
   {
     DUNE_THROW(Dune::NotImplemented,
@@ -197,7 +210,10 @@ public:
     //    globalGridPart_->communicate(data,iftype,dir);
   }
 
-  const CollectiveCommunicationType& comm() const { return grid().comm(); }
+  const CollectiveCommunicationType& comm() const
+  {
+    return grid().comm();
+  }
 
 private:
   const std::shared_ptr<const GlobalGridPartType> globalGridPart_;
@@ -254,8 +270,10 @@ public:
   ConstCoupling(const std::shared_ptr<const GlobalGridPartType> globalGridPart,
                 const std::shared_ptr<const IndexContainerType> indexContainer,
                 const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer,
-                const std::shared_ptr<const InsideType> inside, const std::shared_ptr<const OutsideType> outside)
-    : BaseType(globalGridPart, indexContainer,
+                const std::shared_ptr<const InsideType> inside,
+                const std::shared_ptr<const OutsideType> outside)
+    : BaseType(globalGridPart,
+               indexContainer,
                std::shared_ptr<const BoundaryInfoContainerType>(new BoundaryInfoContainerType()))
     , intersectionContainer_(intersectionContainer)
     , inside_(inside)
@@ -269,7 +287,7 @@ public:
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                        = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
@@ -280,7 +298,7 @@ public:
 
   IntersectionIteratorType iend(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                        = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
@@ -289,9 +307,15 @@ public:
     return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
   } // IntersectionIteratorType iend(const EntityType& entity) const
 
-  std::shared_ptr<const InsideType> inside() const { return inside_; }
+  std::shared_ptr<const InsideType> inside() const
+  {
+    return inside_;
+  }
 
-  std::shared_ptr<const InsideType> outside() const { return outside_; }
+  std::shared_ptr<const InsideType> outside() const
+  {
+    return outside_;
+  }
 
 private:
   const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer_;
@@ -348,7 +372,8 @@ public:
                 const std::shared_ptr<const IndexContainerType> indexContainer,
                 const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer,
                 const std::shared_ptr<const InsideType> inside)
-    : BaseType(globalGridPart, indexContainer,
+    : BaseType(globalGridPart,
+               indexContainer,
                std::shared_ptr<const BoundaryInfoContainerType>(new BoundaryInfoContainerType()))
     , intersectionContainer_(intersectionContainer)
     , inside_(inside)
@@ -361,7 +386,7 @@ public:
 
   IntersectionIteratorType ibegin(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                        = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
@@ -372,7 +397,7 @@ public:
 
   IntersectionIteratorType iend(const EntityType& entity) const
   {
-    const IndexType& globalIndex                                        = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
@@ -381,7 +406,10 @@ public:
     return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
   } // IntersectionIteratorType iend(const EntityType& entity) const
 
-  std::shared_ptr<const InsideType> inside() const { return inside_; }
+  std::shared_ptr<const InsideType> inside() const
+  {
+    return inside_;
+  }
 
 private:
   const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer_;
@@ -407,7 +435,7 @@ struct hasGrid<grid::Part::Local::IndexBased::Const<GridPartType>>
 template <class GridPartType>
 struct hasSingleGeometryType<grid::Part::Local::IndexBased::Const<GridPartType>>
 {
-  static const bool v                  = hasSingleGeometryType<GridPartType>::v;
+  static const bool v = hasSingleGeometryType<GridPartType>::v;
   static const unsigned int topologyId = hasSingleGeometryType<GridPartType>::topologyId;
 };
 

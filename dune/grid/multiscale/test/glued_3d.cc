@@ -7,7 +7,7 @@
 
 #include "glued.hh"
 
-template<typename _ctype, bool anything>
+template <typename _ctype, bool anything>
 struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
 {
   static int num_coarse_refinements()
@@ -62,7 +62,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, SGrid<3, 3, _ctype>, anything>
 
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
-template<typename _ctype, class Comm, bool anything>
+template <typename _ctype, class Comm, bool anything>
 struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype>, anything>
 {
   static int num_coarse_refinements()
@@ -126,7 +126,8 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype
             {{1, 2}, 3456},
             {{2, 0}, 108},
             {{2, 1}, 108},
-            {{2, 2}, 3456}};
+            { {2, 2},
+              3456 }};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
     return {};
@@ -134,7 +135,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, SGrid<3, 3, _ctype
   }
 }; // struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
 
-template<typename _ctype, class Comm, bool anything>
+template <typename _ctype, class Comm, bool anything>
 struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, Comm>, anything>
 {
   static int num_coarse_refinements()
@@ -198,7 +199,8 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, C
             {{1, 2}, 3456},
             {{2, 0}, 108},
             {{2, 1}, 108},
-            {{2, 2}, 3456}};
+            { {2, 2},
+              3456 }};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
     return {};
@@ -206,7 +208,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, C
   }
 }; // ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, cube, nonconforming, Comm>, anything>
 
-template<typename _ctype, class Comm, bool anything>
+template <typename _ctype, class Comm, bool anything>
 struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
 {
   static int num_coarse_refinements()
@@ -270,7 +272,8 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming
             {{1, 2}, 3456},
             {{2, 0}, 108},
             {{2, 1}, 108},
-            {{2, 2}, 3456}};
+            { {2, 2},
+              3456 }};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
     return {};
@@ -278,7 +281,7 @@ struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming
   }
 }; // struct ExpectedResults<SGrid<3, 3, _ctype>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
 
-template<class Comm, bool anything>
+template <class Comm, bool anything>
 struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
 {
   static int num_coarse_refinements()
@@ -342,35 +345,53 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
             {{1, 2}, 3456},
             {{2, 0}, 108},
             {{2, 1}, 108},
-            {{2, 2}, 3456}};
+            { {2, 2},
+              3456 }};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
     return {};
 #endif
   }
-}; // struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simplex, nonconforming, Comm>, anything>
+}; // struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simplex, nonconforming, Comm>,
+// anything>
 
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
 
 
-typedef ::testing::Types<
-                          std::tuple<typename YaspOrSGrid<3>::type, typename YaspOrSGrid<3>::type>
+typedef ::testing::Types<std::tuple<typename YaspOrSGrid<3>::type, typename YaspOrSGrid<3>::type>
 #if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-//                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube, conforming>> // <- knwon to fail completely
-                        , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube, nonconforming>>
-//                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex, conforming>> // <- knwon to fail completely
-                        , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex, nonconforming>>
-                        , std::tuple<ALUGrid<3, 3, cube, conforming>, typename YaspOrSGrid<3>::type>
-//                      , std::tuple<ALUGrid<3, 3, simplex, conforming>, ALUGrid<3, 3, simplex, nonconforming>> // <- knwon to fail completely
-//                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>, ALUGrid<3, 3, simplex, nonconforming>> // <- knwon to fail completely
-                        , std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
+                         //                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube,
+                         //                      conforming>> // <- knwon to fail completely
+                         ,
+                         std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, cube, nonconforming>>
+                         //                      , std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex,
+                         //                      conforming>> // <- knwon to fail completely
+                         ,
+                         std::tuple<typename YaspOrSGrid<3>::type, ALUGrid<3, 3, simplex, nonconforming>>,
+                         std::tuple<ALUGrid<3, 3, cube, conforming>, typename YaspOrSGrid<3>::type>
+                         //                      , std::tuple<ALUGrid<3, 3, simplex, conforming>, ALUGrid<3, 3, simplex,
+                         //                      nonconforming>> // <- knwon to fail completely
+                         //                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>, ALUGrid<3, 3,
+                         //                      simplex, nonconforming>> // <- knwon to fail completely
+                         ,
+                         std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-                         > GridTypes;
+                         >
+    GridTypes;
 
 TYPED_TEST_CASE(GluedMultiscaleGridTest, GridTypes);
-TYPED_TEST(GluedMultiscaleGridTest, setup_works) { this->setup(); }
-TYPED_TEST(GluedMultiscaleGridTest, visualize_is_callable) { this->visualize_is_callable(); }
-TYPED_TEST(GluedMultiscaleGridTest, couplings_are_of_correct_size) { this->couplings_are_of_correct_size(); }
+TYPED_TEST(GluedMultiscaleGridTest, setup_works)
+{
+  this->setup();
+}
+TYPED_TEST(GluedMultiscaleGridTest, visualize_is_callable)
+{
+  this->visualize_is_callable();
+}
+TYPED_TEST(GluedMultiscaleGridTest, couplings_are_of_correct_size)
+{
+  this->couplings_are_of_correct_size();
+}
 TYPED_TEST(GluedMultiscaleGridTest, __STILL_BROKEN__intersections_are_correctly_oriented_for_equal_levels)
 {
   this->check_intersection_orientation_for_equal_levels();
@@ -379,7 +400,8 @@ TYPED_TEST(GluedMultiscaleGridTest, __STILL_BROKEN__intersections_are_correctly_
 {
   this->check_intersection_orientation_for_higher_neighbor_levels();
 }
-TYPED_TEST(GluedMultiscaleGridTest, __STILL_BROKEN__intersection_orientation_is_wrong_for_lower_or_equal_neighbor_levels)
+TYPED_TEST(GluedMultiscaleGridTest,
+           __STILL_BROKEN__intersection_orientation_is_wrong_for_lower_or_equal_neighbor_levels)
 {
   this->check_intersection_orientation_for_lower_or_equal_neighbor_levels();
 }

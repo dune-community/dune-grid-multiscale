@@ -60,8 +60,10 @@ public:
   {
   }
 
-  FakeDomainBoundary(const GlobalGridPartType& globalGridPart, const EntityType& entity,
-                     const InfoContainerType infoContainer, bool end = false)
+  FakeDomainBoundary(const GlobalGridPartType& globalGridPart,
+                     const EntityType& entity,
+                     const InfoContainerType infoContainer,
+                     bool end = false)
     : BaseType(end ? globalGridPart.iend(entity) : globalGridPart.ibegin(entity))
     , passThrough_(false)
     , intersection_(*this)
@@ -84,7 +86,10 @@ public:
 private:
   friend class Dune::grid::Part::Intersection::Wrapper::FakeDomainBoundary<ThisType, BaseIntersectionType>;
 
-  const BaseIntersectionType& getBaseIntersection() const { return BaseType::operator*(); }
+  const BaseIntersectionType& getBaseIntersection() const
+  {
+    return BaseType::operator*();
+  }
 
   void setIntersectionState() const
   {
@@ -101,8 +106,8 @@ private:
       } else {
         intersection_.setPassThrough(true);
       } // if this intersection is special
-    }   // if we are not on an entity of interest
-  }     // void setIntersectionState() const
+    } // if we are not on an entity of interest
+  } // void setIntersectionState() const
 
   bool passThrough_;
   mutable Intersection intersection_;

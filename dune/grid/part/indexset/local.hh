@@ -65,7 +65,7 @@ public:
          iterator != indexContainer_->end();
          ++iterator) {
       const GeometryType& geometryType = iterator->first;
-      const IndexType size             = boost::numeric_cast<IndexType>(iterator->second.size());
+      const IndexType size = boost::numeric_cast<IndexType>(iterator->second.size());
       const unsigned int codim = dimension - geometryType.dim();
       geometryTypesByCodim_[codim].push_back(geometryType);
       sizeByGeometryType_.insert(std::pair<GeometryType, IndexType>(geometryType, size));
@@ -109,8 +109,8 @@ public:
           const IndexType localSubIndex = result->second;
           return localSubIndex;
         } // search for the global index
-      }   // check if geometry type has correct dimension
-    }     // loop over all geometry types
+      } // check if geometry type has correct dimension
+    } // loop over all geometry types
     // if we came this far we did not find it
     std::stringstream msg;
     msg << std::endl
@@ -145,8 +145,8 @@ public:
           const IndexType localSubIndex = result->second;
           return localSubIndex;
         } // search for the global index
-      }   // check if geometry type has correct dimension
-    }     // loop over all geometry types
+      } // check if geometry type has correct dimension
+    } // loop over all geometry types
     // if we came this far we did not find it
     std::stringstream msg;
     msg << std::endl
@@ -156,7 +156,10 @@ public:
     DUNE_THROW(Dune::InvalidStateException, msg.str());
   } // IndexType subIndex(const EntityType& entity, int i, unsigned int codim) const
 
-  const std::vector<GeometryType>& geomTypes(int codim) const { return geometryTypesByCodim_[codim]; }
+  const std::vector<GeometryType>& geomTypes(int codim) const
+  {
+    return geometryTypesByCodim_[codim];
+  }
 
   IndexType size(GeometryType type) const
   {
@@ -175,7 +178,7 @@ public:
   bool contains(const EntityType& entity) const
   {
     // check if we have an index map for this GeometryType
-    const GeometryType& geometryType                           = entity.type();
+    const GeometryType& geometryType = entity.type();
     const typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
     if (indexMap != indexContainer_->end()) {
       // check if this entity is listen in the map
@@ -194,11 +197,11 @@ private:
   IndexType getIndex(const EntityType& entity) const
   {
     // check if we have an index map for this GeometryType
-    const GeometryType& geometryType                           = entity.type();
+    const GeometryType& geometryType = entity.type();
     const typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
     if (indexMap != indexContainer_->end()) {
       // check if this entity is listen in the map
-      const IndexType globalIndex                              = BaseType::index(entity);
+      const IndexType globalIndex = BaseType::index(entity);
       const typename Indices_MapType::const_iterator indexPair = indexMap->second.find(globalIndex);
       if (indexPair != indexMap->second.end())
         return indexPair->second;
@@ -213,7 +216,7 @@ private:
     // find the map with this global index and return the local one
     for (typename IndexContainerType::const_iterator it = indexContainer_->begin(); it != indexContainer_->end();
          ++it) {
-      const Indices_MapType& indicesMap                        = it->second;
+      const Indices_MapType& indicesMap = it->second;
       const typename Indices_MapType::const_iterator indexPair = indicesMap.find(globalIndex);
       if (indexPair != indicesMap.end())
         return indexPair->second;

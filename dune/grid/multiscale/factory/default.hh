@@ -19,11 +19,11 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/stuff/common/disable_warnings.hh>
-# include <dune/grid/sgrid.hh>
-# include <dune/grid/yaspgrid.hh>
-# if HAVE_ALUGRID
-#   include <dune/grid/alugrid.hh>
-# endif
+#include <dune/grid/sgrid.hh>
+#include <dune/grid/yaspgrid.hh>
+#if HAVE_ALUGRID
+#include <dune/grid/alugrid.hh>
+#endif
 #include <dune/stuff/common/reenable_warnings.hh>
 
 #include <dune/grid/part/local/indexbased.hh>
@@ -51,21 +51,30 @@ template <>
 class NeighborRecursionLevel<SGrid<1, 1>>
 {
 public:
-  static size_t compute() { return 1; }
+  static size_t compute()
+  {
+    return 1;
+  }
 };
 
 template <>
 class NeighborRecursionLevel<SGrid<2, 2>>
 {
 public:
-  static size_t compute() { return 1; }
+  static size_t compute()
+  {
+    return 1;
+  }
 };
 
 template <>
 class NeighborRecursionLevel<SGrid<3, 3>>
 {
 public:
-  static size_t compute() { return 3; }
+  static size_t compute()
+  {
+    return 3;
+  }
 };
 
 // YaspGrid
@@ -73,21 +82,30 @@ template <>
 class NeighborRecursionLevel<YaspGrid<1>>
 {
 public:
-  static size_t compute() { return 1; }
+  static size_t compute()
+  {
+    return 1;
+  }
 };
 
 template <>
 class NeighborRecursionLevel<YaspGrid<2>>
 {
 public:
-  static size_t compute() { return 1; }
+  static size_t compute()
+  {
+    return 1;
+  }
 };
 
 template <>
 class NeighborRecursionLevel<YaspGrid<3>>
 {
 public:
-  static size_t compute() { return 3; }
+  static size_t compute()
+  {
+    return 3;
+  }
 };
 
 // ALUGrid
@@ -96,14 +114,20 @@ template <class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming, Comm>>
 {
 public:
-  static size_t compute() { return 3; }
+  static size_t compute()
+  {
+    return 3;
+  }
 };
 
 template <class Comm, ALUGridRefinementType tp>
 class NeighborRecursionLevel<Dune::ALUGrid<3, 3, Dune::simplex, tp, Comm>>
 {
 public:
-  static size_t compute() { return 9; } // just a guess!
+  static size_t compute()
+  {
+    return 9;
+  } // just a guess!
 };
 
 #endif
@@ -122,7 +146,10 @@ public:
 
   typedef typename GridType::template Codim<0>::Entity EntityType;
 
-  static const std::string id() { return "grid.multiscale.factory.default"; }
+  static const std::string id()
+  {
+    return "grid.multiscale.factory.default";
+  }
 
 private:
   typedef typename MsGridType::GlobalGridPartType GlobalGridPartType;
@@ -157,24 +184,26 @@ private:
   template <int c, int d>
   struct Add
   {
-    static void subEntities(ThisType& factory, const EntityType& entity, GeometryMapType& geometryMap,
-                            CodimSizesType& localCodimSizes/*, const std::string prefix = "",
+    static void subEntities(ThisType& factory,
+                            const EntityType& entity,
+                            GeometryMapType& geometryMap,
+                            CodimSizesType& localCodimSizes /*, const std::string prefix = "",
                             std::ostream& out                                         = Dune::Stuff::Common::Logger().devnull()*/)
     {
-//      // suppress output, since we are not codim 0
-//      Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
+      //      // suppress output, since we are not codim 0
+      //      Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
       // loop over all codim c subentities of the entity
       typedef typename EntityType::template Codim<c>::EntityPointer CodimCentityPtrType;
       for (int i = 0; i < entity.template count<c>(); ++i) {
         const CodimCentityPtrType codimCentityPtr = entity.template subEntity<c>(i);
-        const GeometryType& geometryType          = codimCentityPtr->type();
+        const GeometryType& geometryType = codimCentityPtr->type();
         const IndexType globalIndex = factory.globalGridPart_->indexSet().index(*codimCentityPtr);
-        factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex/*, prefix, out*/);
+        factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex /*, prefix, out*/);
       } // loop over all codim c subentities of the entity
       // add all codim c + 1 subentities
-      Add<c + 1, d>::subEntities(factory, entity, geometryMap, localCodimSizes/*, prefix, out*/);
+      Add<c + 1, d>::subEntities(factory, entity, geometryMap, localCodimSizes /*, prefix, out*/);
     } // static void subEntities()
-  };  // struct Add
+  }; // struct Add
 
 public:
   Default(const GridType& grid, const int boundaryId = 7)
@@ -188,18 +217,23 @@ public:
   }
 
   Default(const std::shared_ptr<const GridType> grid, const int boundaryId = 7)
-    : grid_(grid), boundaryId_(boundaryId), prepared_(false), finalized_(false), size_(0), oversampled_(false)
+    : grid_(grid)
+    , boundaryId_(boundaryId)
+    , prepared_(false)
+    , finalized_(false)
+    , size_(0)
+    , oversampled_(false)
   {
   }
 
   void prepare()
   {
     if (!prepared_) {
-      globalGridPart_       = std::make_shared<const GlobalGridPartType>(const_cast<GridType&>(*grid_));
+      globalGridPart_ = std::make_shared<const GlobalGridPartType>(const_cast<GridType&>(*grid_));
       entityToSubdomainMap_ = std::shared_ptr<EntityToSubdomainMapType>(new EntityToSubdomainMapType());
-      prepared_             = true;
+      prepared_ = true;
     } // if (!prepared_)
-  }   // void prepare()
+  } // void prepare()
 
   const std::shared_ptr<const GlobalGridPartType> globalGridPart() const
   {
@@ -207,16 +241,16 @@ public:
     return globalGridPart_;
   }
 
-  void add(const EntityType& entity, const size_t subdomain/*, const std::string prefix = "",
+  void add(const EntityType& entity, const size_t subdomain /*, const std::string prefix = "",
            std::ostream& out = Dune::Stuff::Common::Logger().debug()*/)
   {
     // prepare
     assert(prepared_ && "Please call prepare() before calling add()!");
     assert(!finalized_ && "Do not call add() after calling finalized()!");
     const IndexType globalIndex = globalGridPart_->indexSet().index(entity);
-//#ifndef NDEBUG
-//    out << prefix << "adding entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
-//#endif
+    //#ifndef NDEBUG
+    //    out << prefix << "adding entity " << globalIndex << " to subdomain " << subdomain << ":" << std::endl;
+    //#endif
     // add subdomain to this entity index
     typename EntityToSubdomainMapType::iterator indexIt = entityToSubdomainMap_->find(globalIndex);
     if (indexIt == entityToSubdomainMap_->end()) {
@@ -243,20 +277,21 @@ public:
     // add geometry and global index of this codim 0 entity
     const GeometryType& geometryType = entity.type();
     CodimSizesType& localCodimSizes = localCodimSizes_.find(subdomain)->second;
-    addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex/*, prefix, out*/);
+    addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex /*, prefix, out*/);
     // add all remaining codims
-    Add<1, dim>::subEntities(*this, entity, geometryMap, localCodimSizes/*, prefix, out*/);
+    Add<1, dim>::subEntities(*this, entity, geometryMap, localCodimSizes /*, prefix, out*/);
   } // void add()
 
-  void finalize(const size_t oversamplingLayers = 0,
-                const size_t neighbor_recursion_level = NeighborRecursionLevel<GridType>::compute(),
-//                const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug(),
-                bool assert_connected = true)
+  void
+  finalize(const size_t oversamplingLayers = 0,
+           const size_t neighbor_recursion_level = NeighborRecursionLevel<GridType>::compute(),
+           //                const std::string prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().debug(),
+           bool assert_connected = true)
   {
     assert(prepared_ && "Please call prepare() and add() before calling finalize()!");
     if (!finalized_) {
       // prepare
-//      out << prefix << "finalizing " << std::flush;
+      //      out << prefix << "finalizing " << std::flush;
       // init data structures
       // for the subdomains inner boundaries
       //   * to map the local intersection index to the desired fake boundary id
@@ -316,23 +351,23 @@ public:
               const IndexMapType& indexMap = subdomainGeometryMapIt->second;
               subdomainSizes[subdomain] += indexMap.size();
             } // if this is a codim 0 geometry
-          }   // loop over all geometry types of this subdomain
+          } // loop over all geometry types of this subdomain
           // init data structures
           subdomainInnerBoundaryInfos[subdomain] =
               std::shared_ptr<EntityToIntersectionInfoMapType>(new EntityToIntersectionInfoMapType());
         } // test if this subdomain exists
-      }   // loop over all subdomains
-//      out << size_ << " subdomains:" << std::endl;
+      } // loop over all subdomains
+      //      out << size_ << " subdomains:" << std::endl;
       // walk the global grid part
       //   * to generate the information which sudomains neighbor each other
-//      out << prefix << "  generating boundary information:" << std::endl;
+      //      out << prefix << "  generating boundary information:" << std::endl;
       for (typename GlobalGridPartType::template Codim<0>::IteratorType entityIt = globalGridPart_->template begin<0>();
            entityIt != globalGridPart_->template end<0>();
            ++entityIt) {
         // find the subdomains this entity lives in
-        const EntityType& entity          = *entityIt;
+        const EntityType& entity = *entityIt;
         const IndexType entityGlobalIndex = globalGridPart_->indexSet().index(entity);
-        const size_t entitySubdomain      = getSubdomainOf(entityGlobalIndex);
+        const size_t entitySubdomain = getSubdomainOf(entityGlobalIndex);
         // get the set of this subdomains neighbors
         NeighboringSubdomainsSetType& neighborsOfSubdomain = neighboringSubdomainSets[entitySubdomain];
         // get the boundary info map for this subdomain
@@ -349,10 +384,11 @@ public:
             // get local index of the intersection
             const int intersectionLocalIndex = intersection.indexInInside();
             // report
-//#ifndef NDEBUG
-//            out << prefix << "    entity " << entityGlobalIndex << " lies at the domain boundary of subdomain "
-//                << entitySubdomain << std::endl;
-//#endif
+            //#ifndef NDEBUG
+            //            out << prefix << "    entity " << entityGlobalIndex << " lies at the domain boundary of
+            //            subdomain "
+            //                << entitySubdomain << std::endl;
+            //#endif
             // for the boundary grid part
             //   * get the maps for this subdomain (and create them, if necessary)
             if (boundaryGeometryMapMap.find(entitySubdomain) == boundaryGeometryMapMap.end())
@@ -382,21 +418,22 @@ public:
             // then this entity lies inside the domain
             // and has a neighbor
             typedef typename IntersectionType::EntityPointer EntityPtrType;
-            const EntityPtrType neighborPtr      = intersection.outside();
-            const EntityType& neighbor           = *neighborPtr;
+            const EntityPtrType neighborPtr = intersection.outside();
+            const EntityType& neighbor = *neighborPtr;
             const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
-            const size_t neighborSubdomain       = getSubdomainOf(neighborGlobalIndex);
+            const size_t neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
             // check if neighbor is in another or in the same subdomain
             if (neighborSubdomain != entitySubdomain) {
               // get local index of the intersection
               const int intersectionLocalIndex = intersection.indexInInside();
-//#ifndef NDEBUG
-//              // report
-//              out << prefix << "    entity " << entityGlobalIndex << " lies at an inner boundary of subdomain "
-//                  << entitySubdomain << std::endl;
-//              out << prefix << "      at intersection " << intersectionLocalIndex << " with neighbor "
-//                  << neighborGlobalIndex << " of subdomain " << neighborSubdomain << std::endl;
-//#endif
+              //#ifndef NDEBUG
+              //              // report
+              //              out << prefix << "    entity " << entityGlobalIndex << " lies at an inner boundary of
+              //              subdomain "
+              //                  << entitySubdomain << std::endl;
+              //              out << prefix << "      at intersection " << intersectionLocalIndex << " with neighbor "
+              //                  << neighborGlobalIndex << " of subdomain " << neighborSubdomain << std::endl;
+              //#endif
               // for the neighbor information between the subdomains
               //   * the subdomain of the neighbor is a neighboring subdomain of the entities subdomain
               neighborsOfSubdomain.insert(neighborSubdomain);
@@ -415,7 +452,7 @@ public:
               //   * and get it
               GeometryMapType& couplingGeometryMap = *(couplingMap[neighborSubdomain]);
               //   * and add geometry and global index of this codim 0 entity
-              const GeometryType& entityGeometryType                 = entity.type();
+              const GeometryType& entityGeometryType = entity.type();
               std::map<size_t, CodimSizesType>& couplingCodimSizeMap = couplingCodimSizeMaps[entitySubdomain];
               //   * create codim sizes vector for this neighbor (if needed)
               if (couplingCodimSizeMap.find(neighborSubdomain) == couplingCodimSizeMap.end())
@@ -442,8 +479,8 @@ public:
             } else { // if neighbor is contained in this subdomain
               subdomainsEntitiesAreConnected = true;
             } // check if neighbor is in another subdomain
-          }   // check the type of this intersection
-        }     // walk the neighbors
+          } // check the type of this intersection
+        } // walk the neighbors
         // check if this entity is connected to the other entities of this subdomain
         if (assert_connected && subdomainSizes[entitySubdomain] != 1 && !subdomainsEntitiesAreConnected) {
           std::stringstream msg;
@@ -451,22 +488,23 @@ public:
               << " is not connected to entity " << entityGlobalIndex << " (connected)!";
           DUNE_THROW(Dune::InvalidStateException, msg.str());
         } // check if this entity is connected to the other entities of this subdomain
-      }   // walk the global grid part
+      } // walk the global grid part
       // walk the subdomains
       //   * to create the local grid parts
       localGridParts_ = std::shared_ptr<std::vector<std::shared_ptr<const LocalGridPartType>>>(
           new std::vector<std::shared_ptr<const LocalGridPartType>>(size_));
       std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts = *localGridParts_;
-//      out << prefix << "creating local grid parts:" << std::endl;
+      //      out << prefix << "creating local grid parts:" << std::endl;
       for (typename SubdomainMapType::const_iterator subdomainIterator = subdomainToEntityMap_.begin();
            subdomainIterator != subdomainToEntityMap_.end();
            ++subdomainIterator) {
         // report
-        const size_t subdomain     = subdomainIterator->first;
-//        const size_t subdomainSize = subdomainSizes[subdomain];
-//#ifndef NDEBUG
-//        out << prefix << "  subdomain " << subdomain << " (of size " << subdomainSize << ")... " << std::flush;
-//#endif
+        const size_t subdomain = subdomainIterator->first;
+        //        const size_t subdomainSize = subdomainSizes[subdomain];
+        //#ifndef NDEBUG
+        //        out << prefix << "  subdomain " << subdomain << " (of size " << subdomainSize << ")... " <<
+        //        std::flush;
+        //#endif
         // for the local grid part
         //   * get the geometry map
         const std::shared_ptr<const GeometryMapType> localGeometryMap = subdomainIterator->second;
@@ -476,17 +514,17 @@ public:
         //   * and create the local grid part
         localGridParts[subdomain] = std::shared_ptr<const LocalGridPartType>(
             new LocalGridPartType(globalGridPart_, localGeometryMap, localBoundaryInfo));
-//#ifndef NDEBUG
-//        out << "done" << std::endl;
-//#endif
+        //#ifndef NDEBUG
+        //        out << "done" << std::endl;
+        //#endif
       } // walk the subdomains
 
       // walk those subdomains which have a boundary grid part
-//      out << prefix << "creating boundary grid parts:" << std::endl;
+      //      out << prefix << "creating boundary grid parts:" << std::endl;
       //   * to create the boundary grid parts
       boundaryGridParts_ = std::shared_ptr<std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>>(
           new std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>());
-      std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>& boundaryGridParts  = *boundaryGridParts_;
+      std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>& boundaryGridParts = *boundaryGridParts_;
       typename std::map<size_t, CodimSizesType>::const_iterator boundaryCodimSizesMapIt = boundaryCodimSizesMap.begin();
       typename std::map<size_t, std::shared_ptr<EntityToIntersectionSetMapType>>::const_iterator boundaryInfoMapIt =
           boundaryInfoMap.begin();
@@ -499,10 +537,10 @@ public:
                && "We should not get here: we are in big trouble, if these maps do not correspond to each other!");
         assert(boundarySubdomain == boundaryInfoMapIt->first
                && "We should not get here: we are in big trouble, if these maps do not correspond to each other!");
-//#ifndef NDEBUG
-//        out << prefix << "  subdomain " << boundarySubdomain << " (of size "
-//            << boundaryCodimSizesMapIt->second.operator[](0) << ")... " << std::flush;
-//#endif
+        //#ifndef NDEBUG
+        //        out << prefix << "  subdomain " << boundarySubdomain << " (of size "
+        //            << boundaryCodimSizesMapIt->second.operator[](0) << ")... " << std::flush;
+        //#endif
         // for the boundary grid part
         //   * get the geometry map
         const std::shared_ptr<const GeometryMapType> boundaryGeometryMap = boundaryGeometryMapMapIt->second;
@@ -513,9 +551,9 @@ public:
             boundarySubdomain,
             std::shared_ptr<const BoundaryGridPartType>(new BoundaryGridPartType(
                 globalGridPart_, boundaryGeometryMap, boundaryBoundaryInfo, localGridParts[boundarySubdomain]))));
-//#ifndef NDEBUG
-//        out << "done" << std::endl;
-//#endif
+        //#ifndef NDEBUG
+        //        out << "done" << std::endl;
+        //#endif
       } // walk those subdomains which have a boundary grid part
       // walk the subdomains
       //   * to create the coupling grid parts
@@ -524,7 +562,7 @@ public:
               new std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>(size_));
       std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>& couplingGridPartsMaps =
           *couplingGridPartsMaps_;
-//      out << prefix << "creating coupling grid parts:" << std::endl;
+      //      out << prefix << "creating coupling grid parts:" << std::endl;
       for (size_t subdomain = 0; subdomain < couplingMaps.size(); ++subdomain) {
         // get the coupling map for this subdomain
         const SubdomainMapType& couplingMap = couplingMaps[subdomain];
@@ -538,9 +576,9 @@ public:
              neighborIt != couplingMap.end();
              ++neighborIt) {
           const size_t neighbor = neighborIt->first;
-//#ifndef NDEBUG
-//          out << prefix << "  subdomain " << subdomain << ", neighbor " << neighbor << "... " << std::flush;
-//#endif
+          //#ifndef NDEBUG
+          //          out << prefix << "  subdomain " << subdomain << ", neighbor " << neighbor << "... " << std::flush;
+          //#endif
           // get the geometry map
           const std::shared_ptr<const GeometryMapType> couplingGeometryMap = neighborIt->second;
           // get the boundary info map
@@ -555,11 +593,11 @@ public:
                                                                                    coupling_boundary_info,
                                                                                    localGridParts[subdomain],
                                                                                    localGridParts[neighbor]))));
-//#ifndef NDEBUG
-//          out << "done" << std::endl;
-//#endif
+          //#ifndef NDEBUG
+          //          out << "done" << std::endl;
+          //#endif
         } // loop over all neighbors
-      }   // walk the subdomains
+      } // walk the subdomains
 
       // create the first layer of oversampling
       if (oversamplingLayers > 0) {
@@ -574,8 +612,8 @@ public:
         oversampledLocalGridParts_ = std::shared_ptr<std::vector<std::shared_ptr<const LocalGridPartType>>>(
             new std::vector<std::shared_ptr<const LocalGridPartType>>(size_));
         SubdomainMapType tmpSubdomainToOversamplingEntitiesMap = subdomainToOversamplingEntitiesMap_;
-        subdomainToOversamplingEntitiesMap_                    = SubdomainMapType();
-        oversampledLocalGridParts_                             = addOneLayerOfOverSampling(tmpSubdomainToOversamplingEntitiesMap,
+        subdomainToOversamplingEntitiesMap_ = SubdomainMapType();
+        oversampledLocalGridParts_ = addOneLayerOfOverSampling(tmpSubdomainToOversamplingEntitiesMap,
                                                                *tmpOversapledGridParts,
                                                                neighbor_recursion_level,
                                                                subdomainToOversamplingEntitiesMap_);
@@ -584,7 +622,7 @@ public:
       // done
       finalized_ = true;
     } // if (!finalized_)
-  }   // void finalize()
+  } // void finalize()
 
   const std::shared_ptr<const MsGridType> createMsGrid() const
   {
@@ -611,26 +649,29 @@ public:
   } // const std::shared_ptr< const MsGridType > createMsGrid() const
 
 private:
-  void addGeometryAndIndex(GeometryMapType& geometryMap, CodimSizesType& localCodimSizes,
-                           const GeometryType& geometryType, const IndexType& globalIndex/*,
+  void addGeometryAndIndex(GeometryMapType& geometryMap,
+                           CodimSizesType& localCodimSizes,
+                           const GeometryType& geometryType,
+                           const IndexType& globalIndex /*,
                            const std::string& prefix = "", std::ostream& out = Dune::Stuff::Common::Logger().devnull()*/)
   {
     // get the map to this geometry type
     typename GeometryMapType::mapped_type& indexMap = geometryMap[geometryType];
     // add if needed
     if (indexMap.find(globalIndex) == indexMap.end()) {
-      const size_t codim         = dim - geometryType.dim();
+      const size_t codim = dim - geometryType.dim();
       const IndexType localIndex = boost::numeric_cast<IndexType>(localCodimSizes[codim]);
       indexMap.insert(std::pair<IndexType, IndexType>(globalIndex, localIndex));
       // increase count for this codim
       ++(localCodimSizes[codim]);
       // report
-//#ifndef NDEBUG
-//      out << prefix << "- " << geometryType << ", global index " << globalIndex << ", local index " << localIndex
-//          << std::endl;
-//#endif
+      //#ifndef NDEBUG
+      //      out << prefix << "- " << geometryType << ", global index " << globalIndex << ", local index " <<
+      //      localIndex
+      //          << std::endl;
+      //#endif
     } // add if needed
-  }   // void addGeometryAndIndex()
+  } // void addGeometryAndIndex()
 
   size_t getSubdomainOf(const IndexType& globalIndex) const
   {
@@ -644,10 +685,10 @@ private:
   } // size_t getSubdomainOf(const IndexType& globalIndex) const
 
   std::shared_ptr<std::vector<std::shared_ptr<const LocalGridPartType>>>
-      addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
-                                const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts,
-                                const size_t neighbor_recursion_level,
-                                SubdomainMapType& subdomainToOversamplingEntitiesMap)
+  addOneLayerOfOverSampling(const SubdomainMapType& subdomainToEntityMap,
+                            const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts,
+                            const size_t neighbor_recursion_level,
+                            SubdomainMapType& subdomainToOversamplingEntitiesMap)
   {
     // init data structures
     // for the subdomains inner boundaries
@@ -659,7 +700,7 @@ private:
     std::vector<std::shared_ptr<EntityToIntersectionInfoMapType>> oversamplingSubdomainInnerBoundaryInfos(size_);
     // walk the subdomains to create the oversampling
     for (auto subdomainIt = subdomainToEntityMap.begin(); subdomainIt != subdomainToEntityMap.end(); ++subdomainIt) {
-      const size_t subdomain             = subdomainIt->first;
+      const size_t subdomain = subdomainIt->first;
       const GeometryMapType& geometryMap = *(subdomainIt->second);
       // * therefore, hardcopy the existing map we want to extend,
       std::shared_ptr<GeometryMapType> geometryMapCopy = Dune::make_shared<GeometryMapType>(geometryMap);
@@ -688,8 +729,8 @@ private:
             // if this intersection is not on the domain boundary
             if (intersection.neighbor()) {
               // get the neighbor
-              const auto neighborPtr               = intersection.outside();
-              const auto& neighbor                 = *neighborPtr;
+              const auto neighborPtr = intersection.outside();
+              const auto& neighbor = *neighborPtr;
               const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
               //              const size_t neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
               // if the neighbor is not in the subdomain
@@ -713,17 +754,17 @@ private:
                   add_neighbors_neighbors_recursively(
                       entity, neighbor, geometryMap, neighbor_recursion_level, localCodimSizes, *geometryMapCopy);
               } // if the neighbor is not in the subdomain
-            }   // if this intersection is not on the domain boundary
-          }     // iterate over the intersections in the global grid part
-        }       // lets see if this is a boundary entity of the local grid part
-      }         // then walk the local grid part to find the local boundary entities
+            } // if this intersection is not on the domain boundary
+          } // iterate over the intersections in the global grid part
+        } // lets see if this is a boundary entity of the local grid part
+      } // then walk the local grid part to find the local boundary entities
       subdomainToOversamplingEntitiesMap.insert(std::make_pair(subdomain, geometryMapCopy));
     } // walk the subdomains to create the oversampling
 
     // now we need to create the local boundary info for the oversampling, so walk the global grid part
     for (auto entityIt = globalGridPart_->template begin<0>(); entityIt != globalGridPart_->template end<0>();
          ++entityIt) {
-      const auto& entity          = *entityIt;
+      const auto& entity = *entityIt;
       const IndexType entityIndex = globalGridPart_->indexSet().index(entity);
       // now we find all the oversampled subdomains this entity is a part of
       for (auto subdomainToOversamplingEntitiesMapIt : subdomainToOversamplingEntitiesMap) {
@@ -738,11 +779,11 @@ private:
                  ++intersectionIt) {
               const auto& intersection = *intersectionIt;
               if (intersection.neighbor()) {
-                const auto neighborPtr        = intersection.outside();
-                const auto& neighbor          = *neighborPtr;
+                const auto neighborPtr = intersection.outside();
+                const auto& neighbor = *neighborPtr;
                 const IndexType neighborIndex = globalGridPart_->indexSet().index(neighbor);
                 // and check, if the neighbor is in the same subdomain
-                bool isInSame                    = false;
+                bool isInSame = false;
                 const auto neighborGeometryMapIt = subdomainToOversamplingEntitiesMapIt.second->find(neighbor.type());
                 if (neighborGeometryMapIt != subdomainToOversamplingEntitiesMapIt.second->end()) {
                   const auto& neighborGeometryMap = neighborGeometryMapIt->second;
@@ -754,7 +795,7 @@ private:
                   // the neighbor is not part of this oversampled subdomain,
                   // so the entity in question is on the boundary!
                   const int intersectionLocalIndex = intersection.indexInInside();
-                  auto& localBoundaryInfo          = *(oversamplingSubdomainInnerBoundaryInfos[entitySubdomain]);
+                  auto& localBoundaryInfo = *(oversamplingSubdomainInnerBoundaryInfos[entitySubdomain]);
                   // get the boundary info map for this entity
                   IntersectionToBoundaryIdMapType& entityBoundaryInfo = localBoundaryInfo[entityIndex];
                   // and add the local intersection id and its desired fake boundary id to this entities map
@@ -765,7 +806,7 @@ private:
           }
         }
       } // now we find all the oversampled subdomains this entity is a part of
-    }   // walk the global grid part
+    } // walk the global grid part
 
     // and create the oversampled local grid parts
     std::shared_ptr<std::vector<std::shared_ptr<const LocalGridPartType>>> oversampledLocalGridPartsRet =
@@ -791,9 +832,12 @@ private:
   } // ... addOneLayerOfOverSampling(...)
 
   template <class EntityType, class NeighborType>
-  void add_neighbors_neighbors_recursively(const EntityType& entity, const NeighborType& neighbor,
-                                           const GeometryMapType& geometryMap, size_t recursion_level,
-                                           CodimSizesType& localCodimSizes, GeometryMapType& geometryMapCopy)
+  void add_neighbors_neighbors_recursively(const EntityType& entity,
+                                           const NeighborType& neighbor,
+                                           const GeometryMapType& geometryMap,
+                                           size_t recursion_level,
+                                           CodimSizesType& localCodimSizes,
+                                           GeometryMapType& geometryMapCopy)
   {
     // loop over all the neighbors of the neighbor
     for (auto neighborIntersectionIt = globalGridPart_->ibegin(neighbor);
@@ -802,8 +846,8 @@ private:
       const auto& neighborIntersection = *neighborIntersectionIt;
       if (neighborIntersection.neighbor()) {
         // get the neighbors neighbor
-        const auto neighborsNeighborPtr              = neighborIntersection.outside();
-        const auto& neighborsNeighbor                = *neighborsNeighborPtr;
+        const auto neighborsNeighborPtr = neighborIntersection.outside();
+        const auto& neighborsNeighbor = *neighborsNeighborPtr;
         const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
         bool neighborsNeighborIsNotInThisSubdomain = true;
         if (geometryMap.find(neighborsNeighbor.type()) != geometryMap.end()) {
@@ -815,7 +859,7 @@ private:
         // if the neighbor is not in the subdomain
         if (neighborsNeighborIsNotInThisSubdomain) {
           // check, if he intersects the entity
-          const auto& entityGeometry            = entity.geometry();
+          const auto& entityGeometry = entity.geometry();
           const auto& neighborsNeighborGeometry = neighborsNeighbor.geometry();
           // * therefore loop over all corners of the entity
           for (int ii = 0; ii < entityGeometry.corners(); ++ii) {
@@ -839,7 +883,7 @@ private:
               entity, neighborsNeighbor, geometryMap, --recursion_level, localCodimSizes, geometryMapCopy);
       }
     } // loop over all the neighbors of the neighbor
-  }   // ... add_neighbors_neighbors_recursively(...)
+  } // ... add_neighbors_neighbors_recursively(...)
 
   // friends
   template <int, int>
@@ -874,24 +918,26 @@ template <class GridType>
 template <int c>
 struct Default<GridType>::Add<c, c>
 {
-  static void subEntities(Default<GridType>& factory, const typename Default<GridType>::EntityType& entity,
-                          typename Default<GridType>::GeometryMapType& geometryMap,
-                          typename Default<GridType>::CodimSizesType& localCodimSizes/*, const std::string prefix = "",
+  static void
+  subEntities(Default<GridType>& factory,
+              const typename Default<GridType>::EntityType& entity,
+              typename Default<GridType>::GeometryMapType& geometryMap,
+              typename Default<GridType>::CodimSizesType& localCodimSizes /*, const std::string prefix = "",
                           std::ostream& out                                                                     = Dune::Stuff::Common::Logger().devnull()*/)
   {
-//    // suppress output, since we are not codim 0
-//    Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
+    //    // suppress output, since we are not codim 0
+    //    Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
     // loop over all codim c subentities of this entity
     typedef typename Default<GridType>::EntityType::template Codim<c>::EntityPointer CodimCentityPtrType;
     for (int i = 0; i < entity.template count<c>(); ++i) {
-      const CodimCentityPtrType codimCentityPtr           = entity.template subEntity<c>(i);
+      const CodimCentityPtrType codimCentityPtr = entity.template subEntity<c>(i);
       const Default<GridType>::GeometryType& geometryType = codimCentityPtr->type();
       const typename Default<GridType>::IndexType globalIndex =
           factory.globalGridPart_->indexSet().index(*codimCentityPtr);
-      factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex/*, prefix, out*/);
+      factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex /*, prefix, out*/);
     } // loop over all codim c subentities of this entity
-  }   // static void subEntities()
-};    // struct Default< GridType >::Add< c, c >
+  } // static void subEntities()
+}; // struct Default< GridType >::Add< c, c >
 
 } // namespace Factory
 } // namespace Multiscale
