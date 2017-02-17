@@ -104,6 +104,36 @@ class GluedVTKWriter;
 template <class MacroGridImp, class LocalGridImp>
 class Glued
 {
+  template< class G, bool anything = true>
+  struct allowed_macro_grid
+  {
+    static const bool value = true;
+  };
+
+  template< class G, bool anything = true>
+  struct allowed_local_grid
+  {
+    static const bool value = true;
+  };
+
+#if HAVE_ALUGRID
+  template< class Comm, bool anything>
+  struct allowed_local_grid<ALUGrid<3, 3, simplex, conforming, Comm>, anything>
+  {
+    static const bool value = false;
+  };
+
+  template< class Comm, bool anything>
+  struct allowed_local_grid<ALUGrid<3, 3, cube, conforming, Comm>, anything>
+  {
+    static const bool value = false;
+  };
+#endif
+
+  static_assert(allowed_macro_grid<MacroGridImp>::value,
+                "This macro grid is known to fail, enable on your onw risk by disabling this check!");
+  static_assert(allowed_local_grid<LocalGridImp>::value,
+                "This local grid is known to fail, enable on your onw risk by disabling this check!");
 public:
   typedef MacroGridImp                                      MacroGridType;
   typedef Stuff::Grid::ProviderInterface<MacroGridType>     MacroGridProviderType;
@@ -371,13 +401,13 @@ public:
       if (brocken_intersections > 0)
         DUNE_THROW(Exceptions::intersection_orientation_is_broken,
                    "The coupling glue between the grid views of\n"
-                   << "  level " << local_level_macro_entity << " on macro entity   "
+                   << "     level " << local_level_macro_entity << " on macro entity   "
                    << macro_leaf_view_.indexSet().index(macro_entity) << " and\n"
-                   << "  level " << local_level_macro_neighbor << " on macro neighbor "
+                   << "     level " << local_level_macro_neighbor << " on macro neighbor "
                    << macro_leaf_view_.indexSet().index(macro_neighbor) << "\n"
-                   << "contains\n"
-                   << "  " << brocken_intersections << "/" << glue.size() << " intersections with wrong "
-                   << "orientation!");
+                   << "   contains\n"
+                   << "     " << brocken_intersections << "/" << glue.size()
+                   << " intersections with wrong orientation!");
     }
     return glue;
   } // ... coupling(...)
@@ -530,7 +560,8 @@ public:
             outside_inside_coupling_visualization[macro_neighbor_index] = std::vector<double>(local_neighbor_grid_view.indexSet().size(0), -1);
           // walk the coupling, where this is the inside
           size_t num_coupling_intersections = 0;
-          const auto& in_out_coupling_glue = coupling(macro_entity, local_level, macro_neighbor, local_neighbor_level);
+          const auto& in_out_coupling_glue = coupling(macro_entity, local_level, macro_neighbor, local_neighbor_level,
+                                                      /*allow_for_broken_orientation_of_coupling_intersections=*/true);
           const auto in_out_coupling_intersection_it_end = in_out_coupling_glue.template iend<0>();
           for (auto in_out_coupling_intersection_it = in_out_coupling_glue.template ibegin<0>();
                in_out_coupling_intersection_it != in_out_coupling_intersection_it_end;
@@ -548,7 +579,8 @@ public:
           }
           // walk the coupling, where this is the outside
           size_t out_in_num_coupling_intersections = 0;
-          const auto& out_in_coupling_glue = coupling(macro_neighbor, local_neighbor_level, macro_entity, local_level);
+          const auto& out_in_coupling_glue = coupling(macro_neighbor, local_neighbor_level, macro_entity, local_level,
+                                                      /*allow_for_broken_orientation_of_coupling_intersections=*/true);
           const auto out_in_coupling_intersection_it_end = out_in_coupling_glue.template iend<0>();
           for (auto out_in_coupling_intersection_it = out_in_coupling_glue.template ibegin<0>();
                out_in_coupling_intersection_it != out_in_coupling_intersection_it_end;
