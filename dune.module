@@ -6,6 +6,6 @@
 Module: dune-grid-multiscale
 Version: 0.1
 Maintainer: felix.schindler@wwu.de
-Depends: dune-common (>= 2.2) dune-grid (>= 2.2)
-Suggests: dune-alugrid dune-fem dune-grid-glue dune-stuff (>= 2.2.1) dune-xt-common
+Depends: dune-common (>= 2.4) dune-grid (>= 2.4) dune-xt-grid (>= 2.4)
+Suggests: dune-alugrid dune-fem dune-grid-glue
 
