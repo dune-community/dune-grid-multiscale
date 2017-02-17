@@ -9,6 +9,12 @@
 
 #include "glued.hh"
 
+namespace Dune {
+namespace grid {
+namespace Multiscale {
+namespace Test {
+
+
 template <bool anything>
 struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
                        YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
@@ -29,7 +35,7 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return "3d_yaspgrid_yaspgrid";
   }
 
-  static std::set<int> num_local_couplings_intersections()
+  static std::set<size_t> num_local_couplings_intersections()
   {
     // we expect 16 rectangles, each containing two triangles
     return {32};
@@ -78,7 +84,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>,
     return 0;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -88,7 +94,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>,
     return 2;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -97,13 +103,13 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>,
     return "3d_alucubeconforminggrid_yaspgrid";
   }
 
-  static std::set<int> num_local_couplings_intersections()
+  static std::set<size_t> num_local_couplings_intersections()
   {
 #if HAVE_ALUGRID
     return {32};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -154,7 +160,7 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return 0;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -164,7 +170,7 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return 2;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -173,13 +179,13 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return "3d_alucubenonconforminggrid_yaspgrid";
   }
 
-  static std::set<int> num_local_couplings_intersections()
+  static std::set<size_t> num_local_couplings_intersections()
   {
 #if HAVE_ALUGRID
     return {32};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -230,7 +236,7 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return 0;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -240,7 +246,7 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return 2;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -249,13 +255,13 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
     return "3d_alusimplexnonconforminggrid_yaspgrid";
   }
 
-  static std::set<int> num_local_couplings_intersections()
+  static std::set<size_t> num_local_couplings_intersections()
   {
 #if HAVE_ALUGRID
     return {32};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -304,7 +310,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
     return 0;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -314,7 +320,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
     return 2;
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -323,13 +329,13 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
     return "3d_alucubeconforminggrid_alusimplexnonconforminggrid";
   }
 
-  static std::set<int> num_local_couplings_intersections()
+  static std::set<size_t> num_local_couplings_intersections()
   {
 #if HAVE_ALUGRID
     return {32};
 #else
     DUNE_THROW(InvalidStateException, "Please update these for dune-alugrid!");
-    return -1;
+    return 0;
 #endif
   }
 
@@ -370,31 +376,98 @@ struct ExpectedResults<ALUGrid<3, 3, cube, conforming, Comm>, ALUGrid<3, 3, simp
 // anything>
 
 #endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
+#if HAVE_UG
+
+template <bool anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, UGGrid<3>, anything>
+{
+  static int num_coarse_refinements()
+  {
+    return 0;
+  }
+
+  static int num_local_refinements()
+  {
+    return 2;
+  }
+
+  static std::string id()
+  {
+    return "3d_yaspgrid_uggrid";
+  }
+
+  static std::set<size_t> num_local_couplings_intersections()
+  {
+    // we expect 16 rectangles, each containing two triangles
+    return {32};
+  }
+
+  static bool failure_for_lower_or_equal()
+  {
+    return true;
+  }
+
+  static bool failure_for_equal()
+  {
+    return true;
+  }
+
+  static bool failure_for_higher()
+  {
+    return true;
+  }
+
+  static std::map<std::pair<size_t, size_t>, size_t> results()
+  {
+    return {{{0, 0}, 216},
+            {{0, 1}, 864},
+            {{0, 2}, 3456},
+            {{1, 0}, 72},
+            {{1, 1}, 864},
+            {{1, 2}, 3456},
+            {{2, 0}, 72},
+            {{2, 1}, 36},
+            {{2, 2}, 3456}};
+  }
+}; // struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, UGGrid<3>, anything>
 
 
-typedef ::testing::
-    Types<std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
-                     YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
-#if HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-          //                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, cube,
-          //                      conforming>> // <- knwon to fail completely
-          ,
-          std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, cube, nonconforming>>
-          //                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3,
-          //                      simplex,
-          //                      conforming>> // <- knwon to fail completely
-          ,
-          std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, ALUGrid<3, 3, simplex, nonconforming>>,
-          std::tuple<ALUGrid<3, 3, cube, conforming>, YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
-          //                      , std::tuple<ALUGrid<3, 3, simplex, conforming>, ALUGrid<3, 3, simplex,
-          //                      nonconforming>> // <- knwon to fail completely
-          //                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>, ALUGrid<3, 3,
-          //                      simplex, nonconforming>> // <- knwon to fail completely
-          ,
-          std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
-#endif // HAVE_DUNE_ALUGRID || HAVE_ALUGRID
-          >
-        GridTypes;
+#endif // HAVE_UG
+
+} // namespace Test
+} // namespace Multiscale
+} // namespace grid
+} // namespace Dune
+
+
+using namespace Dune;
+using namespace Dune::grid::Multiscale::Test;
+
+
+// clang-format off
+typedef ::testing::Types< std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                                     YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
+#if HAVE_ALUGRID
+//                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+//                                   ALUGrid<3, 3, cube, conforming>> //                     <- knwon to fail completely
+                        , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                                     ALUGrid<3, 3, cube, nonconforming>>
+//                      , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+//                                   ALUGrid<3, 3, simplex, conforming>> //                  <- knwon to fail completely
+                        , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>,
+                                     ALUGrid<3, 3, simplex, nonconforming>>
+                        , std::tuple<ALUGrid<3, 3, cube, conforming>,
+                                     YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>>
+//                      , std::tuple<ALUGrid<3, 3, simplex, conforming>,
+//                                   ALUGrid<3, 3, simplex, nonconforming>>               // <- knwon to fail completely
+//                      , std::tuple<ALUGrid<3, 3, simplex, nonconforming>,
+//                                   ALUGrid<3, 3, simplex, nonconforming>>               // <- knwon to fail completely
+                        , std::tuple<ALUGrid<3, 3, cube, conforming>, ALUGrid<3, 3, simplex, nonconforming>>
+#endif // HAVE_ALUGRID
+#if HAVE_UG
+                        , std::tuple<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, UGGrid<3>>
+#endif
+                        > GridTypes; // clang-format on
 
 TYPED_TEST_CASE(GluedMultiscaleGridTest, GridTypes);
 TYPED_TEST(GluedMultiscaleGridTest, setup_works)

@@ -1,15 +1,19 @@
 #ifndef DUNE_GRID_MULTISCALE_TEST_GLUED_HH
 #define DUNE_GRID_MULTISCALE_TEST_GLUED_HH
 
-// alugrid
+#include <map>
+#include <set>
+#include <sstream>
+#include <vector>
+
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/common/rangegenerators.hh>
+
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #elif HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
 #endif
-
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/xt/common/memory.hh>
 #include <dune/xt/common/test/gtest/gtest.h>
@@ -19,8 +23,9 @@
 
 
 template <class T>
-std::ostream& operator<<(std::ostream& out, const std::set<T>& results)
+std::string convert_to_initializer_list_str(const std::set<T>& results)
 {
+  std::stringstream out;
   if (results.size() == 0)
     out << "{}";
   else if (results.size() == 1)
@@ -34,37 +39,42 @@ std::ostream& operator<<(std::ostream& out, const std::set<T>& results)
     }
     out << "}";
   }
-  return out;
+  return out.str();
 }
 
 template <class L, class R>
-std::ostream& operator<<(std::ostream& out, const std::pair<L, R>& results)
+std::string convert_to_initializer_list_str(const std::pair<L, R>& results)
 {
+  std::stringstream out;
   out << "{" << results.first << ", " << results.second << "}";
-  return out;
+  return out.str();
 }
 
 template <class F, class S>
-std::ostream& operator<<(std::ostream& out, const std::map<F, S>& results)
+std::string convert_to_initializer_list_str(const std::map<F, S>& results)
 {
+  std::stringstream out;
   if (results.size() == 0)
     out << "{}" << std::endl;
   else if (results.size() == 1)
-    out << "{{" << results.begin()->first << ", " << results.begin()->second << "}}";
+    out << "{{" << convert_to_initializer_list_str(results.begin()->first) << ", " << results.begin()->second << "}}";
   else {
     auto iterator = results.begin();
-    out << "{{" << iterator->first << ", " << iterator->second << "}";
+    out << "{{" << convert_to_initializer_list_str(iterator->first) << ", " << iterator->second << "}";
     ++iterator;
     for (; iterator != results.end(); ++iterator) {
-      out << ",\n {" << iterator->first << ", " << iterator->second << "}";
+      out << ",\n {" << convert_to_initializer_list_str(iterator->first) << ", " << iterator->second << "}";
     }
     out << "}";
   }
-  return out;
+  return out.str();
 }
 
 
-using namespace Dune;
+namespace Dune {
+namespace grid {
+namespace Multiscale {
+namespace Test {
 
 
 template <class M, class L, bool aything = true>
@@ -111,8 +121,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
       const auto entity_index = macro_grid_view.indexSet().index(macro_entity);
       for (auto&& macro_intersection : Dune::intersections(macro_grid_view, macro_entity)) {
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
-          const auto macro_neighbor_ptr = macro_intersection.outside();
-          const auto& macro_neighbor = *macro_neighbor_ptr;
+          const auto macro_neighbor = macro_intersection.outside();
           const auto neighbor_index = macro_grid_view.indexSet().index(macro_neighbor);
           const auto& coupling =
               multiscale_grid_->coupling(macro_entity,
@@ -123,7 +132,8 @@ struct GluedMultiscaleGridTest : public ::testing::Test
           EXPECT_EQ(Expectations::num_local_couplings_intersections().count(coupling.size()), 1)
               << "entity: " << entity_index << "\n"
               << "neighbor: " << neighbor_index << "\n"
-              << "expected num_local_couplings_intersections: " << Expectations::num_local_couplings_intersections()
+              << "expected num_local_couplings_intersections: "
+              << convert_to_initializer_list_str(Expectations::num_local_couplings_intersections())
               << "\nactual num_local_couplings_intersections: " << coupling.size();
         }
       }
@@ -151,7 +161,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
 
     if (failure)
       std::cout << "The actual numbers of broken intersections are\n"
-                << count_wrong_intersections_on_all_levels() << std::endl;
+                << convert_to_initializer_list_str(count_wrong_intersections_on_all_levels()) << std::endl;
   } // ... check_intersection_orientation_for_equal_levels(...)
 
   void check_intersection_orientation_for_higher_neighbor_levels(
@@ -169,7 +179,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
 
     if (failure)
       std::cout << "The actual numbers of broken intersections are\n"
-                << count_wrong_intersections_on_all_levels() << std::endl;
+                << convert_to_initializer_list_str(count_wrong_intersections_on_all_levels()) << std::endl;
   } // ... check_intersection_orientation_for_higher_neighbor_levels(...)
 
   void check_intersection_orientation_for_lower_or_equal_neighbor_levels(
@@ -186,7 +196,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
 
     if (failure)
       std::cout << "The actual numbers of broken intersections are\n"
-                << count_wrong_intersections_on_all_levels() << std::endl;
+                << convert_to_initializer_list_str(count_wrong_intersections_on_all_levels()) << std::endl;
   } // ... check_intersection_orientation_for_lower_or_equal_neighbor_levels(...)
 
   size_t
@@ -199,8 +209,8 @@ struct GluedMultiscaleGridTest : public ::testing::Test
       const auto search_for_levels_in_expected_results =
           expected_results.find(std::make_pair(entity_level, neighbor_level));
       EXPECT_NE(search_for_levels_in_expected_results, expected_results.end())
-          << "missing expected results for entity and neighbor level " << std::make_pair(entity_level, neighbor_level)
-          << ".\n"
+          << "missing expected results for entity and neighbor level "
+          << convert_to_initializer_list_str(std::make_pair(entity_level, neighbor_level)) << ".\n"
           << "-> PLEASE ADD A RECORD TO\n"
           << "   ExpectedResults<" << XT::Common::Typename<MacroGridType>::value() << ", "
           << XT::Common::Typename<LocalGridType>::value() << ">!";
@@ -208,7 +218,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
         DUNE_THROW(InvalidStateException,
                    "Cannot use ASSERT_EQ above, so we need to exit this way.\n\n"
                        << "The actual numbers of broken intersections are\n"
-                       << count_wrong_intersections_on_all_levels());
+                       << convert_to_initializer_list_str(count_wrong_intersections_on_all_levels()));
       }
       const auto expected_num_wrongly_oriented_intersections = search_for_levels_in_expected_results->second;
       if (expected_num_wrongly_oriented_intersections != actual_num_wrongly_oriented_intersections)
@@ -256,8 +266,7 @@ struct GluedMultiscaleGridTest : public ::testing::Test
     for (auto&& macro_entity : Dune::elements(macro_grid_view)) {
       for (auto&& macro_intersection : Dune::intersections(macro_grid_view, macro_entity)) {
         if (macro_intersection.neighbor() && !macro_intersection.boundary()) {
-          const auto macro_neighbor_ptr = macro_intersection.outside();
-          const auto& macro_neighbor = *macro_neighbor_ptr;
+          const auto macro_neighbor = macro_intersection.outside();
           //          const auto local_grid_view = multiscale_grid_->local_grid(macro_entity).level_view(entity_level);
           const auto& coupling_glue =
               multiscale_grid_->coupling(macro_entity,
@@ -276,5 +285,10 @@ struct GluedMultiscaleGridTest : public ::testing::Test
   std::unique_ptr<grid::Multiscale::Glued<MacroGridType, LocalGridType>> multiscale_grid_;
 }; // struct GluedMultiscaleGridTest
 
+
+} // namespace Test
+} // namespace Multiscale
+} // namespace grid
+} // namespace Dune
 
 #endif // DUNE_GRID_MULTISCALE_TEST_GLUED_HH
