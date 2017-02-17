@@ -266,47 +266,6 @@ struct GluedMultiscaleGridTest : public ::testing::Test
                                          neighbor_level,
                                          /*allow_for_broken_orientation_of_coupling_intersections=*/true);
           failures += Dune::grid::Multiscale::check_for_broken_coupling_intersections(coupling_glue);
-          //          // walk the coupling
-          //          const auto coupling_intersection_it_end = coupling_glue.template iend<0>();
-          //          for (auto coupling_intersection_it = coupling_glue.template ibegin<0>();
-          //               coupling_intersection_it != coupling_intersection_it_end;
-          //               ++coupling_intersection_it) {
-          //            const auto& coupling_intersection = *coupling_intersection_it;
-          //            const auto coupling_intersection_normal = coupling_intersection.centerUnitOuterNormal();
-          //            const auto local_entity_ptr = coupling_intersection.inside();
-          //            const auto& local_entity = *local_entity_ptr;
-          //            typename std::remove_const<decltype(coupling_intersection_normal)>::type
-          //            local_intersection_normal(0.);
-          //            // find the intersection of the local inside entity that corresponds to the coupling
-          //            intersection
-          //            size_t found = 0;
-          //            for (auto&& local_intersection : Dune::intersections(local_grid_view, local_entity)) {
-          //              // the coupling intersection may be smaller than the local intersection
-          //              int corners_inside = 0;
-          //              for (auto ii : XT::Common::valueRange(coupling_intersection.geometry().corners()))
-          //                if (DSG::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
-          //                  ++corners_inside;
-          //              if (corners_inside == coupling_intersection.geometry().corners()) {
-          //                // this is the one
-          //                ++found;
-          //                local_intersection_normal = local_intersection.centerUnitOuterNormal();
-          //              }
-          //            }
-          //            EXPECT_EQ(1, found) << "This should not happen!\n"
-          //                                << "  macro_entity:   " << macro_grid_view.indexSet().index(macro_entity) <<
-          //                                "\n"
-          //                                << "  macro_neighbor: " << macro_grid_view.indexSet().index(macro_neighbor)
-          //                                << "\n"
-          //                                << "  entity_level:   " << entity_level << "\n"
-          //                                << "  neighbor_level: " << neighbor_level << "\n"
-          //                                << "  coupling_intersection: " <<
-          //                                coupling_glue.indexSet().index(coupling_intersection);
-          //            // now the expected normal is local_intersection_normal
-          //            // and we would like coupling_intersection_normal to point in the same direction
-          //            // since they have unit length, they should be identical
-          //            if ((local_intersection_normal - coupling_intersection_normal).infinity_norm() > 1e-15)
-          //              ++failures;
-          //          }
         }
       }
     }
