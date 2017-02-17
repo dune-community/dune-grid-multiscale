@@ -41,6 +41,59 @@
 namespace Dune {
 namespace grid {
 namespace Multiscale {
+namespace Exceptions {
+
+
+class intersection_orientation_is_broken : public Dune::InvalidStateException {};
+
+
+} // namespace Exceptions
+
+
+template<typename P0, typename P1>
+size_t check_for_broken_coupling_intersections(const GridGlue::GridGlue<P0, P1>& glue,
+                                               const typename P0::ctype& tolerance = 10*Stuff::Common::FloatCmp::DefaultEpsilon<typename P0::ctype>::value())
+{
+  const auto inside_grid_view = glue.template gridView<0>();
+  size_t failures = 0;
+  // walk the coupling
+  const auto coupling_intersection_it_end = glue.template iend<0>();
+  for (auto coupling_intersection_it = glue.template ibegin<0>();
+       coupling_intersection_it != coupling_intersection_it_end;
+       ++coupling_intersection_it) {
+    const auto& coupling_intersection = *coupling_intersection_it;
+    const auto coupling_intersection_normal = coupling_intersection.centerUnitOuterNormal();
+    const auto local_entity_ptr = coupling_intersection.inside();
+    const auto& local_entity = *local_entity_ptr;
+    typename std::remove_const<decltype(coupling_intersection_normal)>::type local_intersection_normal(0.);
+    // find the intersection of the local inside entity that corresponds to the coupling intersection
+    size_t found = 0;
+    for (auto&& local_intersection : intersection_range(inside_grid_view, local_entity)) {
+      // the coupling intersection may be smaller than the local intersection, so check if all of the corners of the
+      // coupling intersection lie within this local intersection
+      int corners_inside = 0;
+      for (auto ii : DSC::valueRange(coupling_intersection.geometry().corners()))
+        if (DSG::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
+          ++corners_inside;
+      if (corners_inside == coupling_intersection.geometry().corners()) {
+        // this is the one
+        ++found;
+        local_intersection_normal = local_intersection.centerUnitOuterNormal();
+      }
+    }
+    if (found != 1)
+      DUNE_THROW(InvalidStateException,
+                 "This should not happen!\n"
+                 << "There were " << found << " local intersections which contain the coupling intersection, "
+                 << "and there must not be more than one!");
+    // now the expected normal is local_intersection_normal
+    // and we would like coupling_intersection_normal to point in the same direction
+    // since they have unit length, they should be identical
+    if ((local_intersection_normal - coupling_intersection_normal).infinity_norm() > tolerance)
+      ++failures;
+  }
+  return failures;
+} // ... check_for_broken_coupling_intersections(...)
 
 
 // forward
@@ -112,8 +165,10 @@ private:
   }
 
 public:
-  Glued(MacroGridProviderType& macro_grid_provider, const size_t num_local_refinements = 0,
-        const bool prepare_glues     = false,
+  Glued(MacroGridProviderType& macro_grid_provider,
+        const size_t num_local_refinements = 0,
+        const bool prepare_glues = false,
+        const bool allow_for_broken_orientation_of_coupling_intersections = false,
         const ctype& allowed_overlap = 10 * Stuff::Common::FloatCmp::DefaultEpsilon<ctype>::value())
     : macro_grid_(macro_grid_provider)
     , allowed_overlap_(allowed_overlap)
@@ -128,7 +183,7 @@ public:
         local_grid_provider->grid().globalRefine(boost::numeric_cast<int>(num_local_refinements));
       }
     if (prepare_glues)
-      setup_glues();
+      setup_glues(allow_for_broken_orientation_of_coupling_intersections);
   } // Glued(...)
 
   const MacroGridViewType& macro_grid_view() const { return macro_leaf_view_; }
@@ -271,7 +326,8 @@ public:
    *        std::map::operator[].
    */
   const GlueType& coupling(const MacroEntityType& macro_entity, const int local_level_macro_entity,
-                           const MacroEntityType& macro_neighbor, const int local_level_macro_neighbor)
+                           const MacroEntityType& macro_neighbor, const int local_level_macro_neighbor,
+                           const bool allow_for_broken_orientation_of_coupling_intersections = false)
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
     assert(macro_index_set.contains(macro_entity));
@@ -308,12 +364,31 @@ public:
         }
       } // ... find the corresponding macro intersection
     }
-    return *(glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor]);
+
+    const auto& glue = *(glues_[entity_index][neighbor_index][local_level_macro_entity][local_level_macro_neighbor]);
+    if (!allow_for_broken_orientation_of_coupling_intersections) {
+      const size_t brocken_intersections = check_for_broken_coupling_intersections(glue);
+      if (brocken_intersections > 0)
+        DUNE_THROW(Exceptions::intersection_orientation_is_broken,
+                   "The coupling glue between the grid views of\n"
+                   << "  level " << local_level_macro_entity << " on macro entity   "
+                   << macro_leaf_view_.indexSet().index(macro_entity) << " and\n"
+                   << "  level " << local_level_macro_neighbor << " on macro neighbor "
+                   << macro_leaf_view_.indexSet().index(macro_neighbor) << "\n"
+                   << "contains\n"
+                   << "  " << brocken_intersections << "/" << glue.size() << " intersections with wrong "
+                   << "orientation!");
+    }
+    return glue;
   } // ... coupling(...)
 
-  const GlueType& coupling(const MacroEntityType& macro_entity, const MacroEntityType& macro_neighbor)
+  const GlueType& coupling(const MacroEntityType& macro_entity,
+                           const MacroEntityType& macro_neighbor,
+                           const bool allow_for_broken_orientation_of_coupling_intersections = false)
   {
-    return coupling(macro_entity, max_local_level(macro_entity), macro_neighbor, max_local_level(macro_neighbor));
+    return coupling(macro_entity, max_local_level(macro_entity),
+                    macro_neighbor, max_local_level(macro_neighbor),
+                    allow_for_broken_orientation_of_coupling_intersections);
   }
 
   int max_local_level(const MacroEntityType& macro_entity) const
@@ -625,7 +700,7 @@ private:
     return glue;
   } // ... create_glue(...)
 
-  void setup_glues()
+  void setup_glues(const bool allow_for_broken_orientation_of_coupling_intersections = false)
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
     for (auto&& macro_entity :
@@ -652,9 +727,25 @@ private:
 #endif
           const auto macro_neighbor_index = macro_index_set.index(macro_neighbor);
           for (auto local_entity_level : DSC::valueRange(local_grids_[macro_entity_index]->grid().maxLevel() + 1))
-            for (auto local_neighbor_level : DSC::valueRange(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1))
-              entity_glues[macro_neighbor_index][local_entity_level][local_neighbor_level] = create_glue(
-                  macro_entity, macro_neighbor, macro_intersection, local_entity_level, local_neighbor_level);
+            for (auto local_neighbor_level : DSC::valueRange(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1)) {
+              auto glue = create_glue(macro_entity, macro_neighbor,
+                                      macro_intersection,
+                                      local_entity_level, local_neighbor_level);
+              if (!allow_for_broken_orientation_of_coupling_intersections) {
+                const size_t brocken_intersections = check_for_broken_coupling_intersections(*glue);
+                if (brocken_intersections > 0)
+                  DUNE_THROW(Exceptions::intersection_orientation_is_broken,
+                             "The coupling glue between the grid views of\n"
+                             << "  level " << local_entity_level << " on macro entity   "
+                             << macro_leaf_view_.indexSet().index(macro_entity) << " and\n"
+                             << "  level " << local_neighbor_level << " on macro neighbor "
+                             << macro_leaf_view_.indexSet().index(macro_neighbor) << "\n"
+                             << "contains\n"
+                             << "  " << brocken_intersections << "/" << glue->size() << " intersections with wrong"
+                             << "orientation!");
+              }
+              entity_glues[macro_neighbor_index][local_entity_level][local_neighbor_level] = glue;
+            }
         }
       } // ... walk the neighbors
     }
