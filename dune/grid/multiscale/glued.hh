@@ -57,8 +57,7 @@ size_t check_for_broken_coupling_intersections(
        ++coupling_intersection_it) {
     const auto& coupling_intersection = *coupling_intersection_it;
     const auto coupling_intersection_normal = coupling_intersection.centerUnitOuterNormal();
-    const auto local_entity_ptr = coupling_intersection.inside();
-    const auto& local_entity = *local_entity_ptr;
+    const auto local_entity = coupling_intersection.inside();
     typename std::remove_const<decltype(coupling_intersection_normal)>::type local_intersection_normal(0.);
     // find the intersection of the local inside entity that corresponds to the coupling intersection
     size_t found = 0;
@@ -597,12 +596,10 @@ public:
                ++in_out_coupling_intersection_it) {
             ++num_coupling_intersections;
             const auto& coupling_intersection = *in_out_coupling_intersection_it;
-            const auto local_entity_ptr = coupling_intersection.inside();
-            const auto& local_entity = *local_entity_ptr;
+            const auto local_entity = coupling_intersection.inside();
             const size_t local_entity_index = local_grid_view.indexSet().index(local_entity);
             inside_outside_coupling_visualization[macro_entity_index][local_entity_index] = macro_entity_index;
-            const auto local_neighbor_ptr = coupling_intersection.outside();
-            const auto& local_neighbor = *local_neighbor_ptr;
+            const auto local_neighbor = coupling_intersection.outside();
             const size_t local_neighbor_index = local_neighbor_grid_view.indexSet().index(local_neighbor);
             inside_outside_coupling_visualization[macro_neighbor_index][local_neighbor_index] = macro_neighbor_index;
           }
@@ -619,12 +616,10 @@ public:
                ++out_in_coupling_intersection_it) {
             ++out_in_num_coupling_intersections;
             const auto& coupling_intersection = *out_in_coupling_intersection_it;
-            const auto local_entity_ptr = coupling_intersection.inside();
-            const auto& local_entity = *local_entity_ptr;
+            const auto local_entity = coupling_intersection.inside();
             const size_t local_entity_index = local_grid_view.indexSet().index(local_entity);
             outside_inside_coupling_visualization[macro_neighbor_index][local_entity_index] = macro_neighbor_index;
-            const auto local_neighbor_ptr = coupling_intersection.outside();
-            const auto& local_neighbor = *local_neighbor_ptr;
+            const auto local_neighbor = coupling_intersection.outside();
             const size_t local_neighbor_index = local_neighbor_grid_view.indexSet().index(local_neighbor);
             outside_inside_coupling_visualization[macro_entity_index][local_neighbor_index] = macro_entity_index;
           }
@@ -879,19 +874,19 @@ private:
     // build maps of indices, relating the local to the global grid
     const auto global_view = global_grid_->leaf_view();
     local_to_global_indices_ = std::make_unique<std::vector<std::vector<size_t>>>(macro_leaf_view_.indexSet().size(0));
-    auto& local_to_global_indices = *local_to_global_indices_;
+    auto& local_to_global_inds = *local_to_global_indices_;
     global_to_local_indices_ = std::make_unique<std::vector<std::pair<size_t, size_t>>>(global_view.indexSet().size(0));
-    auto& global_to_local_indices = *global_to_local_indices_;
+    auto& global_to_local_inds = *global_to_local_indices_;
     // therefore
     // * create a search on the global view: if all is fine, we only need to walk that one once
     std::vector<FieldVector<ctype, dimDomain>> local_entity_center{FieldVector<ctype, dimDomain>(0.0)};
     auto global_search = XT::Grid::make_entity_in_level_search(global_view);
     // * walk the macro grid
     for (auto&& macro_entity : elements(macro_leaf_view_)) {
-      const size_t subdomain = macro_leaf_view_.indexSet().index(macro_entity);
+      const size_t subd = macro_leaf_view_.indexSet().index(macro_entity);
       const auto local_leaf_view = local_grid(macro_entity).leaf_view();
       const auto& local_index_set = local_leaf_view.indexSet();
-      local_to_global_indices[subdomain] = std::vector<size_t>(local_index_set.size(0));
+      local_to_global_inds[subd] = std::vector<size_t>(local_index_set.size(0));
       // * walk the local grid
       for (auto&& local_entity : elements(local_leaf_view)) {
         const size_t local_entity_index = local_index_set.index(local_entity);
@@ -906,8 +901,8 @@ private:
         const auto& global_entity = *global_entity_ptr;
         const size_t global_entity_index = global_view.indexSet().index(global_entity);
         // store information
-        local_to_global_indices[subdomain][local_entity_index] = global_entity_index;
-        global_to_local_indices[global_entity_index] = {subdomain, local_entity_index};
+        local_to_global_inds[subd][local_entity_index] = global_entity_index;
+        global_to_local_inds[global_entity_index] = {subd, local_entity_index};
       } // * walk the local grid
     } // * walk the macro grid
   } // ... prepare_global_grid(...)
