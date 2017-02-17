@@ -1,2 +1,1 @@
-include(FindTBB)
-find_package(TBB)
+# we have no special requirements

@@ -1,62 +1,42 @@
-# This file is part of the dune-grid-multiscale project:
-#   http://users.dune-project.org/projects/dune-grid-multiscale
-# Copyright holders: Felix Schindler
-# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
 # set up project
-project("dune-grid-multiscale" C CXX)
+project("dune-grid-multiscale" CXX)
 
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 3.1)
 
-# local environment
-set( ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/bin:$ENV{PATH}" )
-set( ENV{LD_LIBRARY_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib:$ENV{LD_LIBRARY_PATH}" )
-set( ENV{PKG_CONFIG_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}" )
+if(NOT (dune-common_DIR OR dune-common_ROOT OR
+      "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))
+    string(REPLACE  ${CMAKE_PROJECT_NAME} dune-common dune-common_DIR
+      ${PROJECT_BINARY_DIR})
+endif()
 
-# find dune-common and set the module path
-find_package(dune-common)
+# dune-common
+find_package(dune-common REQUIRED)
 list(APPEND CMAKE_MODULE_PATH
-     ${dune-common_MODULE_PATH}
-     "${CMAKE_SOURCE_DIR}/../dune-stuff/cmake/modules"
-     "${CMAKE_SOURCE_DIR}/cmake/modules")
-
-#include the dune macros
+     "${PROJECT_SOURCE_DIR}/cmake/modules"
+     "${dune-common_MODULE_PATH}")
 include(DuneMacros)
-include(AddALUGridCompileFlags)
+
+find_package(dune-xt-common REQUIRED)
+list(APPEND CMAKE_MODULE_PATH
+     "${dune-xt-common_MODULE_PATH}")
+include(DuneUtils)
 
 # start a dune project with information from dune.module
 dune_project()
-include(DuneUtils)
+dune_enable_all_packages(INCLUDE_DIRS ${dune-grid-multiscale_SOURCE_DIR}/dune
+                         VERBOSE)
 
-file( GLOB_RECURSE gridmultiscaleheader "${CMAKE_CURRENT_SOURCE_DIR}/*.hh" )
-file( GLOB_RECURSE gridmultiscalesources "${CMAKE_CURRENT_SOURCE_DIR}/*.cc" )
-set( COMMON_HEADER ${gridmultiscaleheader} ${DUNE_HEADERS} )
-# add header of dependent modules for header listing
-foreach(_mod ${ALL_DEPENDENCIES})
-file(GLOB_RECURSE HEADER_LIST "${CMAKE_CURRENT_SOURCE_DIR}/../${_mod}/*.hh")
-list(APPEND COMMON_HEADER ${HEADER_LIST})
-endforeach(_mod DEPENDENCIES)
-set_source_files_properties( ${COMMON_HEADER} PROPERTIES HEADER_FILE_ONLY 1 )
 
-#disable most warnings from dependent modules
-foreach(_mod ${ALL_DEPENDENCIES})
-dune_module_to_uppercase(_upper_case "${_mod}")
-if(${_mod}_INCLUDE_DIRS)
-    foreach( _idir ${${_mod}_INCLUDE_DIRS} )
-    add_definitions("-isystem ${_idir}")
-    endforeach( _idir )
-endif(${_mod}_INCLUDE_DIRS)
-endforeach(_mod DEPENDENCIES)
+add_header_listing()
+make_dependent_modules_sys_included()
 
-set( COMMON_LIBS
-    ${DUNE_DEFAULT_LIBS}
-    ${GRIDLIBS}
-    ${FASPLIB}
-)
+add_subdirectory(dune)
+add_subdirectory(cmake/modules)
 
-add_subdirectory(test EXCLUDE_FROM_ALL)
-
-add_format(${gridmultiscaleheader} ${gridmultiscalesources})
+# enable headercheck
+add_definitions("-DENABLE_HEADERCHECK=1")
+add_format(${CMAKE_CURRENT_SOURCE_DIR})
+add_tidy(${CMAKE_CURRENT_SOURCE_DIR})
 
 # finalize the dune project, e.g., generate config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
