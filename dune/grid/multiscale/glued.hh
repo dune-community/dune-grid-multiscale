@@ -6,37 +6,28 @@
 #ifndef DUNE_GRID_MULTISCALE_GLUED_HH
 #define DUNE_GRID_MULTISCALE_GLUED_HH
 
+#include <array>
 #include <algorithm>
 #include <memory>
 #include <map>
 
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <dune/common/version.hh>
-
-#include <dune/grid/common/gridfactory.hh>
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
 #include <dune/grid/common/rangegenerators.hh>
-#else
-#include <dune/stuff/common/ranges.hh>
-#endif
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/grid-glue/extractors/codim1extractor.hh>
 #include <dune/grid-glue/extractors/extractorpredicate.hh>
 #include <dune/grid-glue/gridglue.hh>
 #include <dune/grid-glue/merging/contactmerge.hh>
 
-#include <dune/stuff/common/exceptions.hh>
-#include <dune/stuff/common/float_cmp.hh>
-#include <dune/stuff/common/memory.hh>
-#include <dune/stuff/common/timedlogging.hh>
-#include <dune/stuff/common/ranges.hh>
-#include <dune/stuff/common/vector.hh>
-#include <dune/stuff/grid/intersection.hh>
-#include <dune/stuff/grid/provider/cube.hh>
-#include <dune/stuff/grid/provider/interface.hh>
-#include <dune/stuff/grid/search.hh>
+#include <dune/xt/common/exceptions.hh>
+#include <dune/xt/common/float_cmp.hh>
+#include <dune/xt/common/ranges.hh>
+#include <dune/xt/common/timedlogging.hh>
+#include <dune/xt/grid/intersection.hh>
+#include <dune/xt/grid/gridprovider/provider.hh>
+#include <dune/xt/grid/gridprovider/cube.hh>
+#include <dune/xt/grid/search.hh>
 
 namespace Dune {
 namespace grid {
@@ -55,7 +46,7 @@ class intersection_orientation_is_broken : public Dune::InvalidStateException
 template <typename P0, typename P1>
 size_t check_for_broken_coupling_intersections(
     const GridGlue::GridGlue<P0, P1>& glue,
-    const typename P0::ctype& tolerance = 10 * Stuff::Common::FloatCmp::DefaultEpsilon<typename P0::ctype>::value())
+    const typename P0::ctype& tolerance = 10 * XT::Common::FloatCmp::DefaultEpsilon<typename P0::ctype>::value())
 {
   const auto inside_grid_view = glue.template gridView<0>();
   size_t failures = 0;
@@ -71,12 +62,12 @@ size_t check_for_broken_coupling_intersections(
     typename std::remove_const<decltype(coupling_intersection_normal)>::type local_intersection_normal(0.);
     // find the intersection of the local inside entity that corresponds to the coupling intersection
     size_t found = 0;
-    for (auto&& local_intersection : intersection_range(inside_grid_view, local_entity)) {
+    for (auto&& local_intersection : intersections(inside_grid_view, local_entity)) {
       // the coupling intersection may be smaller than the local intersection, so check if all of the corners of the
       // coupling intersection lie within this local intersection
       int corners_inside = 0;
-      for (auto ii : DSC::valueRange(coupling_intersection.geometry().corners()))
-        if (DSG::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
+      for (auto ii : XT::Common::value_range(coupling_intersection.geometry().corners()))
+        if (XT::Grid::contains(local_intersection, coupling_intersection.geometry().corner(ii)))
           ++corners_inside;
       if (corners_inside == coupling_intersection.geometry().corners()) {
         // this is the one
@@ -142,12 +133,12 @@ class Glued
 
 public:
   typedef MacroGridImp MacroGridType;
-  typedef Stuff::Grid::ProviderInterface<MacroGridType> MacroGridProviderType;
+  typedef XT::Grid::GridProvider<MacroGridType> MacroGridProviderType;
   typedef typename MacroGridProviderType::LeafGridViewType MacroGridViewType;
   typedef typename MacroGridType::template Codim<0>::Entity MacroEntityType;
 
   typedef LocalGridImp LocalGridType;
-  typedef Stuff::Grid::ProviderInterface<LocalGridType> LocalGridProviderType;
+  typedef XT::Grid::GridProvider<LocalGridType> LocalGridProviderType;
 
 #if HAVE_DUNE_FEM
   typedef typename LocalGridProviderType::LevelGridPartType MicroGridPartType;
@@ -187,8 +178,8 @@ private:
 #endif
       const auto& local_intersection_geometry = local_intersection.geometry();
       // Check if all corners of the local intersection lie within the macro intersection.
-      for (auto ii : DSC::valueRange(local_intersection_geometry.corners()))
-        if (!DSG::contains(macro_intersection_, local_intersection_geometry.corner(ii)))
+      for (auto ii : XT::Common::value_range(local_intersection_geometry.corners()))
+        if (!XT::Grid::contains(macro_intersection_, local_intersection_geometry.corner(ii)))
           return false;
       return true;
     } // ... contains(...)
@@ -208,7 +199,7 @@ public:
         const size_t num_local_refinements = 0,
         const bool prepare_glues = false,
         const bool allow_for_broken_orientation_of_coupling_intersections = false,
-        const ctype& allowed_overlap = 10 * Stuff::Common::FloatCmp::DefaultEpsilon<ctype>::value())
+        const ctype& allowed_overlap = 10 * XT::Common::FloatCmp::DefaultEpsilon<ctype>::value())
     : macro_grid_(macro_grid_provider)
     , allowed_overlap_(allowed_overlap)
     , macro_leaf_view_(macro_grid_.leaf_view())
@@ -249,7 +240,7 @@ public:
 
   MicroGridViewType global_grid_view()
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_grid_view");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.global_grid_view");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     return global_grid_->level_view(global_grid_->grid().maxLevel());
@@ -258,7 +249,7 @@ public:
 #if HAVE_DUNE_FEM
   MicroGridPartType global_grid_part()
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_grid_part");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.global_grid_part");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     return MicroGridPartType(global_grid_->grid(), global_grid_->grid().maxLevel());
@@ -267,24 +258,24 @@ public:
 
   const std::vector<std::vector<size_t>>& local_to_global_indices()
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.local_to_global_indices");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.local_to_global_indices");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     return *local_to_global_indices_;
   }
 
-  MicroEntityPointerType local_to_global_entity(const size_t subdomain, const MicroEntityType& local_entity)
+  MicroEntityPointerType local_to_global_entity(const size_t subd, const MicroEntityType& local_entity)
   {
-    return local_to_global_entity(
-        subdomain, local_grids_[subdomain]->level_view(max_local_level(subdomain)).indexSet().index(local_entity));
+    return local_to_global_entity(subd,
+                                  local_grids_[subd]->level_view(max_local_level(subd)).indexSet().index(local_entity));
   }
 
-  MicroEntityPointerType local_to_global_entity(const size_t subdomain, const size_t local_entity_index)
+  MicroEntityPointerType local_to_global_entity(const size_t subd, const size_t local_entity_index)
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.local_to_global_entity");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.local_to_global_entity");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
-    const size_t global_index_of_local_entity = local_to_global_indices_->operator[](subdomain)[local_entity_index];
+    const size_t global_index_of_local_entity = local_to_global_indices_->operator[](subd)[local_entity_index];
     const auto global_micro_grid_view = global_grid_view();
     const auto entity_it_end = global_micro_grid_view.template end<0>();
     for (auto entity_it = global_micro_grid_view.template begin<0>(); entity_it != entity_it_end; ++entity_it) {
@@ -292,8 +283,8 @@ public:
       if (global_micro_grid_view.indexSet().index(entity) == global_index_of_local_entity)
         return entity_it;
     }
-    DUNE_THROW(Stuff::Exceptions::wrong_input_given,
-               "subdomain: " << subdomain << "\n"
+    DUNE_THROW(XT::Common::Exceptions::wrong_input_given,
+               "subdomain: " << subd << "\n"
                              << "local_entity_index: "
                              << local_entity_index
                              << "\n"
@@ -310,23 +301,23 @@ public:
 
   MicroEntityPointerType global_to_local_entity(const size_t micro_entity_index)
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_to_local_entity");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.global_to_local_entity");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     auto subdomain_and_local_entity_index = global_to_local_indices_->operator[](micro_entity_index);
-    const auto subdomain = subdomain_and_local_entity_index.first;
+    const auto subd = subdomain_and_local_entity_index.first;
     const auto local_index_of_global_entity = subdomain_and_local_entity_index.second;
-    const auto local_grid_view = local_grids_[subdomain]->level_view(max_local_level(subdomain));
+    const auto local_grid_view = local_grids_[subd]->level_view(max_local_level(subd));
     const auto entity_it_end = local_grid_view.template end<0>();
     for (auto entity_it = local_grid_view.template begin<0>(); entity_it != entity_it_end; ++entity_it) {
       const auto& entity = *entity_it;
       if (local_grid_view.indexSet().index(entity) == local_index_of_global_entity)
         return MicroEntityPointerType(entity_it);
     }
-    DUNE_THROW(Stuff::Exceptions::wrong_input_given,
+    DUNE_THROW(XT::Common::Exceptions::wrong_input_given,
                "micro_entity_index: " << micro_entity_index << "\n"
                                                                "subdomain: "
-                                      << subdomain
+                                      << subd
                                       << "\n"
                                       << "local_index_of_global_entity: "
                                       << local_index_of_global_entity);
@@ -335,7 +326,7 @@ public:
 
   const std::vector<std::pair<size_t, size_t>>& global_to_local_indices()
   {
-    auto logger = DSC::TimedLogger().get("grid-multiscale.glued.global_to_local_indices");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.global_to_local_indices");
     logger.warn() << "Requiring access to global micro grid!" << std::endl;
     prepare_global_grid();
     assert(global_to_local_indices_);
@@ -381,12 +372,12 @@ public:
     assert(macro_index_set.contains(macro_entity));
     assert(macro_index_set.contains(macro_neighbor));
     if (local_level_macro_entity > max_local_level(macro_entity))
-      DUNE_THROW(Stuff::Exceptions::you_are_using_this_wrong,
+      DUNE_THROW(XT::Common::Exceptions::you_are_using_this_wrong,
                  "max_local_level(macro_entity): " << max_local_level(macro_entity) << "\n"
                                                    << "   local_level_macro_entity:      "
                                                    << local_level_macro_entity);
     if (local_level_macro_neighbor > max_local_level(macro_neighbor))
-      DUNE_THROW(Stuff::Exceptions::you_are_using_this_wrong,
+      DUNE_THROW(XT::Common::Exceptions::you_are_using_this_wrong,
                  "max_local_level(macro_neighbor): " << max_local_level(macro_neighbor) << "\n"
                                                      << "   local_level_macro_neighbor:      "
                                                      << local_level_macro_neighbor);
@@ -467,7 +458,7 @@ public:
     assert(macro_leaf_view_.indexSet().contains(macro_entity));
     const size_t macro_entity_index = macro_leaf_view_.indexSet().index(macro_entity);
     if (local_level > max_local_level(macro_entity))
-      DUNE_THROW(Stuff::Exceptions::you_are_using_this_wrong,
+      DUNE_THROW(XT::Common::Exceptions::you_are_using_this_wrong,
                  "macro_entity_index: " << macro_entity_index << "\n"
                                         << "local_level: "
                                         << local_level
@@ -494,7 +485,7 @@ public:
           // This entity has intersections on the local grid boundary, those could either be the domain boundary (which
           // we are looking for) or a boundary to another local grid (which we are not looking for). To find out
           // * walk the intersections
-          for (auto&& local_intersection : DSC::intersectionRange(local_leaf_view, local_entity)) {
+          for (auto&& local_intersection : intersections(local_leaf_view, local_entity)) {
             if (local_intersection.boundary() && !local_intersection.neighbor()) {
               //              logger.debug() << "local_intersection: " << local_intersection.indexInInside() << ":" <<
               //              std::endl;
@@ -504,13 +495,13 @@ public:
               // of
               //    the macro entity this local grid belongs to. Therefore
               //    *** walk the intersections of the macro entity
-              for (auto&& macro_intersection : DSC::intersectionRange(macro_leaf_view_, macro_entity)) {
+              for (auto&& macro_intersection : intersections(macro_leaf_view_, macro_entity)) {
                 if (macro_intersection.boundary() && !macro_intersection.neighbor()) {
                   // This macro intersection lies on the domain boundary, check if the local intersection is contained.
                   size_t corners_lie_on_boundary = 0;
                   for (size_t ii = 0; ii < num_corners; ++ii) {
-                    if (DSG::contains(macro_intersection,
-                                      local_intersection_geometry.corner(boost::numeric_cast<int>(ii))))
+                    if (XT::Grid::contains(macro_intersection,
+                                           local_intersection_geometry.corner(boost::numeric_cast<int>(ii))))
                       ++corners_lie_on_boundary;
                   }
                   if (corners_lie_on_boundary == num_corners) {
@@ -523,7 +514,8 @@ public:
           } // * walk the intersections
           if (!local_boundary_intersections.empty()) {
             // add this local entity and its local intersections to the container
-            boundary_entity_ptrs_with_local_intersections.emplace_back(local_entity_it, local_boundary_intersections);
+            boundary_entity_ptrs_with_local_intersections.emplace_back(MicroEntityPointerType(*local_entity_it),
+                                                                       local_boundary_intersections);
           }
         } /*else
           logger.debug() << "(inner entity)" << std::endl;*/
@@ -535,7 +527,7 @@ public:
   template <class... Args>
   void visualize(const std::string& filename = "grid.multiscale.glued", Args&&... args)
   {
-    auto logger = Stuff::Common::TimedLogger().get("grid-multiscale.glued.visualize");
+    auto logger = XT::Common::TimedLogger().get("grid-multiscale.glued.visualize");
     macro_grid_.visualize(filename + ".macro", std::forward<Args>(args)...);
     GluedVTKWriter<MacroGridType, LocalGridType> vtk_writer(*this);
     const auto& macro_index_set = macro_leaf_view_.indexSet();
@@ -544,13 +536,7 @@ public:
     std::vector<std::vector<double>> inside_outside_coupling_visualization(macro_index_set.size(0));
     std::vector<std::vector<double>> outside_inside_coupling_visualization(macro_index_set.size(0));
     // walk the macro grid
-    for (auto&& macro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-         elements
-#else
-         DSC::entityRange
-#endif
-         (macro_leaf_view_)) {
+    for (auto&& macro_entity : elements(macro_leaf_view_)) {
       const size_t macro_entity_index = macro_index_set.index(macro_entity);
       logger.debug() << "macro_entity: " << macro_entity_index << " ";
       const auto local_level = max_local_level(macro_entity);
@@ -581,7 +567,7 @@ public:
         }
       } else
         logger.debug() << "(inner entity)" << std::endl;
-      for (auto&& macro_intersection : DSC::intersectionRange(macro_leaf_view_, macro_entity)) {
+      for (auto&& macro_intersection : intersections(macro_leaf_view_, macro_entity)) {
         if (!macro_intersection.boundary() && macro_intersection.neighbor()) {
           const auto macro_neighbor_ptr = macro_intersection.outside();
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
@@ -643,7 +629,7 @@ public:
             outside_inside_coupling_visualization[macro_entity_index][local_neighbor_index] = macro_entity_index;
           }
           if (num_coupling_intersections != out_in_num_coupling_intersections)
-            DUNE_THROW(Stuff::Exceptions::internal_error,
+            DUNE_THROW(XT::Common::Exceptions::internal_error,
                        "The coupling glue is broken!\n"
                            << "macro entity (local level):   "
                            << macro_entity_index
@@ -673,34 +659,20 @@ private:
   {
     try {
       GridFactory<LocalGridType> subdomain_factory;
-      const auto num_vertices = macro_entity.
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-
-                                subEntities(dimDomain);
-#else
-                                template count<dimDomain>();
-#endif
+      const auto num_vertices = macro_entity.subEntities(dimDomain);
       std::vector<unsigned int> vertex_ids(num_vertices, 0);
-      for (int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
-        const auto vertex = macro_entity
-                                .template subEntity<dimDomain>(local_vertex_id)
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-                                .
-#else
-                                ->
-#endif
-                            geometry()
-                                .center();
+      for (auto&& local_vertex_id : XT::Common::value_range(num_vertices)) {
+        const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id).geometry().center();
         subdomain_factory.insertVertex(vertex);
         vertex_ids[local_vertex_id] = local_vertex_id;
       }
       subdomain_factory.insertElement(macro_entity.geometry().type(), vertex_ids);
-      return std::make_shared<Stuff::Grid::Providers::Default<LocalGridType>>(subdomain_factory.createGrid());
+      return std::make_shared<XT::Grid::GridProvider<LocalGridType>>(subdomain_factory.createGrid());
     } catch (GridError& ee) {
       DUNE_THROW(GridError,
                  "It was not possible to create a grid for this simplex with the given GridType!\n\n"
                      << "GridType: "
-                     << Stuff::Common::Typename<LocalGridType>::value()
+                     << XT::Common::Typename<LocalGridType>::value()
                      << "\n\n"
                      << "This was the original error: "
                      << ee.what());
@@ -710,43 +682,26 @@ private:
   template <class MacroEntityType>
   static std::shared_ptr<LocalGridProviderType> create_grid_of_cube(const MacroEntityType& macro_entity)
   {
-    const auto num_vertices = macro_entity.
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-
-                              subEntities(dimDomain);
-#else
-                              template count<dimDomain>();
-#endif
+    const auto num_vertices = macro_entity.subEntities(dimDomain);
     FieldVector<ctype, dimDomain> lower_left(std::numeric_limits<ctype>::max());
     FieldVector<ctype, dimDomain> upper_right(std::numeric_limits<ctype>::min());
-    for (int local_vertex_id = 0; local_vertex_id < num_vertices; ++local_vertex_id) {
-      const auto vertex = macro_entity
-                              .template subEntity<dimDomain>(local_vertex_id)
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-                              .
-#else
-                              ->
-#endif
-                          geometry()
-                              .center();
+    for (auto&& local_vertex_id : XT::Common::value_range(num_vertices)) {
+      const auto vertex = macro_entity.template subEntity<dimDomain>(local_vertex_id).geometry().center();
       for (size_t dd = 0; dd < dimDomain; ++dd) {
         lower_left[dd] = std::min(lower_left[dd], vertex[dd]);
         upper_right[dd] = std::max(upper_right[dd], vertex[dd]);
       }
     }
-    return std::make_shared<Stuff::Grid::Providers::Cube<LocalGridType>>(lower_left, upper_right, 1);
+    std::array<unsigned int, dimDomain> num_refinements;
+    std::fill(num_refinements.begin(), num_refinements.end(), 1);
+    return std::make_shared<XT::Grid::GridProvider<LocalGridType>>(
+        XT::Grid::make_cube_grid<LocalGridType>(lower_left, upper_right, num_refinements));
   } // ... create_grid_of_cube(...)
 
   void setup_local_grids()
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
-    for (auto&& macro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-         elements
-#else
-         DSC::entityRange
-#endif
-         (macro_leaf_view_)) {
+    for (auto&& macro_entity : elements(macro_leaf_view_)) {
       auto macro_entity_index = macro_index_set.index(macro_entity);
       if (macro_entity.type().isSimplex())
         local_grids_[macro_entity_index] = create_grid_of_simplex(macro_entity);
@@ -803,13 +758,7 @@ private:
   void setup_glues(const bool allow_for_broken_orientation_of_coupling_intersections = false)
   {
     const auto& macro_index_set = macro_leaf_view_.indexSet();
-    for (auto&& macro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-         elements
-#else
-         DSC::entityRange
-#endif
-         (macro_leaf_view_)) {
+    for (auto&& macro_entity : elements(macro_leaf_view_)) {
       const auto macro_entity_index = macro_index_set.index(macro_entity);
       auto& entity_glues = glues_[macro_entity_index];
       // walk the neighbors ...
@@ -826,9 +775,10 @@ private:
           const auto& macro_neighbor = *macro_neighbor_ptr;
 #endif
           const auto macro_neighbor_index = macro_index_set.index(macro_neighbor);
-          for (auto local_entity_level : DSC::valueRange(local_grids_[macro_entity_index]->grid().maxLevel() + 1))
+          for (auto local_entity_level :
+               XT::Common::value_range(local_grids_[macro_entity_index]->grid().maxLevel() + 1))
             for (auto local_neighbor_level :
-                 DSC::valueRange(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1)) {
+                 XT::Common::value_range(local_grids_[macro_neighbor_index]->grid().maxLevel() + 1)) {
               auto glue = create_glue(
                   macro_entity, macro_neighbor, macro_intersection, local_entity_level, local_neighbor_level);
               if (!allow_for_broken_orientation_of_coupling_intersections) {
@@ -870,25 +820,13 @@ private:
     std::vector<std::vector<std::vector<unsigned int>>> entity_to_vertex_ids(local_grids_.size());
     std::vector<std::vector<GeometryType>> geometry_types(local_grids_.size());
     // walk the grid for the first time
-    for (auto&& macro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-         elements
-#else
-         DSC::entityRange
-#endif
-         (macro_leaf_view_)) {
+    for (auto&& macro_entity : elements(macro_leaf_view_)) {
       const auto local_leaf_view = local_grid(macro_entity).leaf_view();
       const auto& local_index_set = local_leaf_view.indexSet();
       const size_t macro_index = macro_index_set.index(macro_entity);
       entity_to_vertex_ids[macro_index] = std::vector<std::vector<unsigned int>>(local_index_set.size(0));
       geometry_types[macro_index] = std::vector<GeometryType>(local_index_set.size(0));
-      for (auto&& micro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-           elements
-#else
-           DSC::entityRange
-#endif
-           (local_leaf_view)) {
+      for (auto&& micro_entity : elements(local_leaf_view)) {
         const size_t micro_index = local_index_set.index(micro_entity);
         const auto num_vertices = micro_entity.
 #if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
@@ -927,7 +865,7 @@ private:
       DUNE_THROW(GridError,
                  "It was not possible to insert an element into the grid factory!\n\n"
                      << "GridType: "
-                     << Stuff::Common::Typename<LocalGridType>::value()
+                     << XT::Common::Typename<LocalGridType>::value()
                      << "\n"
                      << "GeometryType: "
                      << geometry_types[II][JJ]
@@ -936,39 +874,26 @@ private:
                      << "This was the original error: "
                      << ee.what());
     } // try
-    global_grid_ = DSC::make_unique<Stuff::Grid::Providers::Default<LocalGridType>>(global_factory.createGrid());
+    global_grid_ = std::make_unique<XT::Grid::GridProvider<LocalGridType>>(global_factory.createGrid());
 
     // build maps of indices, relating the local to the global grid
-    const auto global_grid_view = global_grid_->leaf_view();
-    local_to_global_indices_ = DSC::make_unique<std::vector<std::vector<size_t>>>(macro_leaf_view_.indexSet().size(0));
+    const auto global_view = global_grid_->leaf_view();
+    local_to_global_indices_ = std::make_unique<std::vector<std::vector<size_t>>>(macro_leaf_view_.indexSet().size(0));
     auto& local_to_global_indices = *local_to_global_indices_;
-    global_to_local_indices_ =
-        DSC::make_unique<std::vector<std::pair<size_t, size_t>>>(global_grid_view.indexSet().size(0));
+    global_to_local_indices_ = std::make_unique<std::vector<std::pair<size_t, size_t>>>(global_view.indexSet().size(0));
     auto& global_to_local_indices = *global_to_local_indices_;
     // therefore
     // * create a search on the global view: if all is fine, we only need to walk that one once
     std::vector<FieldVector<ctype, dimDomain>> local_entity_center{FieldVector<ctype, dimDomain>(0.0)};
-    auto global_search = DSG::make_entity_in_level_search(global_grid_view);
+    auto global_search = XT::Grid::make_entity_in_level_search(global_view);
     // * walk the macro grid
-    for (auto&& macro_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-         elements
-#else
-         DSC::entityRange
-#endif
-         (macro_leaf_view_)) {
+    for (auto&& macro_entity : elements(macro_leaf_view_)) {
       const size_t subdomain = macro_leaf_view_.indexSet().index(macro_entity);
       const auto local_leaf_view = local_grid(macro_entity).leaf_view();
       const auto& local_index_set = local_leaf_view.indexSet();
       local_to_global_indices[subdomain] = std::vector<size_t>(local_index_set.size(0));
       // * walk the local grid
-      for (auto&& local_entity :
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-           elements
-#else
-           DSC::entityRange
-#endif
-           (local_leaf_view)) {
+      for (auto&& local_entity : elements(local_leaf_view)) {
         const size_t local_entity_index = local_index_set.index(local_entity);
         local_entity_center[0] = local_entity.geometry().center();
         const auto global_entity_ptr_unique_ptrs = global_search(local_entity_center);
@@ -979,13 +904,12 @@ private:
         assert(global_entity_ptr_unique_ptr);
         const auto& global_entity_ptr = *global_entity_ptr_unique_ptr;
         const auto& global_entity = *global_entity_ptr;
-        const size_t global_entity_index = global_grid_view.indexSet().index(global_entity);
+        const size_t global_entity_index = global_view.indexSet().index(global_entity);
         // store information
         local_to_global_indices[subdomain][local_entity_index] = global_entity_index;
         global_to_local_indices[global_entity_index] = {subdomain, local_entity_index};
       } // * walk the local grid
     } // * walk the macro grid
-
   } // ... prepare_global_grid(...)
 
   size_t find_insert_vertex(std::vector<FieldVector<ctype, dimDomain>>& vertices,
@@ -993,7 +917,7 @@ private:
   {
     // check if vertex is already contained
     for (size_t ii = 0; ii < vertices.size(); ++ii)
-      if (DSC::FloatCmp::eq(vertex, vertices[ii]))
+      if (XT::Common::FloatCmp::eq(vertex, vertices[ii]))
         return ii;
     // if not, add it
     vertices.emplace_back(std::move(vertex));
@@ -1050,7 +974,7 @@ public:
   {
     // set each local level to its respective max
     if (local_level < 0)
-      for (auto&& macro_entity : DSC::entityRange(glued_grid_.macro_grid_view()))
+      for (auto&& macro_entity : elements(glued_grid_.macro_grid_view()))
         local_levels_[glued_grid_.subdomain(macro_entity)] = glued_grid_.max_local_level(macro_entity);
     prepare_local_vtk_writers();
   } // GluedVTKWriter(...)
@@ -1069,7 +993,7 @@ public:
   void addCellData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
   {
     if (vectors.size() != glued_grid_.num_subdomains())
-      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+      DUNE_THROW(XT::Common::Exceptions::shapes_do_not_match,
                  "vectors.size(): " << vectors.size() << "\n"
                                     << "glued_grid_.num_subdomains(): "
                                     << glued_grid_.num_subdomains());
@@ -1081,7 +1005,7 @@ public:
   void addCellData(const std::vector<std::shared_ptr<VTKFunctionType>>& functions)
   {
     if (functions.size() != glued_grid_.num_subdomains())
-      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+      DUNE_THROW(XT::Common::Exceptions::shapes_do_not_match,
                  "funcitons.size(): " << functions.size() << "\n"
                                       << "glued_grid_.num_subdomains(): "
                                       << glued_grid_.num_subdomains());
@@ -1093,7 +1017,7 @@ public:
   void addVertexData(const std::vector<std::vector<V>>& vectors, const std::string& name, const int ncomps = 1)
   {
     if (vectors.size() != glued_grid_.num_subdomains())
-      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+      DUNE_THROW(XT::Common::Exceptions::shapes_do_not_match,
                  "vectors.size(): " << vectors.size() << "\n"
                                     << "glued_grid_.num_subdomains(): "
                                     << glued_grid_.num_subdomains());
@@ -1105,7 +1029,7 @@ public:
   void addVertexData(const std::vector<std::shared_ptr<VTKFunctionType>>& functions)
   {
     if (functions.size() != glued_grid_.num_subdomains())
-      DUNE_THROW(Stuff::Exceptions::shapes_do_not_match,
+      DUNE_THROW(XT::Common::Exceptions::shapes_do_not_match,
                  "funcitons.size(): " << functions.size() << "\n"
                                       << "glued_grid_.num_subdomains(): "
                                       << glued_grid_.num_subdomains());
@@ -1128,7 +1052,7 @@ public:
 private:
   void prepare_local_vtk_writers()
   {
-    for (auto&& macro_entity : DSC::entityRange(glued_grid_.macro_grid_view())) {
+    for (auto&& macro_entity : elements(glued_grid_.macro_grid_view())) {
       const size_t subdomain = glued_grid_.subdomain(macro_entity);
       local_vtk_writers_.emplace_back(
           new LocalVTKWriter(glued_grid_.local_grid(macro_entity).level_view(local_levels_[subdomain]),
