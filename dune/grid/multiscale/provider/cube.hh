@@ -123,7 +123,7 @@ public:
        const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
                                                                                              dimDomain),
        const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers"),
-       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+       std::ostream& out = DSC_LOG.debug(), const std::string prefix = "")
     : grid_(grd)
   {
     if (num_partittions.size() < dimDomain)
@@ -153,7 +153,7 @@ public:
 
 private:
   void setup(const DomainType& lower_left, const DomainType& upper_right, const std::vector<size_t>& num_partitions,
-             const size_t num_oversampling_layers, std::ostream& out = DSC_LOG.devnull(), const std::string prefix = "")
+             const size_t num_oversampling_layers, std::ostream& out = DSC_LOG.debug(), const std::string prefix = "")
   {
     typedef Dune::grid::Multiscale::Factory::Default<GridType> MsGridFactoryType;
 
@@ -172,15 +172,15 @@ private:
     typedef typename MsGridType::GlobalGridPartType GridPartType;
     const auto global_grid_part = factory.globalGridPart();
     // walk the grid
-    const auto entity_it_end = global_grid_part->template end<0>();
-    for (auto entity_it = global_grid_part->template begin<0>(); entity_it != entity_it_end; ++entity_it) {
+    const auto entity_it_end = global_grid_part->template end<0, All_Partition>();
+    for (auto entity_it = global_grid_part->template begin<0, All_Partition>(); entity_it != entity_it_end; ++entity_it) {
       // get center of entity
       const auto& entity = *entity_it;
       const auto center  = entity.geometry().center();
-#ifndef NDEBUG
+
       const size_t entity_index = global_grid_part->indexSet().index(entity);
       Stuff::Common::print(center, "entity (" + Stuff::Common::toString(entity_index) + ")", out, prefix);
-#endif // NDEBUG
+      out << std::endl;
       // decide on the subdomain this entity shall belong to
       std::vector<size_t> whichPartition(dimDomain, 0);
       for (size_t dd = 0; dd < dimDomain; ++dd)
@@ -202,7 +202,7 @@ private:
       // add entity to subdomain
       factory.add(entity, subdomain, prefix + "  ", out);
     } // walk the grid
-    // finalize
+    factory.report(DSC_LOG_DEBUG);
     factory.finalize(num_oversampling_layers, neighbor_recursion_level, prefix + "  ", out);
     //    debug << std::flush;
     // be done with it

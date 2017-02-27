@@ -92,19 +92,23 @@ private:
     bool found = false;
     while (!found && (workAtAll_ > 0)) {
       const Entity& entity                                 = BaseType::operator*();
-      const IndexType& index                               = globalGridPart_.indexSet().index(entity);
+      const bool contained = globalGridPart_.indexSet().real_contains(entity);
       const GeometryType& geometryType                     = entity.type();
       typename IndexContainerType::const_iterator indexMap = indexContainer_->find(geometryType);
-      if (indexMap != indexContainer_->end()) {
+      auto center = entity.geometry().center();
+      if (contained && indexMap != indexContainer_->end()) {
+        const IndexType index  = globalGridPart_.indexSet().index(entity);
         const typename IndexMapType::const_iterator result = indexMap->second.find(index);
         if ((result != end_.find(geometryType)->second)) {
           found = true;
           if (result->first == last_.find(geometryType)->second)
             --workAtAll_;
-        } else
+        } else {
           BaseType::operator++();
-      } else
+        }
+      } else {
         BaseType::operator++();
+      }
     }
   } // void forward()
 

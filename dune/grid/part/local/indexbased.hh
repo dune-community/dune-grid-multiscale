@@ -25,6 +25,10 @@
 #include <dune/grid/part/iterator/intersection/wrapper.hh>
 #include <dune/grid/part/indexset/local.hh>
 
+#include <dune/stuff/common/print.hh>
+#include <dune/stuff/common/logging.hh>
+#include <dune/stuff/aliases.hh>
+
 namespace Dune {
 namespace grid {
 namespace Part {
@@ -110,8 +114,22 @@ public:
     , boundaryInfoContainer_(boundaryInfoContainer)
     , indexSet_(*globalGridPart_, indexContainer_)
   {
+    check();
   }
 
+  void check() {
+    DSC_LOG_DEBUG << "\nCheck 1/2" << std::endl;
+    const auto& gend = globalGridPart_->template end<0>();
+    for (auto&& git = globalGridPart_->template begin<0>(); git!=gend; ++git) {
+      DSC::print(git->geometry().center(), "Global", DSC_LOG_DEBUG, "\nCheck ");
+    }
+    DSC_LOG_DEBUG << "\nCheck 2/2" << std::endl;
+    const auto& end = this->template end<0>();
+    for (auto&& it = this->template begin<0>(); it!=end; ++it) {
+      DSC::print(it->geometry().center(), "Local", DSC_LOG_DEBUG, "\nCheck ");
+    }
+    DSC_LOG_DEBUG << "\nCheck Done" << std::endl;
+  }
   Const(const ThisType& other) = default;
 
   Const(ThisType&& source) = default;
