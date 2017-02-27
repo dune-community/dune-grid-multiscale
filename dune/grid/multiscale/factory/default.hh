@@ -90,6 +90,15 @@ public:
   static size_t compute() { return 3; }
 };
 
+#if HAVE_UG
+template <>
+class NeighborRecursionLevel<UGGrid<2>>
+{
+public:
+static size_t compute() { return 1; }// just a guess!
+};
+
+#endif
 // ALUGrid
 #if HAVE_ALUGRID
 template <class Comm>

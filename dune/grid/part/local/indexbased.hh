@@ -425,8 +425,13 @@ struct hasGrid<grid::Part::Local::IndexBased::Const<GridPartType>>
 template <class GridPartType>
 struct hasSingleGeometryType<grid::Part::Local::IndexBased::Const<GridPartType>>
 {
+  static const int dim = GridPartType::dimension;
   static const bool v                  = hasSingleGeometryType<GridPartType>::v;
-  static const unsigned int topologyId = hasSingleGeometryType<GridPartType>::topologyId;
+  static const unsigned int topologyId = std::conditional<
+      std::is_same<typename GridPartType::GridType, Dune::UGGrid<dim>>::value,
+      std::integral_constant<unsigned int, GenericGeometry :: CubeTopology< dim > :: type :: id>,
+      std::integral_constant<unsigned int, hasSingleGeometryType<GridPartType>::topologyId>>::type::value;
+  static_assert(topologyId < (1 << dim ), "bah");
 };
 
 template <class GridPartType>
