@@ -271,7 +271,7 @@ public:
     CodimSizesType& localCodimSizes = localCodimSizes_.find(subdomain)->second;
     addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex, prefix, DSC_LOG_DEVNULL);
     // add all remaining codims
-    Add<1, dim>::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, DSC_LOG_DEVNULL);
+    Add<2, dim>::subEntities(*this, entity, geometryMap, localCodimSizes, prefix, DSC_LOG_DEVNULL);
   } // void add()
 
   void finalize(const size_t oversamplingLayers = 0,
@@ -387,7 +387,7 @@ public:
           const GeometryType& entityGeometryType = entity.type();
           addGeometryAndIndex(boundaryGeometryMap, boundaryCodimSizes, entityGeometryType, entityGlobalIndex);
           //   * and of all remaining codims
-          Add<1, dim>::subEntities(*this, entity, boundaryGeometryMap, boundaryCodimSizes);
+          Add<2, dim>::subEntities(*this, entity, boundaryGeometryMap, boundaryCodimSizes);
           // for the intersection information of the boundary grid part
           //   * get the map for this subdomain (and create it, if necessary)
           if (boundaryInfoMap.find(entitySubdomain) == boundaryInfoMap.end())
@@ -445,7 +445,7 @@ public:
             CodimSizesType& couplingCodimSizes = couplingCodimSizeMap[neighborSubdomain];
             addGeometryAndIndex(couplingGeometryMap, couplingCodimSizes, entityGeometryType, entityGlobalIndex);
             //   * and of all remaining codims
-            Add<1, dim>::subEntities(*this, entity, couplingGeometryMap, couplingCodimSizes);
+            Add<2, dim>::subEntities(*this, entity, couplingGeometryMap, couplingCodimSizes);
             // for the intersection information of the coupling
             //   * get the map for this subdomain
             CouplingIntersectionMapType& couplingBoundaryInfo = couplingBoundaryInfos[entitySubdomain];
@@ -727,7 +727,7 @@ private:
                 // * add the neighbor
                 addGeometryAndIndex(*geometryMapCopy, localCodimSizes, neighbor.type(), neighborGlobalIndex);
                 // * and all remaining codims entities
-                Add<1, dim>::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
+                Add<2, dim>::subEntities(*this, neighbor, *geometryMapCopy, localCodimSizes);
                 // and also check all its neighbors
                 if (neighbor_recursion_level > 0)
                   add_neighbors_neighbors_recursively(
@@ -848,7 +848,7 @@ private:
                 // then add the neighbors neighbor
                 addGeometryAndIndex(
                     geometryMapCopy, localCodimSizes, neighborsNeighbor.type(), neighborsNeighborGlobalIndex);
-                Add<1, dim>::subEntities(*this, neighborsNeighbor, geometryMapCopy, localCodimSizes);
+                Add<2, dim>::subEntities(*this, neighborsNeighbor, geometryMapCopy, localCodimSizes);
               }
             }
           }
