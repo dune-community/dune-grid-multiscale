@@ -222,7 +222,7 @@ public:
                  "You requsted subdomain number " << subdomain << " of a multiscale grid with only " << num_subdomains()
                                                   << " subdomains!\n"
                                                   << "Check 'num_subdomains()' first!");
-    return ChooseLocalPartView<MsGridType, type>::create(ms_grid(), subdomain, oversampling);
+    return ChooseLocalPartView<MsGridType, type>::create(*ms_grid(), subdomain, oversampling);
   } // ... local(...)
 
   bool is_boundary(const size_t subdomain) const
