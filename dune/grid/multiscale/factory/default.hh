@@ -37,6 +37,8 @@ namespace grid {
 namespace Multiscale {
 namespace Factory {
 
+
+/// \todo: collect all specializations below into this implementation, differentiate at runtime using std::is_same, allow user to override via template specialization
 template <class GridImp>
 class NeighborRecursionLevel
 {
@@ -110,8 +112,8 @@ public:
 
 // ALUGrid
 #if HAVE_ALUGRID
-template <class Comm>
-class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, Dune::conforming, Comm>>
+template <Dune::ALUGridRefinementType ref, class Comm>
+class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, ref, Comm>>
 {
 public:
   static size_t compute()
