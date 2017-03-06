@@ -169,12 +169,8 @@ struct CubeProviderTest : public ::testing::Test
       ms_grid_provider_w_oversampling_ = std::make_shared<ProviderType>(
           lower_left(), upper_right(), num_elements(), num_partitions(), /*oversampling_layers=*/2);
 
-    size_t num_subdomains = 1;
-    for (size_t ii = 0; ii < d; ++ii)
-      num_subdomains *= 3;
-
-    ASSERT_EQ(num_subdomains, ms_grid_provider_->ms_grid()->size());
-    ASSERT_EQ(num_subdomains, ms_grid_provider_w_oversampling_->ms_grid()->size());
+    ASSERT_EQ(num_subdomains(), ms_grid_provider_->ms_grid()->size());
+    ASSERT_EQ(num_subdomains(), ms_grid_provider_w_oversampling_->ms_grid()->size());
     ASSERT_FALSE(ms_grid_provider_->oversampling_available());
     ASSERT_TRUE(ms_grid_provider_w_oversampling_->oversampling_available());
   } // ... setup(...)
@@ -205,14 +201,14 @@ struct CubeProviderTest : public ::testing::Test
 
     auto global_grid_part = ms_grid_provider_->ms_grid()->globalGridPart();
     const auto& entity_to_subdomain_map = *ms_grid_provider_->ms_grid()->entityToSubdomainMap();
-    ASSERT_EQ(entity_to_subdomain_map.size(), global_grid_part.indexSet().size(0));
+    ASSERT_EQ(global_grid_part.indexSet().size(0), entity_to_subdomain_map.size());
     for (auto&& entity : entity_range(global_grid_part)) {
       const auto entity_index = global_grid_part.indexSet().index(entity);
       auto expected_subdomain = compute_subdomain(entity);
-      ASSERT_NE(entity_to_subdomain_map.find(entity_index), entity_to_subdomain_map.end());
-      EXPECT_EQ(entity_to_subdomain_map.at(entity_index), expected_subdomain);
-      EXPECT_EQ(ms_grid_provider_->ms_grid()->subdomainOf(entity), expected_subdomain);
-      EXPECT_EQ(ms_grid_provider_->ms_grid()->subdomainOf(entity_index), expected_subdomain);
+      ASSERT_NE(entity_to_subdomain_map.end(), entity_to_subdomain_map.find(entity_index));
+      EXPECT_EQ(expected_subdomain, entity_to_subdomain_map.at(entity_index));
+      EXPECT_EQ(expected_subdomain, ms_grid_provider_->ms_grid()->subdomainOf(entity));
+      EXPECT_EQ(expected_subdomain, ms_grid_provider_->ms_grid()->subdomainOf(entity_index));
     }
   } // ... entity_to_subdomain_mapping_is_correct(...)
 
@@ -223,7 +219,8 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
     auto expected_local_sizes = Expected::local_sizes();
-    ASSERT_EQ(expected_local_sizes.size(), ms_grid_provider_->ms_grid()->size());
+    ASSERT_EQ(ms_grid_provider_->ms_grid()->size(), expected_local_sizes.size())
+        << "Please update the expected results!";
     size_t total_size = 0;
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
@@ -285,10 +282,10 @@ struct CubeProviderTest : public ::testing::Test
                 ++global_equals_local;
                 if (global_intersection.boundary() && !global_intersection.neighbor()) {
                   // and this is also on the domain boundary
-                  EXPECT_EQ(local_intersection.boundaryId(), global_intersection.boundaryId());
+                  EXPECT_EQ(global_intersection.boundaryId(), local_intersection.boundaryId());
                 } else if (global_intersection.neighbor() && !global_intersection.boundary()) {
                   // and this is an inner intersection globally
-                  EXPECT_EQ(local_intersection.boundaryId(), local_boundary_id())
+                  EXPECT_EQ(local_boundary_id(), local_intersection.boundaryId())
                       << "The wrapped intersections of the local grid part should report a predefined boundary id on "
                          "subdomain boundaries!";
                 } else
@@ -296,7 +293,7 @@ struct CubeProviderTest : public ::testing::Test
                              "This should only happen in parallel runs, which are not yet considered here!");
               }
             }
-            EXPECT_EQ(global_equals_local, 1) << "This must not happen!";
+            EXPECT_EQ(1, global_equals_local) << "This must not happen!";
           }
         }
       }
@@ -310,15 +307,18 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
     auto expected_boundary_sizes = Expected::boundary_sizes();
-    ASSERT_EQ(expected_boundary_sizes.size(), 8)
-        << "The grid is designed to have exactly 8 subdomains which touch the domain boundary and one which does not!";
+    ASSERT_EQ(num_subdomains() - 1, expected_boundary_sizes.size())
+        << "The grid is designed to have only 1 subdomain which does not touch the domain boundary!"
+        << "\n"
+        << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
-        ASSERT_NE(expected_boundary_sizes.find(ss), expected_boundary_sizes.end())
+        ASSERT_NE(expected_boundary_sizes.end(), expected_boundary_sizes.find(ss))
             << "This subdomain is not supposed to have a boundary grid part!\n"
-            << "ss: " << ss << "expected_boundary_sizes: " << expected_boundary_sizes;
-        ASSERT_NE(expected_boundary_sizes.find(ss), expected_boundary_sizes.end())
+            << "ss: " << ss << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
+            << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
+        ASSERT_NE(expected_boundary_sizes.end(), expected_boundary_sizes.find(ss))
             << "Please record the expected results!\n"
             << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
             << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
@@ -328,9 +328,10 @@ struct CubeProviderTest : public ::testing::Test
             << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
             << "actual boundary sizes:   " << compute_boundary_sizes(*ms_grid_provider_);
       } else {
-        EXPECT_EQ(expected_boundary_sizes.find(ss), expected_boundary_sizes.end())
+        EXPECT_EQ(expected_boundary_sizes.end(), expected_boundary_sizes.find(ss))
             << "This subdomain is supposed to have a boundary grid part!\n"
-            << "ss: " << ss << "expected_boundary_sizes: " << expected_boundary_sizes;
+            << "ss: " << ss << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
+            << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
       }
     }
   } // ... boundary_parts_are_of_correct_size(...)
@@ -342,8 +343,10 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
     auto expected_boundary_sizes = Expected::boundary_sizes();
-    ASSERT_EQ(expected_boundary_sizes.size(), 8)
-        << "The grid is designed to have exactly 8 subdomains which touch the domain boundary and one which does not!";
+    ASSERT_EQ(num_subdomains() - 1, expected_boundary_sizes.size())
+        << "The grid is designed to have only 1 subdomain which does not touch the domain boundary!"
+        << "\n"
+        << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
@@ -409,11 +412,11 @@ struct CubeProviderTest : public ::testing::Test
         auto boundary_entities = compute_boundary_indices(boundary_grid_part);
         for (auto&& entity : entity_range(boundary_grid_part)) {
           auto boundary_entity_index = boundary_grid_part.indexSet().index(entity);
-          ASSERT_NE(boundary_entities.find(boundary_entity_index), boundary_entities.end())
+          ASSERT_NE(boundary_entities.end(), boundary_entities.find(boundary_entity_index))
               << "A boundary grid part should contain only boundary entities!";
           auto boundary_entity_intersections = boundary_entities[boundary_entity_index];
           auto global_entity_index = global_grid_part.indexSet().index(entity);
-          ASSERT_NE(global_boundary_entities.find(global_entity_index), global_boundary_entities.end())
+          ASSERT_NE(global_boundary_entities.end(), global_boundary_entities.find(global_entity_index))
               << "Each entity of a boundary grid part has to be a boundary "
                  "entity of the global grid part!";
           auto global_entity_intersections = global_boundary_entities[global_entity_index];
@@ -449,10 +452,10 @@ struct CubeProviderTest : public ::testing::Test
       for (const auto& element : expected_coupling_sizes[ss])
         expected_neighbors.insert(element.first);
       auto actual_neighbors = ms_grid_provider_->ms_grid()->neighborsOf(ss);
-      ASSERT_EQ(actual_neighbors, expected_neighbors) << "ss: " << ss;
+      ASSERT_EQ(expected_neighbors, actual_neighbors) << "ss: " << ss;
       for (const auto& nn : actual_neighbors) {
-        EXPECT_EQ(ms_grid_provider_->ms_grid()->couplingGridPart(ss, nn).indexSet().size(0),
-                  expected_coupling_sizes[ss][nn])
+        EXPECT_EQ(expected_coupling_sizes[ss][nn],
+                  ms_grid_provider_->ms_grid()->couplingGridPart(ss, nn).indexSet().size(0))
             << "ss: " << ss << "\n"
             << "nn: " << nn << "\n"
             << "expected_coupling_sizes: " << expected_coupling_sizes << "\n"
@@ -540,7 +543,7 @@ struct CubeProviderTest : public ::testing::Test
           }
           EXPECT_GT(num_coupling_intersections, 0);
         }
-        EXPECT_EQ(actual_coupling_indices[ss][nn], expected_coupling_indices[ss][nn]) << "ss: " << ss << "\n"
+        EXPECT_EQ(expected_coupling_indices[ss][nn], actual_coupling_indices[ss][nn]) << "ss: " << ss << "\n"
                                                                                       << "nn: " << nn;
       }
     }
@@ -680,6 +683,14 @@ struct CubeProviderTest : public ::testing::Test
   static std::vector<size_t> num_partitions()
   {
     return std::vector<size_t>(d, 3);
+  }
+
+  static size_t num_subdomains()
+  {
+    size_t ret = 1;
+    for (size_t dd = 0; dd < d; ++dd)
+      ret *= num_partitions()[dd];
+    return ret;
   }
 
   static int local_boundary_id()
