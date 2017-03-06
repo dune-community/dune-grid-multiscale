@@ -132,7 +132,17 @@ public:
   } // just a guess!
 };
 
-#endif
+template <class Comm, ALUGridRefinementType tp>
+class NeighborRecursionLevel<Dune::ALUGrid<3, 3, Dune::cube, tp, Comm>>
+{
+public:
+  static size_t compute()
+  {
+    return 3;
+  } // just a guess!
+};
+
+#endif // HAVE_ALUGRID
 
 template <class GridImp>
 class Default
