@@ -220,7 +220,9 @@ struct CubeProviderTest : public ::testing::Test
 
     auto expected_local_sizes = Expected::local_sizes();
     ASSERT_EQ(ms_grid_provider_->ms_grid()->size(), expected_local_sizes.size())
-        << "Please update the expected results!";
+        << "Please update the expected results!" << "\n"
+        << "expected_local_sizes: " << expected_local_sizes << "\n"
+        << "actual local sizes:   " << compute_local_sizes(*ms_grid_provider_);
     size_t total_size = 0;
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
