@@ -76,6 +76,38 @@ struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
   }
 };
 
+template <bool anything>
+struct ExpectedResults<ALUGrid<2, 2, simplex, nonconforming>, anything>
+{
+  static std::string grid_name()
+  {
+    return "alu_2d_simplex_nonconforming";
+  }
+
+  static std::vector<size_t> local_sizes()
+  {
+    return {18, 18, 18, 18, 18, 18, 18, 18, 18};
+  }
+
+  static std::map<size_t, size_t> boundary_sizes()
+  {
+    return {{0, 6}, {1, 3}, {2, 5}, {3, 3}, {5, 3}, {6, 5}, {7, 3}, {8, 6}};
+  }
+
+  static std::vector<std::map<size_t, size_t>> coupling_sizes()
+  {
+    return {{{1, 3}, {3, 3}},
+            {{0, 3}, {2, 3}, {4, 3}},
+            {{1, 3}, {5, 3}},
+            {{0, 3}, {4, 3}, {6, 3}},
+            {{1, 3}, {3, 3}, {5, 3}, {7, 3}},
+            {{2, 3}, {4, 3}, {8, 3}},
+            {{3, 3}, {7, 3}},
+            {{4, 3}, {6, 3}, {8, 3}},
+            {{5, 3}, {7, 3}}};
+  }
+};
+
 #endif // HAVE_ALUGRID
 
 
@@ -83,6 +115,7 @@ struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
 typedef ::testing::Types< typename YaspOrSGrid<2>::type
 #if HAVE_ALUGRID
                         , ALUGrid<2, 2, simplex, conforming>
+                        , ALUGrid<2, 2, simplex, nonconforming>
 #endif
                         >
     GridTypes; // clang-format on
