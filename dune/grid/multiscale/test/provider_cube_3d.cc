@@ -69,10 +69,7 @@ struct ExpectedResults<ALUGrid<3, 3, cube, ref>, anything>
 {
   static std::string grid_name()
   {
-    if (ref == Dune::ALUGridRefinementType::conforming)
-      return "alu_3d_cube_conforming";
-    else
-      return "alu_3d_cube_nonconforming";
+    return std::string("alu_3d_cube_") + (ref == Dune::ALUGridRefinementType::conforming ? "" : "non") + "conforming";
   }
 
   static std::vector<size_t> local_sizes()
@@ -119,6 +116,59 @@ struct ExpectedResults<ALUGrid<3, 3, cube, ref>, anything>
   }
 }; // ... ALUGrid<3, 3, cube, ref> ...
 
+template <Dune::ALUGridRefinementType ref, bool anything>
+struct ExpectedResults<ALUGrid<3, 3, simplex, ref>, anything>
+{
+  static std::string grid_name()
+  {
+    return std::string("alu_3d_simplex_") + (ref == Dune::ALUGridRefinementType::conforming ? "" : "non")
+           + "conforming";
+  }
+
+  static std::vector<size_t> local_sizes()
+  {
+    return std::vector<size_t>(27, 162);
+  }
+
+  static std::map<size_t, size_t> boundary_sizes()
+  {
+    return {{0, 54},  {1, 36},  {2, 48},  {3, 36},  {4, 18},  {5, 33},  {6, 48},  {7, 33},  {8, 48},
+            {9, 36},  {10, 18}, {11, 33}, {12, 18}, {14, 18}, {15, 33}, {16, 18}, {17, 36}, {18, 48},
+            {19, 33}, {20, 48}, {21, 33}, {22, 18}, {23, 36}, {24, 48}, {25, 36}, {26, 54}};
+  }
+
+  static std::vector<std::map<size_t, size_t>> coupling_sizes()
+  {
+    return {{{1, 18}, {3, 18}, {9, 18}},
+            {{0, 18}, {2, 18}, {4, 18}, {10, 18}},
+            {{1, 18}, {5, 18}, {11, 18}},
+            {{0, 18}, {4, 18}, {6, 18}, {12, 18}},
+            {{1, 18}, {3, 18}, {5, 18}, {7, 18}, {13, 18}},
+            {{2, 18}, {4, 18}, {8, 18}, {14, 18}},
+            {{3, 18}, {7, 18}, {15, 18}},
+            {{4, 18}, {6, 18}, {8, 18}, {16, 18}},
+            {{5, 18}, {7, 18}, {17, 18}},
+            {{0, 18}, {10, 18}, {12, 18}, {18, 18}},
+            {{1, 18}, {9, 18}, {11, 18}, {13, 18}, {19, 18}},
+            {{2, 18}, {10, 18}, {14, 18}, {20, 18}},
+            {{3, 18}, {9, 18}, {13, 18}, {15, 18}, {21, 18}},
+            {{4, 18}, {10, 18}, {12, 18}, {14, 18}, {16, 18}, {22, 18}},
+            {{5, 18}, {11, 18}, {13, 18}, {17, 18}, {23, 18}},
+            {{6, 18}, {12, 18}, {16, 18}, {24, 18}},
+            {{7, 18}, {13, 18}, {15, 18}, {17, 18}, {25, 18}},
+            {{8, 18}, {14, 18}, {16, 18}, {26, 18}},
+            {{9, 18}, {19, 18}, {21, 18}},
+            {{10, 18}, {18, 18}, {20, 18}, {22, 18}},
+            {{11, 18}, {19, 18}, {23, 18}},
+            {{12, 18}, {18, 18}, {22, 18}, {24, 18}},
+            {{13, 18}, {19, 18}, {21, 18}, {23, 18}, {25, 18}},
+            {{14, 18}, {20, 18}, {22, 18}, {26, 18}},
+            {{15, 18}, {21, 18}, {25, 18}},
+            {{16, 18}, {22, 18}, {24, 18}, {26, 18}},
+            {{17, 18}, {23, 18}, {25, 18}}};
+  }
+}; // ... ALUGrid<3, 3, simplex, conforming> ...
+
 #endif // HAVE_ALUGRID
 
 
@@ -127,9 +177,10 @@ typedef ::testing::Types< typename YaspOrSGrid<3>::type
 #if HAVE_ALUGRID
                         , ALUGrid<3, 3, cube, conforming>
                         , ALUGrid<3, 3, cube, nonconforming>
+                        , ALUGrid<3, 3, simplex, conforming>
+                        , ALUGrid<3, 3, simplex, nonconforming>
 #endif
-                        >
-    GridTypes; // clang-format on
+                        > GridTypes; // clang-format on
 
 TYPED_TEST_CASE(CubeProviderTest, GridTypes);
 TYPED_TEST(CubeProviderTest, setup_works)
