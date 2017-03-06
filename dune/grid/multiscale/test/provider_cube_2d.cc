@@ -37,8 +37,43 @@ struct ExpectedResults<typename YaspOrSGrid<2>::type, anything>
   }
 };
 
+#if HAVE_ALUGRID
 
-typedef ::testing::Types< typename YaspOrSGrid<2>::type // clang-format off
+template <bool anything>
+struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
+{
+  static std::vector<size_t> local_sizes()
+  {
+    return {36, 36, 36, 36, 36, 36, 36, 36, 36};
+  }
+
+  static std::map<size_t, size_t> boundary_sizes()
+  {
+    return {{0, 6}, {1, 3}, {2, 6}, {3, 3}, {5, 3}, {6, 6}, {7, 3}, {8, 6}};
+  }
+
+  static std::vector<std::map<size_t, size_t>> coupling_sizes()
+  {
+    return {{{1, 3}, {3, 3}},
+            {{0, 3}, {2, 3}, {4, 3}},
+            {{1, 3}, {5, 3}},
+            {{0, 3}, {4, 3}, {6, 3}},
+            {{1, 3}, {3, 3}, {5, 3}, {7, 3}},
+            {{2, 3}, {4, 3}, {8, 3}},
+            {{3, 3}, {7, 3}},
+            {{4, 3}, {6, 3}, {8, 3}},
+            {{5, 3}, {7, 3}}};
+  }
+};
+
+#endif // HAVE_ALUGRID
+
+
+// clang-format off
+typedef ::testing::Types< typename YaspOrSGrid<2>::type
+#if HAVE_ALUGRID
+                        , ALUGrid<2, 2, simplex, conforming>
+#endif
                         >
     GridTypes; // clang-format on
 
