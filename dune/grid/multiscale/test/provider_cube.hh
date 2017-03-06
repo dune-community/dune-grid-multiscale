@@ -261,6 +261,8 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
     auto expected_boundary_sizes = Expected::boundary_sizes();
+    ASSERT_EQ(expected_boundary_sizes.size(), 8)
+        << "The grid is designed to have exactly 8 subdomains which touch the domain boundary and one which does not!";
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
@@ -290,6 +292,10 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_);
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
+    auto expected_boundary_sizes = Expected::boundary_sizes();
+    ASSERT_EQ(expected_boundary_sizes.size(), 8)
+        << "The grid is designed to have exactly 8 subdomains which touch the domain boundary and one which does not!";
+
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
         auto boundary_grid_part = ms_grid_provider_->ms_grid()->boundaryGridPart(ss);
@@ -297,7 +303,7 @@ struct CubeProviderTest : public ::testing::Test
         EXPECT_EQ(1, boundary_indices.count(0)) << "boundary indices have to start with 0!\n"
                                                 << "ss: " << ss << "\n"
                                                 << "boundary_indices: " << boundary_indices;
-        EXPECT_EQ(Expected::boundary_sizes()[ss] - 1, *boundary_indices.rbegin())
+        EXPECT_EQ(expected_boundary_sizes[ss] - 1, *boundary_indices.rbegin())
             << "boundary indices have to be numbered consecutively!\n"
             << "ss: " << ss << "\n"
             << "boundary_indices: " << boundary_indices;
