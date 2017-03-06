@@ -254,6 +254,49 @@ struct CubeProviderTest : public ::testing::Test
     }
   } // ... local_parts_are_indexed_consecutively(...)
 
+  void local_parts_report_correct_boundary_id()
+  {
+    setup();
+    ASSERT_NE(nullptr, ms_grid_provider_);
+    ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
+
+    auto global_grid_part = ms_grid_provider_->ms_grid()->globalGridPart();
+    for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
+      auto local_grid_part = ms_grid_provider_->template local<Stuff::Grid::ChoosePartView::part>(ss, false);
+      for (auto&& entity : entity_range(local_grid_part)) {
+        // we cannot use entity.hasBoundaryIntersections() here!
+        for (auto local_intersection_it = local_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
+             local_intersection_it != local_grid_part.iend(entity);
+             ++local_intersection_it) {
+          const auto& local_intersection = *local_intersection_it;
+          const auto local_intersection_index = local_intersection.indexInInside();
+          if (local_intersection.boundary() && !local_intersection.neighbor()) {
+            size_t global_equals_local = 0;
+            // this entity lies on the boundary of the subdomain, so lets see what it looks like globally
+            for (auto global_intersection_it = global_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
+                 global_intersection_it != global_grid_part.iend(entity);
+                 ++global_intersection_it) {
+              const auto& global_intersection = *global_intersection_it;
+              if (global_intersection.indexInInside() == local_intersection_index) {
+                // this should be the corresponding global intersection
+                ++global_equals_local;
+                if (global_intersection.boundary() && !global_intersection.neighbor()) {
+                  // and this is also on the domain boundary
+                  EXPECT_EQ(local_intersection.boundaryId(), global_intersection.boundaryId());
+                } else if (global_intersection.neighbor() && !global_intersection.boundary()) {
+                  // and this is an inner intersection globally
+                  EXPECT_EQ(local_intersection.boundaryId(), local_boundary_id()) << "The wrapped intersections of the local grid part should report a predefined boundary id on subdomain boundaries!";
+                } else
+                  DUNE_THROW(Dune::InvalidStateException, "This should only happen in parallel runs, which are not yet considered here!");
+              }
+            }
+            EXPECT_EQ(global_equals_local, 1) << "This must not happen!";
+          }
+        }
+      }
+    }
+  } // ... local_parts_report_correct_boundary_id(...)
+
   void boundary_parts_are_of_correct_size()
   {
     setup();
@@ -631,6 +674,11 @@ struct CubeProviderTest : public ::testing::Test
   static std::vector<size_t> num_partitions()
   {
     return std::vector<size_t>(d, 3);
+  }
+
+  static int local_boundary_id()
+  {
+    return 7; // <- this is predefined in the factory
   }
 
   std::shared_ptr<ProviderInterfaceType> ms_grid_provider_;

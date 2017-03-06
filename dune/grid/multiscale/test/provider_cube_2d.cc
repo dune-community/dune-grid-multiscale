@@ -64,6 +64,10 @@ TYPED_TEST(CubeProviderTest, local_parts_are_indexed_consecutively)
 {
   this->local_parts_are_indexed_consecutively();
 }
+TYPED_TEST(CubeProviderTest, local_parts_report_correct_boundary_id)
+{
+  this->local_parts_report_correct_boundary_id();
+}
 
 TYPED_TEST(CubeProviderTest, boundary_parts_are_of_correct_size)
 {
