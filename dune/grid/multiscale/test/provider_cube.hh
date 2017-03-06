@@ -185,9 +185,11 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_);
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
-    ms_grid_provider_->visualize(/*filename=*/filename_prefix + "_without_oversampling_with_coupling",
+    ms_grid_provider_->visualize(/*filename=*/filename_prefix + "__" + Expected::grid_name()
+                                     + "__without_oversampling_with_coupling",
                                  /*with_coupling=*/true);
-    ms_grid_provider_->visualize(/*filename=*/filename_prefix + "_without_oversampling_without_coupling",
+    ms_grid_provider_->visualize(/*filename=*/filename_prefix + "__" + Expected::grid_name()
+                                     + "__without_oversampling_without_coupling",
                                  /*with_coupling=*/false);
     //    ms_grid_provider_w_oversampling_->visualize(/*filename=*/filename_prefix
     //    + "_with_oversampling_with_coupling", /*with_coupling=*/true);
@@ -273,7 +275,8 @@ struct CubeProviderTest : public ::testing::Test
           if (local_intersection.boundary() && !local_intersection.neighbor()) {
             size_t global_equals_local = 0;
             // this entity lies on the boundary of the subdomain, so lets see what it looks like globally
-            for (auto global_intersection_it = global_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
+            for (auto global_intersection_it =
+                     global_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
                  global_intersection_it != global_grid_part.iend(entity);
                  ++global_intersection_it) {
               const auto& global_intersection = *global_intersection_it;
@@ -285,9 +288,12 @@ struct CubeProviderTest : public ::testing::Test
                   EXPECT_EQ(local_intersection.boundaryId(), global_intersection.boundaryId());
                 } else if (global_intersection.neighbor() && !global_intersection.boundary()) {
                   // and this is an inner intersection globally
-                  EXPECT_EQ(local_intersection.boundaryId(), local_boundary_id()) << "The wrapped intersections of the local grid part should report a predefined boundary id on subdomain boundaries!";
+                  EXPECT_EQ(local_intersection.boundaryId(), local_boundary_id())
+                      << "The wrapped intersections of the local grid part should report a predefined boundary id on "
+                         "subdomain boundaries!";
                 } else
-                  DUNE_THROW(Dune::InvalidStateException, "This should only happen in parallel runs, which are not yet considered here!");
+                  DUNE_THROW(Dune::InvalidStateException,
+                             "This should only happen in parallel runs, which are not yet considered here!");
               }
             }
             EXPECT_EQ(global_equals_local, 1) << "This must not happen!";

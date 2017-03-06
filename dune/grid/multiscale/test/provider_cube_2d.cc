@@ -13,6 +13,11 @@
 template <bool anything>
 struct ExpectedResults<typename YaspOrSGrid<2>::type, anything>
 {
+  static std::string grid_name()
+  {
+    return "yasp_2d";
+  }
+
   static std::vector<size_t> local_sizes()
   {
     return {9, 9, 9, 9, 9, 9, 9, 9, 9};
@@ -42,6 +47,11 @@ struct ExpectedResults<typename YaspOrSGrid<2>::type, anything>
 template <bool anything>
 struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
 {
+  static std::string grid_name()
+  {
+    return "alu_2d_simplex_conforming";
+  }
+
   static std::vector<size_t> local_sizes()
   {
     return {36, 36, 36, 36, 36, 36, 36, 36, 36};
