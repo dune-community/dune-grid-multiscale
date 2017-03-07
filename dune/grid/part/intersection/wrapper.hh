@@ -44,8 +44,6 @@ public:
 
   typedef typename WrappedIntersectionType::Entity Entity;
 
-  typedef typename WrappedIntersectionType::EntityPointer EntityPointer;
-
   typedef typename WrappedIntersectionType::Geometry Geometry;
 
   typedef typename WrappedIntersectionType::LocalCoordinate LocalCoordinate;
@@ -104,12 +102,12 @@ public:
     return intersectionIterator_.getBaseIntersection().boundarySegmentIndex();
   }
 
-  EntityPointer inside() const
+  Entity inside() const
   {
     return intersectionIterator_.getBaseIntersection().inside();
   }
 
-  EntityPointer outside() const
+  Entity outside() const
   {
     return intersectionIterator_.getBaseIntersection().outside();
   }
