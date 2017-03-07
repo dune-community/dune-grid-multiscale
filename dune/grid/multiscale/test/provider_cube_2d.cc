@@ -3,15 +3,15 @@
 // Copyright holders: Felix Schindler
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#include <dune/stuff/test/main.hxx> // <- this one has to come first (includes the config.h)!
+#include <dune/xt/common/test/main.hxx> // <- this one has to come first (includes the config.h)!
 
-#include <dune/stuff/common/filesystem.hh>
+#include <dune/xt/common/filesystem.hh>
 
 #include "provider_cube.hh"
 
 
 template <bool anything>
-struct ExpectedResults<typename YaspOrSGrid<2>::type, anything>
+struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, anything>
 {
   static std::string grid_name()
   {
@@ -42,10 +42,10 @@ struct ExpectedResults<typename YaspOrSGrid<2>::type, anything>
   }
 };
 
-#if HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
 template <bool anything>
-struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
+struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, conforming>, anything>
 {
   static std::string grid_name()
   {
@@ -77,7 +77,7 @@ struct ExpectedResults<ALUGrid<2, 2, simplex, conforming>, anything>
 };
 
 template <bool anything>
-struct ExpectedResults<ALUGrid<2, 2, simplex, nonconforming>, anything>
+struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, nonconforming>, anything>
 {
   static std::string grid_name()
   {
@@ -108,14 +108,14 @@ struct ExpectedResults<ALUGrid<2, 2, simplex, nonconforming>, anything>
   }
 };
 
-#endif // HAVE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID
 
 
 // clang-format off
-typedef ::testing::Types< typename YaspOrSGrid<2>::type
-#if HAVE_ALUGRID
-                        , ALUGrid<2, 2, simplex, conforming>
-                        , ALUGrid<2, 2, simplex, nonconforming>
+typedef ::testing::Types< YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>
+#if HAVE_DUNE_ALUGRID
+                        , Dune::ALUGrid<2, 2, simplex, conforming>
+                        , Dune::ALUGrid<2, 2, simplex, nonconforming>
 #endif
                         >
     GridTypes; // clang-format on
@@ -127,7 +127,7 @@ TYPED_TEST(CubeProviderTest, setup_works)
 }
 TYPED_TEST(CubeProviderTest, visualize_is_callable)
 {
-  this->visualize_is_callable(Stuff::Common::filenameOnly(::testing::internal::GetArgvs()[0]));
+  this->visualize_is_callable(XT::Common::filename_only(::testing::internal::GetInjectableArgvs().at(0)));
 }
 TYPED_TEST(CubeProviderTest, entity_to_subdomain_mapping_is_correct)
 {

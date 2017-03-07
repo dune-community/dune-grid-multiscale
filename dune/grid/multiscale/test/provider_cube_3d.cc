@@ -3,15 +3,14 @@
 // Copyright holders: Felix Schindler
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#include <dune/stuff/test/main.hxx> // <- this one has to come first (includes the config.h)!
+#include <dune/xt/common/test/main.hxx> // <- this one has to come first (includes the config.h)!
 
-#include <dune/stuff/common/filesystem.hh>
+#include <dune/xt/common/filesystem.hh>
 
 #include "provider_cube.hh"
 
-
 template <bool anything>
-struct ExpectedResults<typename YaspOrSGrid<3>::type, anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, anything>
 {
   static std::string grid_name()
   {
@@ -60,16 +59,16 @@ struct ExpectedResults<typename YaspOrSGrid<3>::type, anything>
             {{16, 9}, {22, 9}, {24, 9}, {26, 9}},
             {{17, 9}, {23, 9}, {25, 9}}};
   }
-}; // ... typename YaspOrSGrid<3>::type ...
+}; // ... YaspGrid<3, EquidistantOffsetCoordinates<double, 3>> ...
 
-#if HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 
-template <Dune::ALUGridRefinementType ref, bool anything>
-struct ExpectedResults<ALUGrid<3, 3, cube, ref>, anything>
+template <bool anything>
+struct ExpectedResults<Dune::ALUGrid<3, 3, cube, nonconforming>, anything>
 {
   static std::string grid_name()
   {
-    return std::string("alu_3d_cube_") + (ref == Dune::ALUGridRefinementType::conforming ? "" : "non") + "conforming";
+    return "alu_3d_cube_nonconforming";
   }
 
   static std::vector<size_t> local_sizes()
@@ -114,10 +113,10 @@ struct ExpectedResults<ALUGrid<3, 3, cube, ref>, anything>
             {{16, 9}, {22, 9}, {24, 9}, {26, 9}},
             {{17, 9}, {23, 9}, {25, 9}}};
   }
-}; // ... ALUGrid<3, 3, cube, ref> ...
+}; // ... Dune::ALUGrid<3, 3, cube, nonconforming> ...
 
 template <Dune::ALUGridRefinementType ref, bool anything>
-struct ExpectedResults<ALUGrid<3, 3, simplex, ref>, anything>
+struct ExpectedResults<Dune::ALUGrid<3, 3, simplex, ref>, anything>
 {
   static std::string grid_name()
   {
@@ -167,18 +166,16 @@ struct ExpectedResults<ALUGrid<3, 3, simplex, ref>, anything>
             {{16, 18}, {22, 18}, {24, 18}, {26, 18}},
             {{17, 18}, {23, 18}, {25, 18}}};
   }
-}; // ... ALUGrid<3, 3, simplex, conforming> ...
+}; // ... Dune::ALUGrid<3, 3, simplex, conforming> ...
 
-#endif // HAVE_ALUGRID
-
+#endif // HAVE_DUNE_ALUGRID
 
 // clang-format off
-typedef ::testing::Types< typename YaspOrSGrid<3>::type
-#if HAVE_ALUGRID
-                        , ALUGrid<3, 3, cube, conforming>
-                        , ALUGrid<3, 3, cube, nonconforming>
-                        , ALUGrid<3, 3, simplex, conforming>
-                        , ALUGrid<3, 3, simplex, nonconforming>
+typedef ::testing::Types< YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>
+#if HAVE_DUNE_ALUGRID
+                        , Dune::ALUGrid<3, 3, cube, nonconforming>
+                        , Dune::ALUGrid<3, 3, simplex, conforming>
+                        , Dune::ALUGrid<3, 3, simplex, nonconforming>
 #endif
                         > GridTypes; // clang-format on
 
@@ -189,7 +186,7 @@ TYPED_TEST(CubeProviderTest, setup_works)
 }
 TYPED_TEST(CubeProviderTest, visualize_is_callable)
 {
-  this->visualize_is_callable(Stuff::Common::filenameOnly(::testing::internal::GetArgvs()[0]));
+  this->visualize_is_callable(XT::Common::filename_only(::testing::internal::GetInjectableArgvs().at(0)));
 }
 TYPED_TEST(CubeProviderTest, entity_to_subdomain_mapping_is_correct)
 {

@@ -1,77 +1,17 @@
 #ifndef DUNE_GRID_MULTISCALE_TEST_PROVIDER_CUBE_HH
 #define DUNE_GRID_MULTISCALE_TEST_PROVIDER_CUBE_HH
 
-#include <dune/common/version.hh>
-
-// alugrid
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#elif HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#endif
-
-// yaspgrid or sgrid
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-#include <dune/grid/yaspgrid.hh>
-#else
-#include <dune/grid/sgrid.hh>
-#endif
-
-template <int dim>
-struct YaspOrSGrid
-{
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-  typedef Dune::YaspGrid<dim, Dune::EquidistantOffsetCoordinates<double, dim>> type;
-#else
-  typedef Dune::SGrid<dim, dim> type;
-#endif
-};
-
-// elements or DSC::entityRange
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
 #include <dune/grid/common/rangegenerators.hh>
-#else
-#include <dune/stuff/common/ranges.hh>
-#endif
 
-template <class... Args>
-auto entity_range(Args&&... args) -> decltype(
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-    Dune::elements(std::forward<Args>(args)...)
-#else
-    DSC::entityRange(std::forward<Args>(args)...)
-#endif
-        )
-{
-#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-  return Dune::elements(std::forward<Args>(args)...);
-#else
-  return DSC::entityRange(std::forward<Args>(args)...);
-#endif
-}
+#include <dune/xt/common/memory.hh>
+#include <dune/xt/common/test/gtest/gtest.h>
+#include <dune/xt/grid/grids.hh>
 
-// template <class... Args>
-// auto intersection_range(Args&&... args) -> decltype(
-//#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-//    Dune::intersections(std::forward<Args>(args)...)
-//#else
-//    DSC::intersectionRange(std::forward<Args>(args)...)
-//#endif
-//        )
-//{
-//#if DUNE_VERSION_NEWER(DUNE_GRID, 2, 4)
-//  return Dune::intersections(std::forward<Args>(args)...);
-//#else
-//  return DSC::intersectionRange(std::forward<Args>(args)...);
-//#endif
-//}
-
-#include <dune/stuff/test/gtest/gtest.h>
+#include <dune/xt/common/test/gtest/gtest.h>
 
 #include <dune/grid/multiscale/provider/cube.hh>
 
 using namespace Dune;
-
 
 template <class T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& results)
@@ -137,20 +77,17 @@ std::ostream& operator<<(std::ostream& out, const std::map<F, S>& results)
   return out;
 }
 
-
 template <class G, bool anything = true>
 struct ExpectedResults
 {
   static_assert(AlwaysFalse<G>::value, "Please add me for this grid!");
 };
 
-
 template <class G>
 struct CubeProviderTest : public ::testing::Test
 {
   static const constexpr size_t d = G::dimension;
-  typedef grid::Multiscale::ProviderInterface<G> ProviderInterfaceType;
-  typedef grid::Multiscale::Providers::Cube<G> ProviderType;
+  typedef grid::Multiscale::DefaultProvider<G> ProviderType;
   typedef typename ProviderType::MsGridType MsGridType;
 
   typedef ExpectedResults<G> Expected;
@@ -163,16 +100,28 @@ struct CubeProviderTest : public ::testing::Test
     // should ensure at least one completely inner subdomain and in each
     // subdomain at least one completely inner entity
     if (!ms_grid_provider_)
-      ms_grid_provider_ = std::make_shared<ProviderType>(
-          lower_left(), upper_right(), num_elements(), num_partitions(), /*oversampling_layers=*/0);
+      ms_grid_provider_ =
+          std::make_shared<ProviderType>(grid::Multiscale::Providers::make_cube_grid<G>(lower_left(),
+                                                                                        upper_right(),
+                                                                                        num_elements(),
+                                                                                        num_refinements(),
+                                                                                        overlap_size(),
+                                                                                        num_partitions(),
+                                                                                        /*oversampling_layers=*/0));
     if (!ms_grid_provider_w_oversampling_)
-      ms_grid_provider_w_oversampling_ = std::make_shared<ProviderType>(
-          lower_left(), upper_right(), num_elements(), num_partitions(), /*oversampling_layers=*/2);
+      ms_grid_provider_w_oversampling_ =
+          std::make_shared<ProviderType>(grid::Multiscale::Providers::make_cube_grid<G>(lower_left(),
+                                                                                        upper_right(),
+                                                                                        num_elements(),
+                                                                                        num_refinements(),
+                                                                                        overlap_size(),
+                                                                                        num_partitions(),
+                                                                                        /*oversampling_layers=*/2));
 
     ASSERT_EQ(num_subdomains(), ms_grid_provider_->ms_grid()->size());
     ASSERT_EQ(num_subdomains(), ms_grid_provider_w_oversampling_->ms_grid()->size());
-    ASSERT_FALSE(ms_grid_provider_->oversampling_available());
-    ASSERT_TRUE(ms_grid_provider_w_oversampling_->oversampling_available());
+    //    ASSERT_FALSE(ms_grid_provider_->oversampling_available());
+    //    ASSERT_TRUE(ms_grid_provider_w_oversampling_->oversampling_available());
   } // ... setup(...)
 
   void visualize_is_callable(const std::string& filename_prefix)
@@ -202,7 +151,7 @@ struct CubeProviderTest : public ::testing::Test
     auto global_grid_part = ms_grid_provider_->ms_grid()->globalGridPart();
     const auto& entity_to_subdomain_map = *ms_grid_provider_->ms_grid()->entityToSubdomainMap();
     ASSERT_EQ(global_grid_part.indexSet().size(0), entity_to_subdomain_map.size());
-    for (auto&& entity : entity_range(global_grid_part)) {
+    for (auto&& entity : elements(global_grid_part)) {
       const auto entity_index = global_grid_part.indexSet().index(entity);
       auto expected_subdomain = compute_subdomain(entity);
       ASSERT_NE(entity_to_subdomain_map.end(), entity_to_subdomain_map.find(entity_index));
@@ -220,14 +169,15 @@ struct CubeProviderTest : public ::testing::Test
 
     auto expected_local_sizes = Expected::local_sizes();
     ASSERT_EQ(ms_grid_provider_->ms_grid()->size(), expected_local_sizes.size())
-        << "Please update the expected results!" << "\n"
+        << "Please update the expected results!"
+        << "\n"
         << "expected_local_sizes: " << expected_local_sizes << "\n"
         << "actual local sizes:   " << compute_local_sizes(*ms_grid_provider_);
     size_t total_size = 0;
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       total_size += expected_local_sizes[ss];
-      auto local_grid_part = ms_grid_provider_->template local<Stuff::Grid::ChoosePartView::part>(ss, false);
+      auto local_grid_part = ms_grid_provider_->ms_grid()->localGridPart(ss, false);
       EXPECT_EQ(expected_local_sizes[ss], local_grid_part.indexSet().size(0))
           << "ss: " << ss << "\n"
           << "expected_local_sizes: " << expected_local_sizes << "\n"
@@ -243,7 +193,7 @@ struct CubeProviderTest : public ::testing::Test
     ASSERT_NE(nullptr, ms_grid_provider_w_oversampling_);
 
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
-      auto local_grid_part = ms_grid_provider_->template local<Stuff::Grid::ChoosePartView::part>(ss, false);
+      auto local_grid_part = ms_grid_provider_->ms_grid()->localGridPart(ss, false);
       auto local_indices = compute_local_indices(local_grid_part);
       EXPECT_EQ(1, local_indices.count(0)) << "local indices have to start with 0!\n"
                                            << "ss: " << ss << "\n"
@@ -263,8 +213,8 @@ struct CubeProviderTest : public ::testing::Test
 
     auto global_grid_part = ms_grid_provider_->ms_grid()->globalGridPart();
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
-      auto local_grid_part = ms_grid_provider_->template local<Stuff::Grid::ChoosePartView::part>(ss, false);
-      for (auto&& entity : entity_range(local_grid_part)) {
+      auto local_grid_part = ms_grid_provider_->ms_grid()->localGridPart(ss, false);
+      for (auto&& entity : elements(local_grid_part)) {
         // we cannot use entity.hasBoundaryIntersections() here!
         for (auto local_intersection_it = local_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
              local_intersection_it != local_grid_part.iend(entity);
@@ -273,7 +223,8 @@ struct CubeProviderTest : public ::testing::Test
           const auto local_intersection_index = local_intersection.indexInInside();
           if (local_intersection.boundary() && !local_intersection.neighbor()) {
             size_t global_equals_local = 0;
-            // this entity lies on the boundary of the subdomain, so lets see what it looks like globally
+            // this entity lies on the boundary of the subdomain, so lets see
+            // what it looks like globally
             for (auto global_intersection_it =
                      global_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
                  global_intersection_it != global_grid_part.iend(entity);
@@ -288,11 +239,13 @@ struct CubeProviderTest : public ::testing::Test
                 } else if (global_intersection.neighbor() && !global_intersection.boundary()) {
                   // and this is an inner intersection globally
                   EXPECT_EQ(local_boundary_id(), local_intersection.boundaryId())
-                      << "The wrapped intersections of the local grid part should report a predefined boundary id on "
+                      << "The wrapped intersections of the local grid part "
+                         "should report a predefined boundary id on "
                          "subdomain boundaries!";
                 } else
                   DUNE_THROW(Dune::InvalidStateException,
-                             "This should only happen in parallel runs, which are not yet considered here!");
+                             "This should only happen in parallel runs, which "
+                             "are not yet considered here!");
               }
             }
             EXPECT_EQ(1, global_equals_local) << "This must not happen!";
@@ -310,7 +263,8 @@ struct CubeProviderTest : public ::testing::Test
 
     auto expected_boundary_sizes = Expected::boundary_sizes();
     ASSERT_EQ(num_subdomains() - 1, expected_boundary_sizes.size())
-        << "The grid is designed to have only 1 subdomain which does not touch the domain boundary!"
+        << "The grid is designed to have only 1 subdomain which does not touch "
+           "the domain boundary!"
         << "\n"
         << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
 
@@ -346,7 +300,8 @@ struct CubeProviderTest : public ::testing::Test
 
     auto expected_boundary_sizes = Expected::boundary_sizes();
     ASSERT_EQ(num_subdomains() - 1, expected_boundary_sizes.size())
-        << "The grid is designed to have only 1 subdomain which does not touch the domain boundary!"
+        << "The grid is designed to have only 1 subdomain which does not touch "
+           "the domain boundary!"
         << "\n"
         << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
 
@@ -374,7 +329,7 @@ struct CubeProviderTest : public ::testing::Test
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
         auto boundary_grid_part = ms_grid_provider_->ms_grid()->boundaryGridPart(ss);
-        for (auto&& entity : entity_range(boundary_grid_part)) {
+        for (auto&& entity : elements(boundary_grid_part)) {
           EXPECT_TRUE(entity.hasBoundaryIntersections()) << "ss: " << ss;
           for (auto intersection_it = boundary_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
                intersection_it != boundary_grid_part.iend(entity);
@@ -412,7 +367,7 @@ struct CubeProviderTest : public ::testing::Test
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
         auto boundary_grid_part = ms_grid_provider_->ms_grid()->boundaryGridPart(ss);
         auto boundary_entities = compute_boundary_indices(boundary_grid_part);
-        for (auto&& entity : entity_range(boundary_grid_part)) {
+        for (auto&& entity : elements(boundary_grid_part)) {
           auto boundary_entity_index = boundary_grid_part.indexSet().index(entity);
           ASSERT_NE(boundary_entities.end(), boundary_entities.find(boundary_entity_index))
               << "A boundary grid part should contain only boundary entities!";
@@ -497,7 +452,7 @@ struct CubeProviderTest : public ::testing::Test
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       for (const auto& nn : ms_grid_provider_->ms_grid()->neighborsOf(ss)) {
         auto coupling_grid_part = ms_grid_provider_->ms_grid()->couplingGridPart(ss, nn);
-        for (auto&& entity : entity_range(coupling_grid_part)) {
+        for (auto&& entity : elements(coupling_grid_part)) {
           for (auto intersection_it = coupling_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
                intersection_it != coupling_grid_part.iend(entity);
                ++intersection_it) {
@@ -529,15 +484,14 @@ struct CubeProviderTest : public ::testing::Test
     for (size_t ss = 0; ss < ms_grid_provider_->ms_grid()->size(); ++ss) {
       for (const auto& nn : ms_grid_provider_->ms_grid()->neighborsOf(ss)) {
         auto coupling_grid_part = ms_grid_provider_->ms_grid()->couplingGridPart(ss, nn);
-        for (auto&& entity : entity_range(coupling_grid_part)) {
+        for (auto&& entity : elements(coupling_grid_part)) {
           EXPECT_EQ(compute_subdomain(entity), ss);
           size_t num_coupling_intersections = 0;
           for (auto intersection_it = coupling_grid_part.ibegin(entity); // <- DO NOT USE intersection_range HERE!
                intersection_it != coupling_grid_part.iend(entity);
                ++intersection_it) {
             const auto& intersection = *intersection_it;
-            const auto neighbor_ptr = intersection.outside(); // has to exist, see test above
-            const auto& neighbor = *neighbor_ptr;
+            const auto neighbor = intersection.outside(); // has to exist, see test above
             EXPECT_EQ(compute_subdomain(neighbor), nn);
             actual_coupling_indices[ss][nn][global_grid_part.indexSet().index(entity)].insert(
                 intersection.indexInInside());
@@ -561,8 +515,8 @@ struct CubeProviderTest : public ::testing::Test
     std::vector<size_t> whichPartition(d, 0);
     for (size_t dd = 0; dd < d; ++dd)
       whichPartition[dd] =
-          (std::min((size_t)(std::floor(num_partitions()[dd]
-                                        * ((center[dd] - lower_left()[dd]) / (upper_right()[dd] - lower_left()[dd])))),
+          (std::min((unsigned int)(std::floor(num_partitions()[dd] * ((center[dd] - lower_left()[dd])
+                                                                      / (upper_right()[dd] - lower_left()[dd])))),
                     num_partitions()[dd] - 1));
     size_t subdomain = 0;
     if (d == 1)
@@ -581,24 +535,24 @@ struct CubeProviderTest : public ::testing::Test
   std::set<size_t> compute_local_indices(const GV& grid_view)
   {
     std::set<size_t> ret;
-    for (auto&& entity : entity_range(grid_view))
+    for (auto&& entity : elements(grid_view))
       ret.insert(grid_view.indexSet().index(entity));
     return ret;
   } // ... compute_local_indices(...)
 
-  std::vector<size_t> compute_local_sizes(const ProviderInterfaceType& provider)
+  std::vector<size_t> compute_local_sizes(const ProviderType& provider)
   {
     std::vector<size_t> ret;
 
     for (size_t ss = 0; ss < provider.ms_grid()->size(); ++ss) {
-      auto local_grid_part = provider.template local<Stuff::Grid::ChoosePartView::part>(ss, false);
+      auto local_grid_part = provider.ms_grid()->localGridPart(ss, false);
       ret.push_back(local_grid_part.indexSet().size(0));
     }
 
     return ret;
   } // ... compute_local_sizes(...)
 
-  std::map<size_t, size_t> compute_boundary_sizes(const ProviderInterfaceType& provider)
+  std::map<size_t, size_t> compute_boundary_sizes(const ProviderType& provider)
   {
     std::map<size_t, size_t> ret;
 
@@ -615,7 +569,7 @@ struct CubeProviderTest : public ::testing::Test
   std::map<size_t, std::set<size_t>> compute_boundary_indices(const GV& grid_view)
   {
     std::map<size_t, std::set<size_t>> ret;
-    for (auto&& entity : entity_range(grid_view))
+    for (auto&& entity : elements(grid_view))
       if (entity.hasBoundaryIntersections()) {
         std::set<size_t> intersection_indices;
         for (auto intersection_it = grid_view.ibegin(entity); // <- DO NOT USE intersection_range HERE!
@@ -644,15 +598,14 @@ struct CubeProviderTest : public ::testing::Test
   compute_coupling_indices(const GV& global_grid_view)
   {
     std::map<size_t, std::map<size_t, std::map<size_t, std::set<size_t>>>> ret;
-    for (auto&& entity : entity_range(global_grid_view)) {
+    for (auto&& entity : elements(global_grid_view)) {
       auto entity_index = global_grid_view.indexSet().index(entity);
       auto ss = compute_subdomain(entity);
       for (auto intersection_it = global_grid_view.ibegin(entity); intersection_it != global_grid_view.iend(entity);
            ++intersection_it) {
         const auto& intersection = *intersection_it;
         if (intersection.neighbor() && !intersection.boundary()) {
-          const auto neighbor_ptr = intersection.outside();
-          const auto& neighbor = *neighbor_ptr;
+          const auto neighbor = intersection.outside();
           auto nn = compute_subdomain(neighbor);
           if (nn != ss) { // this is a coupling intersection
             ret[ss][nn][entity_index].insert(intersection.indexInInside());
@@ -677,14 +630,42 @@ struct CubeProviderTest : public ::testing::Test
     return Dune::FieldVector<double, d>(1.);
   }
 
-  static std::vector<unsigned int> num_elements()
+  static std::array<unsigned int, d> num_elements()
   {
-    return std::vector<unsigned int>(d, 9);
+    return XT::Common::make_array<unsigned int, d>(9);
   }
 
-  static std::vector<size_t> num_partitions()
+  template <class Grid, bool anything = true>
+  struct get_num_refinements
   {
-    return std::vector<size_t>(d, 3);
+    unsigned int operator()()
+    {
+      return 0;
+    }
+  };
+
+  template <class Comm, bool anything>
+  struct get_num_refinements<Dune::ALUGrid<2, 2, simplex, conforming, Comm>, anything>
+  {
+    unsigned int operator()()
+    {
+      return 1;
+    }
+  };
+
+  static unsigned int num_refinements()
+  {
+    return get_num_refinements<G>()();
+  }
+
+  static std::array<unsigned int, d> overlap_size()
+  {
+    return XT::Common::make_array<unsigned int, d>(0);
+  }
+
+  static std::array<unsigned int, d> num_partitions()
+  {
+    return XT::Common::make_array<unsigned int, d>(3);
   }
 
   static size_t num_subdomains()
@@ -700,8 +681,8 @@ struct CubeProviderTest : public ::testing::Test
     return 7; // <- this is predefined in the factory
   }
 
-  std::shared_ptr<ProviderInterfaceType> ms_grid_provider_;
-  std::shared_ptr<ProviderInterfaceType> ms_grid_provider_w_oversampling_;
+  std::shared_ptr<ProviderType> ms_grid_provider_;
+  std::shared_ptr<ProviderType> ms_grid_provider_w_oversampling_;
 }; // struct CubeProviderTest
 
 #endif // DUNE_GRID_MULTISCALE_TEST_PROVIDER_CUBE_HH
