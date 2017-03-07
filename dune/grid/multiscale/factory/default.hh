@@ -119,6 +119,19 @@ public:
 };
 
 #endif // HAVE_DUNE_UGGRID
+#if HAVE_ALBERTA
+
+template <>
+class NeighborRecursionLevel<AlbertaGrid<2, 2>>
+{
+public:
+  static size_t compute()
+  {
+    return 3; // just a guess!
+  }
+};
+
+#endif // HAVE_ALBERTA
 
 
 template <class GridImp>
