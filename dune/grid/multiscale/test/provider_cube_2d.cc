@@ -37,14 +37,8 @@ struct Expected2dSimplexNonconformingResults
 }; // Expected2dSimplexNonconformingResults
 
 
-template <bool anything>
-struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, anything>
+struct Expected2dCubeResults
 {
-  static std::string grid_name()
-  {
-    return "yasp_2d";
-  }
-
   static std::vector<size_t> local_sizes()
   {
     return {9, 9, 9, 9, 9, 9, 9, 9, 9};
@@ -67,9 +61,28 @@ struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, any
             {{4, 3}, {6, 3}, {8, 3}},
             {{5, 3}, {7, 3}}};
   }
-}; // ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, ...>
+}; // Expected2dCubeResults
+
+
+template <bool anything>
+struct ExpectedResults<YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>, anything> : public Expected2dCubeResults
+{
+  static std::string grid_name()
+  {
+    return "yasp_2d";
+  }
+};
 
 #if HAVE_DUNE_ALUGRID
+
+template <bool anything>
+struct ExpectedResults<Dune::ALUGrid<2, 2, cube, nonconforming>, anything> : public Expected2dCubeResults
+{
+  static std::string grid_name()
+  {
+    return "alu_2d_cube";
+  }
+};
 
 template <bool anything>
 struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, conforming>, anything>
@@ -104,7 +117,8 @@ struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, conforming>, anything>
 }; // ExpectedResults<Dune::ALUGrid<2, 2, simplex, conforming>, ...>
 
 template <bool anything>
-struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, nonconforming>, anything> : public Expected2dSimplexNonconformingResults
+struct ExpectedResults<Dune::ALUGrid<2, 2, simplex, nonconforming>, anything>
+    : public Expected2dSimplexNonconformingResults
 {
   static std::string grid_name()
   {
@@ -142,6 +156,7 @@ struct ExpectedResults<AlbertaGrid<2, 2>, anything> : public Expected2dSimplexNo
 // clang-format off
 typedef ::testing::Types< YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>
 #if HAVE_DUNE_ALUGRID
+                        , Dune::ALUGrid<2, 2, cube, nonconforming>
                         , Dune::ALUGrid<2, 2, simplex, conforming>
                         , Dune::ALUGrid<2, 2, simplex, nonconforming>
 #endif
