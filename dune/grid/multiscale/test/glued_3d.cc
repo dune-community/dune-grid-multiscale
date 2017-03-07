@@ -3,8 +3,6 @@
 // Copyright holders: Felix Schindler
 // License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#define DUNE_XT_COMMON_TEST_MAIN_CATCH_EXCEPTIONS 1
-
 #include <dune/xt/common/test/main.hxx> // <- this one has to come first (includes the config.h)!
 
 #include "glued.hh"

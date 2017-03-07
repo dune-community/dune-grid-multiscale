@@ -6,17 +6,11 @@
 #include <sstream>
 #include <vector>
 
-#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/rangegenerators.hh>
-
-#if HAVE_DUNE_ALUGRID
-#include <dune/alugrid/grid.hh>
-#elif HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#endif
 
 #include <dune/xt/common/memory.hh>
 #include <dune/xt/common/test/gtest/gtest.h>
+#include <dune/xt/grid/grids.hh>
 #include <dune/xt/grid/gridprovider.hh>
 
 #include <dune/grid/multiscale/glued.hh>
