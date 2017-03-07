@@ -42,6 +42,17 @@ public:
   static size_t compute() = delete;
 };
 
+// OneDGrid
+template <>
+class NeighborRecursionLevel<OneDGrid>
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
+
 // YaspGrid
 template <class Coordinates>
 class NeighborRecursionLevel<YaspGrid<1, Coordinates>>
@@ -118,8 +129,28 @@ public:
   }
 };
 
+template <>
+class NeighborRecursionLevel<UGGrid<3>>
+{
+public:
+  static size_t compute()
+  {
+    return 9; // just a guess!
+  }
+};
+
 #endif // HAVE_DUNE_UGGRID
 #if HAVE_ALBERTA
+
+template <>
+class NeighborRecursionLevel<AlbertaGrid<1, 1>>
+{
+public:
+  static size_t compute()
+  {
+    return 1;
+  }
+};
 
 template <>
 class NeighborRecursionLevel<AlbertaGrid<2, 2>>
@@ -128,6 +159,16 @@ public:
   static size_t compute()
   {
     return 3; // just a guess!
+  }
+};
+
+template <>
+class NeighborRecursionLevel<AlbertaGrid<3, 3>>
+{
+public:
+  static size_t compute()
+  {
+    return 9; // just a guess!
   }
 };
 
