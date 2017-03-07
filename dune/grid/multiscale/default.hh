@@ -60,19 +60,19 @@ public:
 
   typedef Fem::LeafGridPart<GridType> GlobalGridPartType;
 
-  typedef typename GlobalGridPartType::GridViewType GlobalGridViewType;
+//  typedef typename GlobalGridPartType::GridViewType GlobalGridViewType;
 
   typedef Dune::grid::Part::Local::IndexBased::Const<GlobalGridPartType> LocalGridPartType;
 
-  typedef typename LocalGridPartType::GridViewType LocalGridViewType;
+//  typedef typename LocalGridPartType::GridViewType LocalGridViewType;
 
   typedef Dune::grid::Part::Local::IndexBased::ConstBoundary<GlobalGridPartType> BoundaryGridPartType;
 
-  typedef typename BoundaryGridPartType::GridViewType BoundaryGridViewType;
+//  typedef typename BoundaryGridPartType::GridViewType BoundaryGridViewType;
 
   typedef Dune::grid::Part::Local::IndexBased::ConstCoupling<GlobalGridPartType> CouplingGridPartType;
 
-  typedef typename CouplingGridPartType::GridViewType CouplingGridViewType;
+//  typedef typename CouplingGridPartType::GridViewType CouplingGridViewType;
 
   typedef typename GlobalGridPartType::template Codim<0>::EntityType EntityType;
 
@@ -106,10 +106,10 @@ public:
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
     , oversampling_(false)
-    , localGridViews_(new std::vector<std::shared_ptr<const LocalGridViewType>>(size_))
-    , boundaryGridViews_(new std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>())
-    , couplingGridViewsMaps_(new std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>(
-          size_, std::map<size_t, std::shared_ptr<const CouplingGridViewType>>()))
+  //    , localGridViews_(new std::vector<std::shared_ptr<const LocalGridViewType>>(size_))
+  //    , boundaryGridViews_(new std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>())
+  //    , couplingGridViewsMaps_(new std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>(
+  //          size_, std::map<size_t, std::shared_ptr<const CouplingGridViewType>>()))
   {
     // check for correct sizes
     std::stringstream msg;
@@ -127,8 +127,8 @@ public:
     }
     if (error)
       DUNE_THROW(Dune::InvalidStateException, msg.str());
-    // create grid views
-    createGridViews();
+    //    // create grid views
+    //    createGridViews();
   } // Default()
 
   Default(const std::shared_ptr<const GridType> grd,
@@ -151,10 +151,10 @@ public:
     , couplingGridPartsMaps_(couplingGridPartsMaps)
     , oversampling_(true)
     , oversampledLocalGridParts_(oversampledLocalGridParts)
-    , localGridViews_(new std::vector<std::shared_ptr<const LocalGridViewType>>(size_))
-    , boundaryGridViews_(new std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>())
-    , couplingGridViewsMaps_(new std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>(
-          size_, std::map<size_t, std::shared_ptr<const CouplingGridViewType>>()))
+  //    , localGridViews_(new std::vector<std::shared_ptr<const LocalGridViewType>>(size_))
+  //    , boundaryGridViews_(new std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>())
+  //    , couplingGridViewsMaps_(new std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>(
+  //          size_, std::map<size_t, std::shared_ptr<const CouplingGridViewType>>()))
   {
     // check for correct sizes
     std::stringstream msg;
@@ -172,8 +172,8 @@ public:
     }
     if (error)
       DUNE_THROW(Dune::InvalidStateException, msg.str());
-    // create grid views
-    createGridViews();
+    //    // create grid views
+    //    createGridViews();
   } // Default()
 
   Default(const ThisType& other) = default;
@@ -190,10 +190,10 @@ public:
     return *globalGridPart_;
   }
 
-  GlobalGridViewType globalGridView() const
-  {
-    return *globalGridView_;
-  }
+  //  GlobalGridViewType globalGridView() const
+  //  {
+  //    return *globalGridView_;
+  //  }
 
   size_t size() const
   {
@@ -222,13 +222,13 @@ public:
     }
   } // ... localGridPart(...)
 
-  LocalGridViewType localGridView(const size_t subdomain) const
-  {
-    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
-    assert(subdomain < size_);
-    const std::vector<std::shared_ptr<const LocalGridViewType>>& localGridViews = *localGridViews_;
-    return *(localGridViews[subdomain]);
-  }
+  //  LocalGridViewType localGridView(const size_t subdomain) const
+  //  {
+  //    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
+  //    assert(subdomain < size_);
+  //    const std::vector<std::shared_ptr<const LocalGridViewType>>& localGridViews = *localGridViews_;
+  //    return *(localGridViews[subdomain]);
+  //  }
 
   bool boundary(const size_t subdomain) const
   {
@@ -248,17 +248,17 @@ public:
     return *(result->second);
   }
 
-  BoundaryGridViewType boundaryGridView(const size_t subdomain) const
-  {
-    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
-    assert(subdomain < size_);
-    const std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>& boundaryGridViews = *boundaryGridViews_;
-    typename std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>::const_iterator result =
-        boundaryGridViews.find(subdomain);
-    assert(result != boundaryGridViews.end()
-           && "Only call boundaryGridView(subdomain), if boundary(subdomain) is true!");
-    return *(result->second);
-  }
+  //  BoundaryGridViewType boundaryGridView(const size_t subdomain) const
+  //  {
+  //    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
+  //    assert(subdomain < size_);
+  //    const std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>& boundaryGridViews = *boundaryGridViews_;
+  //    typename std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>::const_iterator result =
+  //        boundaryGridViews.find(subdomain);
+  //    assert(result != boundaryGridViews.end()
+  //           && "Only call boundaryGridView(subdomain), if boundary(subdomain) is true!");
+  //    return *(result->second);
+  //  }
 
   CouplingGridPartType couplingGridPart(const size_t subdomain, const size_t neighbor) const
   {
@@ -280,26 +280,26 @@ public:
   } // const std::shared_ptr< const CouplingGridPartType > couplingGridPart(const size_t subdomain, const size_t
   // neighbor) const
 
-  CouplingGridViewType couplingGridView(const size_t subdomain, const size_t neighbor) const
-  {
-    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
-    assert(subdomain < size_);
-    assert(neighbor < size_);
-    const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>& couplingGridViewsMaps =
-        *couplingGridViewsMaps_;
-    const std::map<size_t, std::shared_ptr<const CouplingGridViewType>>& couplingGridViewsMap =
-        couplingGridViewsMaps[subdomain];
-    const typename std::map<size_t, std::shared_ptr<const CouplingGridViewType>>::const_iterator result =
-        couplingGridViewsMap.find(neighbor);
-    if (result == couplingGridViewsMap.end()) {
-      std::stringstream msg;
-      msg << "Error in " << id() << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain
-          << "!";
-      DUNE_THROW(Dune::InvalidStateException, msg.str());
-    }
-    return *(result->second);
-  } // const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t
-  // neighbor) const
+  //  CouplingGridViewType couplingGridView(const size_t subdomain, const size_t neighbor) const
+  //  {
+  //    DUNE_THROW(NotImplemented, "The grid views are unsafe at the moment!");
+  //    assert(subdomain < size_);
+  //    assert(neighbor < size_);
+  //    const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>& couplingGridViewsMaps =
+  //        *couplingGridViewsMaps_;
+  //    const std::map<size_t, std::shared_ptr<const CouplingGridViewType>>& couplingGridViewsMap =
+  //        couplingGridViewsMaps[subdomain];
+  //    const typename std::map<size_t, std::shared_ptr<const CouplingGridViewType>>::const_iterator result =
+  //        couplingGridViewsMap.find(neighbor);
+  //    if (result == couplingGridViewsMap.end()) {
+  //      std::stringstream msg;
+  //      msg << "Error in " << id() << ": subdomain " << neighbor << " is not a neighbor of subdomain " << subdomain
+  //          << "!";
+  //      DUNE_THROW(Dune::InvalidStateException, msg.str());
+  //    }
+  //    return *(result->second);
+  //  } // const std::shared_ptr< const CouplingGridViewType > couplingGridView(const size_t subdomain, const size_t
+  //  // neighbor) const
 
   const std::shared_ptr<const EntityToSubdomainMapType>& entityToSubdomainMap() const
   {
@@ -330,68 +330,70 @@ public:
   } // size_t subdomainOf(const EntityType& entity) const
 
 private:
-  void createGridViews()
-  {
-    // create global grid view
-    globalGridView_ = std::shared_ptr<const GlobalGridViewType>(new GlobalGridViewType(globalGridPart_->gridView()));
-    // walk the subdomains
-    //   * to create the local grid views
-    //   * to create the boundary grid views
-    //   * to create the coupling grid views
-    for (size_t subdomain = 0; subdomain < size_; ++subdomain) {
-      // for the local grid view
-      //   * get the local grid part
-      const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts = *localGridParts_;
-      const std::shared_ptr<const LocalGridPartType>& localGridPartPtr = localGridParts[subdomain];
-      const LocalGridPartType& localGridPart = *localGridPartPtr;
-      //   * and create the local grid view
-      std::vector<std::shared_ptr<const LocalGridViewType>>& localGridViews = *localGridViews_;
-      localGridViews[subdomain] =
-          std::shared_ptr<const LocalGridViewType>(new LocalGridViewType(localGridPart.gridView()));
-      // for the coupling grid views
-      //   * get the grid parts map for this subdomain
-      const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>& couplingGridPartsMaps =
-          *couplingGridPartsMaps_;
-      const std::map<size_t, std::shared_ptr<const CouplingGridPartType>>& couplingGridPartsMap =
-          couplingGridPartsMaps[subdomain];
-      //   * get the target grid view map for this subdomain
-      std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>& couplingGridViewsMaps =
-          *couplingGridViewsMaps_;
-      std::map<size_t, std::shared_ptr<const CouplingGridViewType>>& couplingGridViewsMap =
-          couplingGridViewsMaps[subdomain];
-      //   * walk the neighbors
-      const std::vector<NeighborSetType>& neighboringSets = *neighboringSetsPtr_;
-      const NeighborSetType& neighbors = neighboringSets[subdomain];
-      for (typename NeighborSetType::const_iterator neighborIt = neighbors.begin(); neighborIt != neighbors.end();
-           ++neighborIt) {
-        const size_t neighbor = *neighborIt;
-        // * get the coupling grid part
-        typename std::map<size_t, std::shared_ptr<const CouplingGridPartType>>::const_iterator couplingGridPartsMapIt =
-            couplingGridPartsMap.find(neighbor);
-        assert(couplingGridPartsMapIt != couplingGridPartsMap.end()
-               && "Error: missing coupling grid part in given 'couplingGridPartsMaps'!");
-        const std::shared_ptr<const CouplingGridPartType>& couplingGridPartPtr = couplingGridPartsMapIt->second;
-        const CouplingGridPartType& couplingGridPart = *couplingGridPartPtr;
-        // * and create the coupling grid view
-        couplingGridViewsMap.insert(std::pair<size_t, std::shared_ptr<const CouplingGridViewType>>(
-            neighbor,
-            std::shared_ptr<const CouplingGridViewType>(new CouplingGridViewType(couplingGridPart.gridView()))));
-      } // walk the neighbors
-    } // walk the subdomains
-    // walk those subdomains that have a boundary grid part
-    //   * to create the boundary grid views
-    for (typename std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>::const_iterator boundaryGridPartIt =
-             boundaryGridParts_->begin();
-         boundaryGridPartIt != boundaryGridParts_->end();
-         ++boundaryGridPartIt) {
-      const size_t subdomain = boundaryGridPartIt->first;
-      const std::shared_ptr<const BoundaryGridPartType> boundaryGridPart = boundaryGridPartIt->second;
-      assert(boundaryGridViews_->find(subdomain) == boundaryGridViews_->end() && "This should not happen!");
-      boundaryGridViews_->insert(std::pair<size_t, std::shared_ptr<const BoundaryGridViewType>>(
-          subdomain,
-          std::shared_ptr<const BoundaryGridViewType>(new BoundaryGridViewType(boundaryGridPart->gridView()))));
-    } // walk those subdomains that have a boundary grid part
-  } // void createGridViews()
+  //  void createGridViews()
+  //  {
+  //    // create global grid view
+  //    globalGridView_ = std::shared_ptr<const GlobalGridViewType>(new
+  //    GlobalGridViewType(globalGridPart_->gridView()));
+  //    // walk the subdomains
+  //    //   * to create the local grid views
+  //    //   * to create the boundary grid views
+  //    //   * to create the coupling grid views
+  //    for (size_t subdomain = 0; subdomain < size_; ++subdomain) {
+  //      // for the local grid view
+  //      //   * get the local grid part
+  //      const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts = *localGridParts_;
+  //      const std::shared_ptr<const LocalGridPartType>& localGridPartPtr = localGridParts[subdomain];
+  //      const LocalGridPartType& localGrdPrt = *localGridPartPtr;
+  //      //   * and create the local grid view
+  //      std::vector<std::shared_ptr<const LocalGridViewType>>& localGridViews = *localGridViews_;
+  //      localGridViews[subdomain] =
+  //          std::shared_ptr<const LocalGridViewType>(new LocalGridViewType(localGrdPrt.gridView()));
+  //      // for the coupling grid views
+  //      //   * get the grid parts map for this subdomain
+  //      const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>& couplingGridPartsMaps =
+  //          *couplingGridPartsMaps_;
+  //      const std::map<size_t, std::shared_ptr<const CouplingGridPartType>>& couplingGridPartsMap =
+  //          couplingGridPartsMaps[subdomain];
+  //      //   * get the target grid view map for this subdomain
+  //      std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>& couplingGridViewsMaps =
+  //          *couplingGridViewsMaps_;
+  //      std::map<size_t, std::shared_ptr<const CouplingGridViewType>>& couplingGridViewsMap =
+  //          couplingGridViewsMaps[subdomain];
+  //      //   * walk the neighbors
+  //      const std::vector<NeighborSetType>& neighboringSets = *neighboringSetsPtr_;
+  //      const NeighborSetType& neighbors = neighboringSets[subdomain];
+  //      for (typename NeighborSetType::const_iterator neighborIt = neighbors.begin(); neighborIt != neighbors.end();
+  //           ++neighborIt) {
+  //        const size_t neighbor = *neighborIt;
+  //        // * get the coupling grid part
+  //        typename std::map<size_t, std::shared_ptr<const CouplingGridPartType>>::const_iterator
+  //        couplingGridPartsMapIt =
+  //            couplingGridPartsMap.find(neighbor);
+  //        assert(couplingGridPartsMapIt != couplingGridPartsMap.end()
+  //               && "Error: missing coupling grid part in given 'couplingGridPartsMaps'!");
+  //        const std::shared_ptr<const CouplingGridPartType>& couplingGridPartPtr = couplingGridPartsMapIt->second;
+  //        const CouplingGridPartType& couplingGrdPrt = *couplingGridPartPtr;
+  //        // * and create the coupling grid view
+  //        couplingGridViewsMap.insert(std::pair<size_t, std::shared_ptr<const CouplingGridViewType>>(
+  //            neighbor,
+  //            std::shared_ptr<const CouplingGridViewType>(new CouplingGridViewType(couplingGrdPrt.gridView()))));
+  //      } // walk the neighbors
+  //    } // walk the subdomains
+  //    // walk those subdomains that have a boundary grid part
+  //    //   * to create the boundary grid views
+  //    for (typename std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>::const_iterator boundaryGridPartIt =
+  //             boundaryGridParts_->begin();
+  //         boundaryGridPartIt != boundaryGridParts_->end();
+  //         ++boundaryGridPartIt) {
+  //      const size_t subdomain = boundaryGridPartIt->first;
+  //      const std::shared_ptr<const BoundaryGridPartType> boundaryGrdPrt = boundaryGridPartIt->second;
+  //      assert(boundaryGridViews_->find(subdomain) == boundaryGridViews_->end() && "This should not happen!");
+  //      boundaryGridViews_->insert(std::pair<size_t, std::shared_ptr<const BoundaryGridViewType>>(
+  //          subdomain,
+  //          std::shared_ptr<const BoundaryGridViewType>(new BoundaryGridViewType(boundaryGrdPrt->gridView()))));
+  //    } // walk those subdomains that have a boundary grid part
+  //  } // void createGridViews()
 
   const std::shared_ptr<const GridType> grid_;
   const std::shared_ptr<const GlobalGridPartType> globalGridPart_;
@@ -404,10 +406,11 @@ private:
       couplingGridPartsMaps_;
   bool oversampling_;
   const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> oversampledLocalGridParts_;
-  std::shared_ptr<std::vector<std::shared_ptr<const LocalGridViewType>>> localGridViews_;
-  std::shared_ptr<std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>> boundaryGridViews_;
-  std::shared_ptr<std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>> couplingGridViewsMaps_;
-  std::shared_ptr<const GlobalGridViewType> globalGridView_;
+  //  std::shared_ptr<std::vector<std::shared_ptr<const LocalGridViewType>>> localGridViews_;
+  //  std::shared_ptr<std::map<size_t, std::shared_ptr<const BoundaryGridViewType>>> boundaryGridViews_;
+  //  std::shared_ptr<std::vector<std::map<size_t, std::shared_ptr<const CouplingGridViewType>>>>
+  //  couplingGridViewsMaps_;
+  //  std::shared_ptr<const GlobalGridViewType> globalGridView_;
 }; // class Default
 
 #else // HAVE_DUNE_FEM
