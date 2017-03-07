@@ -15,17 +15,19 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/dgfparser.hh>
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#endif
 
-#include <dune/stuff/grid/provider/cube.hh>
-#include <dune/stuff/common/logging.hh>
-#include <dune/stuff/common/print.hh>
-#include <dune/stuff/common/memory.hh>
-#include <dune/stuff/common/type_utils.hh>
+//#include <dune/stuff/grid/provider/cube.hh>
+#include <dune/xt/common/logging.hh>
+#include <dune/xt/common/configuration.hh>
+#include <dune/xt/common/print.hh>
+#include <dune/xt/common/memory.hh>
+#include <dune/xt/common/type_traits.hh>
+#include <dune/xt/grid/type_traits.hh>
+#include <dune/xt/grid/grids.hh>
+#include <dune/xt/grid/gridprovider/cube.hh>
 
 #include <dune/grid/multiscale/factory/default.hh>
+#include <dune/grid/multiscale/default.hh>
 
 #include "interface.hh"
 
@@ -34,158 +36,61 @@ namespace grid {
 namespace Multiscale {
 namespace Providers {
 
+
+static inline std::string cube_gridprovider_id()
+{
+  return "grid.multiscale.provider.cube";
+}
+
+
+static inline XT::Common::Configuration cube_gridprovider_default_config()
+{
+  XT::Common::Configuration config = XT::Grid::cube_gridprovider_default_config();
+  config["num_partitions"] = "[2 2 2]";
+  config["oversampling_layers"] = "0";
+  config["inner_boundary_id"] = "7";
+  return config;
+}
+
+
 #if HAVE_DUNE_FEM
 
-template <class GridImp>
-class Cube : public ProviderInterface<GridImp>
+template <class GridType>
+class CubeGridProviderFactory
 {
-  typedef ProviderInterface<GridImp> BaseType;
-  typedef Cube<GridImp> ThisType;
+  static_assert(XT::Grid::is_grid<GridType>::value, "");
 
 public:
-  typedef typename BaseType::GridType GridType;
-  typedef typename BaseType::MsGridType MsGridType;
-
-  static const unsigned int dimDomain = BaseType::dimDomain;
-  typedef typename BaseType::DomainType DomainType;
+  typedef Default<GridType> MsGridType;
 
   static std::string static_id()
   {
-    return BaseType::static_id() + ".cube";
+    return cube_gridprovider_id();
   }
 
-  static Stuff::Common::Configuration default_config(const std::string sub_name = "")
+  static XT::Common::Configuration default_config()
   {
-    Stuff::Common::Configuration config;
-    config["type"] = static_id();
-    config["lower_left"] = "[0.0 0.0 0.0]";
-    config["upper_right"] = "[1.0 1.0 1.0]";
-    config["num_elements"] = "[8 8 8]";
-    config["num_partitions"] = "[2 2 2]";
-    config["oversampling_layers"] = "0";
-    if (sub_name.empty())
-      return config;
-    else {
-      Stuff::Common::Configuration tmp;
-      tmp.add(config, sub_name);
-      return tmp;
-    }
-  } // ... createSampleDescription(...)
-
-  static std::unique_ptr<ThisType> create(const Stuff::Common::Configuration config = default_config(),
-                                          const std::string sub_name = static_id())
-  {
-    // get correct config
-    const Stuff::Common::Configuration cfg = config.has_sub(sub_name) ? config.sub(sub_name) : config;
-    const Stuff::Common::Configuration default_cfg = default_config();
-    return Stuff::Common::make_unique<ThisType>(
-        cfg.get("lower_left", default_cfg.get<DomainType>("lower_left"), dimDomain),
-        cfg.get("upper_right", default_cfg.get<DomainType>("upper_right"), dimDomain),
-        cfg.get("num_elements", default_cfg.get<std::vector<unsigned int>>("num_elements"), dimDomain),
-        cfg.get("num_partitions", default_cfg.get<std::vector<size_t>>("num_partitions"), dimDomain),
-        cfg.get("oversampling_layers", default_cfg.get<size_t>("oversampling_layers")));
-  } // ... create(...)
-
-  Cube(const DomainType lower_left = default_config().template get<DomainType>("lower_left"),
-       const DomainType upper_right = default_config().template get<DomainType>("upper_right"),
-       const std::vector<unsigned int> num_elements =
-           default_config().template get<std::vector<unsigned int>>("num_elements"),
-       const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
-                                                                                                      dimDomain),
-       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers") /*,
-       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
-  {
-    if (num_partittions.size() < dimDomain)
-      DUNE_THROW(Dune::RangeError,
-                 "num_partittions has to be at least of size " << dimDomain << " (is " << num_partittions.size()
-                                                               << ")!");
-#ifndef DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
-    for (size_t ii = 0; ii < dimDomain; ++ii) {
-      if (num_partittions[ii] > num_elements[ii])
-        DUNE_THROW(Dune::RangeError,
-                   num_partittions[ii] << " = num_partittions[" << ii << "] has to be smaller than "
-                                       << "num_elements["
-                                       << ii
-                                       << "] = "
-                                       << num_elements[ii]
-                                       << "!)");
-    }
-#endif // DUNE_GRID_MULTISCALE_PROVIDER_CUBE_DISABLE_CHECKS
-    typedef Dune::Stuff::Grid::Providers::Cube<GridType> CubeGridProvider;
-    auto grd_ptr = CubeGridProvider(lower_left, upper_right, num_elements).grid_ptr();
-#if HAVE_ALUGRID
-    if (std::is_same<GridType, ALUGrid<2, 2, simplex, conforming>>::value)
-      grd_ptr->globalRefine(1);
-#endif
-    grid_ = grd_ptr;
-    setup(lower_left, upper_right, num_partittions, num_oversampling_layers /*, out, prefix*/);
+    return cube_gridprovider_default_config();
   }
 
-  Cube(const std::shared_ptr<const GridType> grd,
-       const DomainType lower_left = default_config().template get<DomainType>("lower_left"),
-       const DomainType upper_right = default_config().template get<DomainType>("upper_right"),
-       const std::vector<size_t> num_partittions = default_config().template get<std::vector<size_t>>("num_partitions",
-                                                                                                      dimDomain),
-       const size_t num_oversampling_layers = default_config().template get<size_t>("oversampling_layers") /*,
-       std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
-    : grid_(grd)
+  static DefaultProvider<GridType> create(const FieldVector<typename GridType::ctype, GridType::dimension>& lower_left,
+                                          const FieldVector<typename GridType::ctype, GridType::dimension>& upper_right,
+                                          const std::array<unsigned int, GridType::dimension>& num_elements,
+                                          const unsigned int num_refinements,
+                                          const std::array<unsigned int, GridType::dimension>& overlap_size,
+                                          const std::array<unsigned int, GridType::dimension>& num_partitions,
+                                          const size_t num_oversampling_layers,
+                                          const int inner_boundary_id)
   {
-    if (num_partittions.size() < dimDomain)
-      DUNE_THROW(Dune::RangeError,
-                 "num_partittions has to be at least of size " << dimDomain << " (is " << num_partittions.size()
-                                                               << ")!");
-    for (size_t ii = 0; ii < dimDomain; ++ii) {
-      if (lower_left[ii] >= upper_right[ii])
-        DUNE_THROW(Dune::RangeError,
-                   lower_left[ii] << " = lower_left[" << ii << "] has to be smaller than upper_right[" << ii << "] = "
-                                  << upper_right[ii]
-                                  << "!)");
-    }
-    setup(lower_left, upper_right, num_partittions, num_oversampling_layers /*, out, prefix*/);
-  }
+    auto grid = XT::Grid::make_cube_grid<GridType>(lower_left, upper_right, num_elements, num_refinements, overlap_size)
+                    .grid_ptr();
 
-  virtual const GridType& grid() const override
-  {
-    return *grid_;
-  }
-
-  virtual const std::shared_ptr<const MsGridType>& ms_grid() const override
-  {
-    return ms_grid_;
-  }
-
-  std::shared_ptr<const GridType> grid_ptr() const
-  {
-    return grid_;
-  }
-
-  virtual std::unique_ptr<Stuff::Grid::ConstProviderInterface<GridType>> copy() const
-  {
-    DUNE_THROW(NotImplemented, "");
-  }
-
-private:
-  void
-  setup(const DomainType& lower_left,
-        const DomainType& upper_right,
-        const std::vector<size_t>& num_partitions,
-        const size_t num_oversampling_layers /*, std::ostream& out = DSC_LOG.devnull(), const std::string prefix = ""*/)
-  {
-    typedef Dune::grid::Multiscale::Factory::Default<GridType> MsGridFactoryType;
-
+    typedef Factory::Default<GridType> MsGridFactoryType;
     const size_t neighbor_recursion_level = Factory::NeighborRecursionLevel<GridType>::compute();
     // prepare
-    MsGridFactoryType factory(grid_);
+    MsGridFactoryType factory(*grid, inner_boundary_id);
     factory.prepare();
-    //#ifndef NDEBUG
-    //    // debug output
-    //    out << prefix << static_id() << ":" << std::endl;
-    //    Stuff::Common::print(lower_left, "lower_left", out, prefix);
-    //    Stuff::Common::print(upper_right, "upper_right", out, prefix);
-    //    Stuff::Common::print(num_partitions, "num_partitions", out, prefix);
-    //#endif // NDEBUG
     // global grid part
-    //    typedef typename MsGridType::GlobalGridPartType GridPartType;
     const auto global_grid_part = factory.globalGridPart();
     // walk the grid
     const auto entity_it_end = global_grid_part->template end<0>();
@@ -193,49 +98,70 @@ private:
       // get center of entity
       const auto& entity = *entity_it;
       const auto center = entity.geometry().center();
-      //#ifndef NDEBUG
-      //      const size_t entity_index = global_grid_part->indexSet().index(entity);
-      //      Stuff::Common::print(center, "entity (" + Stuff::Common::toString(entity_index) + ")", out, prefix);
-      //#endif // NDEBUG
       // decide on the subdomain this entity shall belong to
-      std::vector<size_t> whichPartition(dimDomain, 0);
-      for (size_t dd = 0; dd < dimDomain; ++dd)
+      std::vector<size_t> whichPartition(GridType::dimension, 0);
+      for (size_t dd = 0; dd < GridType::dimension; ++dd)
         whichPartition[dd] =
-            (std::min((size_t)(std::floor(num_partitions[dd]
-                                          * ((center[dd] - lower_left[dd]) / (upper_right[dd] - lower_left[dd])))),
+            (std::min((unsigned int)(std::floor(
+                          num_partitions[dd] * ((center[dd] - lower_left[dd]) / (upper_right[dd] - lower_left[dd])))),
                       num_partitions[dd] - 1));
       size_t subdomain = 0;
-      if (dimDomain == 1)
+      if (GridType::dimension == 1)
         subdomain = whichPartition[0];
-      else if (dimDomain == 2)
+      else if (GridType::dimension == 2)
         subdomain = whichPartition[0] + whichPartition[1] * num_partitions[0];
-      else if (dimDomain == 3)
+      else if (GridType::dimension == 3)
         subdomain = whichPartition[0] + whichPartition[1] * num_partitions[0]
                     + whichPartition[2] * num_partitions[1] * num_partitions[0];
       else
         DUNE_THROW(Dune::NotImplemented,
-                   "ERROR in " << static_id() << ": not implemented for grid dimDomains other than 1, 2 or 3!");
+                   "ERROR in " << static_id() << ": not implemented for grid dimensions other than 1, 2 or 3!");
       // add entity to subdomain
       factory.add(entity, subdomain /*, prefix + "  ", out*/);
     } // walk the grid
     // finalize
     factory.finalize(num_oversampling_layers, neighbor_recursion_level /*, prefix + "  ", out*/);
-    //    debug << std::flush;
     // be done with it
-    ms_grid_ = factory.createMsGrid();
-  } // void setup(const Dune::ParameterTree& paramTree)
+    return DefaultProvider<GridType>(grid, factory.createMsGrid());
+  } // ... create(...)
+}; // class CubeGridProviderFactory
 
-  std::shared_ptr<const GridType> grid_;
-  std::shared_ptr<const MsGridType> ms_grid_;
-}; // class Cube
+
+template <class GridType>
+typename std::enable_if<XT::Grid::is_grid<GridType>::value, DefaultProvider<GridType>>::type make_cube_grid(
+    const FieldVector<typename GridType::ctype, GridType::dimension>& lower_left,
+    const FieldVector<typename GridType::ctype, GridType::dimension>& upper_right,
+    const std::array<unsigned int, GridType::dimension> num_elements =
+        cube_gridprovider_default_config().template get<std::vector<unsigned int>>("num_elements")[0],
+    const unsigned int num_refinements =
+        cube_gridprovider_default_config().template get<unsigned int>("num_refinements"),
+    const std::array<unsigned int, GridType::dimension> overlap_size =
+        XT::Common::make_array<unsigned int, GridType::dimension>(
+            cube_gridprovider_default_config().template get<std::vector<unsigned int>>("overlap_size")),
+    const std::array<unsigned int, GridType::dimension> num_partitions =
+        XT::Common::make_array<unsigned int, GridType::dimension>(
+            cube_gridprovider_default_config().template get<std::vector<unsigned int>>("num_partitions")),
+    const size_t num_oversampling_layers = cube_gridprovider_default_config().template get<size_t>("num_refinements"),
+    const int inner_boundary_id = cube_gridprovider_default_config().template get<int>("inner_boundary_id"))
+{
+  return CubeGridProviderFactory<GridType>::create(lower_left,
+                                                   upper_right,
+                                                   num_elements,
+                                                   num_refinements,
+                                                   overlap_size,
+                                                   num_partitions,
+                                                   num_oversampling_layers,
+                                                   inner_boundary_id);
+}
+
 
 #else // HAVE_DUNE_FEM
 
-template <class GridImp>
-class Cube
-{
-  static_assert(AlwaysFalse<GridImp>::value, "Your are missing dune-fem!");
-};
+// template <class GridImp>
+// class Cube
+//{
+//  static_assert(AlwaysFalse<GridImp>::value, "Your are missing dune-fem!");
+//};
 
 #endif // HAVE_DUNE_FEM
 
