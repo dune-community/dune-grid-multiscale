@@ -68,9 +68,9 @@ public:
     passThrough_ = passThrough;
   }
 
-  void setBoundaryId(const int boundaryId)
+  void setBoundaryId(const int id)
   {
-    boundaryId_ = boundaryId;
+    boundaryId_ = id;
   }
 
   bool neighbor() const

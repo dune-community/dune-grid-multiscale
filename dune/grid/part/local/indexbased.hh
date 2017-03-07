@@ -102,10 +102,10 @@ public:
   //! container type for the boundary information
   typedef std::map<IndexType, std::map<int, int>> BoundaryInfoContainerType;
 
-  Const(const std::shared_ptr<const GlobalGridPartType> globalGridPart,
+  Const(const std::shared_ptr<const GlobalGridPartType> globalGrdPrt,
         const std::shared_ptr<const IndexContainerType> indexContainer,
         const std::shared_ptr<const BoundaryInfoContainerType> boundaryInfoContainer)
-    : globalGridPart_(globalGridPart)
+    : globalGridPart_(globalGrdPrt)
     , indexContainer_(indexContainer)
     , boundaryInfoContainer_(boundaryInfoContainer)
     , indexSet_(*globalGridPart_, indexContainer_)
@@ -157,35 +157,35 @@ public:
         *globalGridPart_, indexContainer_, true);
   }
 
-  IntersectionIteratorType ibegin(const EntityType& entity) const
+  IntersectionIteratorType ibegin(const EntityType& ent) const
   {
-    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(ent);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
       // get the information for this entity
       const std::map<int, int>& info = result->second;
       // return wrapped iterator
-      return IntersectionIteratorType(*globalGridPart_, entity, info);
+      return IntersectionIteratorType(*globalGridPart_, ent, info);
     } else {
       // return iterator which just passes everything thrugh
-      return IntersectionIteratorType(*globalGridPart_, entity);
+      return IntersectionIteratorType(*globalGridPart_, ent);
     } // if this is an entity at the boundary
   } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
-  IntersectionIteratorType iend(const EntityType& entity) const
+  IntersectionIteratorType iend(const EntityType& ent) const
   {
-    const IndexType& globalIndex = globalGridPart_->indexSet().index(entity);
+    const IndexType& globalIndex = globalGridPart_->indexSet().index(ent);
     const typename BoundaryInfoContainerType::const_iterator result = boundaryInfoContainer_->find(globalIndex);
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
       // get the information for this entity
       const std::map<int, int>& info = result->second;
       // return wrapped iterator
-      return IntersectionIteratorType(*globalGridPart_, entity, info, true);
+      return IntersectionIteratorType(*globalGridPart_, ent, info, true);
     } else {
       // return iterator which just passes everything thrugh
-      return IntersectionIteratorType(*globalGridPart_, entity, true);
+      return IntersectionIteratorType(*globalGridPart_, ent, true);
     } // if this is an entity at the boundary
   }
 
@@ -267,17 +267,17 @@ public:
   //! container type for the intersection information
   typedef std::map<IndexType, std::vector<int>> IntersectionInfoContainerType;
 
-  ConstCoupling(const std::shared_ptr<const GlobalGridPartType> globalGridPart,
+  ConstCoupling(const std::shared_ptr<const GlobalGridPartType> globalGrdPart,
                 const std::shared_ptr<const IndexContainerType> indexContainer,
                 const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer,
-                const std::shared_ptr<const InsideType> inside,
-                const std::shared_ptr<const OutsideType> outside)
-    : BaseType(globalGridPart,
+                const std::shared_ptr<const InsideType> insd,
+                const std::shared_ptr<const OutsideType> outsd)
+    : BaseType(globalGrdPart,
                indexContainer,
                std::shared_ptr<const BoundaryInfoContainerType>(new BoundaryInfoContainerType()))
     , intersectionContainer_(intersectionContainer)
-    , inside_(inside)
-    , outside_(outside)
+    , inside_(insd)
+    , outside_(outsd)
   {
   }
 
@@ -285,26 +285,26 @@ public:
 
   ConstCoupling(ThisType&& source) = default;
 
-  IntersectionIteratorType ibegin(const EntityType& entity) const
+  IntersectionIteratorType ibegin(const EntityType& ent) const
   {
-    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(ent);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
     const auto& info = result->second;
     // return localized iterator
-    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info);
+    return IntersectionIteratorType(BaseType::globalGridPart(), ent, info);
   } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
-  IntersectionIteratorType iend(const EntityType& entity) const
+  IntersectionIteratorType iend(const EntityType& ent) const
   {
-    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(ent);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
     const auto& info = result->second;
     // return localized iterator
-    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
+    return IntersectionIteratorType(BaseType::globalGridPart(), ent, info, true);
   } // IntersectionIteratorType iend(const EntityType& entity) const
 
   std::shared_ptr<const InsideType> inside() const
@@ -368,15 +368,15 @@ public:
   //! container type for the intersection information
   typedef std::map<IndexType, std::vector<int>> IntersectionInfoContainerType;
 
-  ConstBoundary(const std::shared_ptr<const GlobalGridPartType> globalGridPart,
+  ConstBoundary(const std::shared_ptr<const GlobalGridPartType> globalGrdPart,
                 const std::shared_ptr<const IndexContainerType> indexContainer,
                 const std::shared_ptr<const IntersectionInfoContainerType> intersectionContainer,
-                const std::shared_ptr<const InsideType> inside)
-    : BaseType(globalGridPart,
+                const std::shared_ptr<const InsideType> insd)
+    : BaseType(globalGrdPart,
                indexContainer,
                std::shared_ptr<const BoundaryInfoContainerType>(new BoundaryInfoContainerType()))
     , intersectionContainer_(intersectionContainer)
-    , inside_(inside)
+    , inside_(insd)
   {
   }
 
@@ -384,26 +384,26 @@ public:
 
   ConstBoundary(ThisType&& source) = default;
 
-  IntersectionIteratorType ibegin(const EntityType& entity) const
+  IntersectionIteratorType ibegin(const EntityType& ent) const
   {
-    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(ent);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
     const auto& info = result->second;
     // return localized iterator
-    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info);
+    return IntersectionIteratorType(BaseType::globalGridPart(), ent, info);
   } // IntersectionIteratorType ibegin(const EntityType& entity) const
 
-  IntersectionIteratorType iend(const EntityType& entity) const
+  IntersectionIteratorType iend(const EntityType& ent) const
   {
-    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(entity);
+    const IndexType& globalIndex = BaseType::globalGridPart().indexSet().index(ent);
     const typename IntersectionInfoContainerType::const_iterator result = intersectionContainer_->find(globalIndex);
     assert(result != intersectionContainer_->end());
     // get the information for this entity
     const auto& info = result->second;
     // return localized iterator
-    return IntersectionIteratorType(BaseType::globalGridPart(), entity, info, true);
+    return IntersectionIteratorType(BaseType::globalGridPart(), ent, info, true);
   } // IntersectionIteratorType iend(const EntityType& entity) const
 
   std::shared_ptr<const InsideType> inside() const

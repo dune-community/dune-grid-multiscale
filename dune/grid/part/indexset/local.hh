@@ -65,12 +65,12 @@ public:
          iterator != indexContainer_->end();
          ++iterator) {
       const GeometryType& geometryType = iterator->first;
-      const IndexType size = boost::numeric_cast<IndexType>(iterator->second.size());
+      const IndexType sz = boost::numeric_cast<IndexType>(iterator->second.size());
       const unsigned int codim = dimension - geometryType.dim();
       geometryTypesByCodim_[codim].push_back(geometryType);
-      sizeByGeometryType_.insert(std::pair<GeometryType, IndexType>(geometryType, size));
+      sizeByGeometryType_.insert(std::pair<GeometryType, IndexType>(geometryType, sz));
       assert(codim <= dimension);
-      sizeByCodim_[codim] += size;
+      sizeByCodim_[codim] += sz;
     }
   } // IndexBased(const GridPartType& localGridPart)
 
