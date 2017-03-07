@@ -64,10 +64,6 @@ public:
   static const bool conforming = GlobalGridPartType::Traits::conforming;
 }; // class ConstTraits
 
-/**
- *  \todo Wrap entity, so that entity.ileaf{begin,end}() returns i{begin,end}(entity)
- *  \todo Implement boundaryId(intersection) by adding a std::map< intersectionIndex, boundaryId >!
- */
 template <class GlobalGridPartImp>
 class Const
 #if HAVE_DUNE_FEM
@@ -100,7 +96,7 @@ public:
   //! container type for the indices
   typedef std::map<GeometryType, IndexMapType> IndexContainerType;
   //! container type for the boundary information
-  typedef std::map<IndexType, std::map<int, int>> BoundaryInfoContainerType;
+  typedef std::map<IndexType, std::map<int, size_t>> BoundaryInfoContainerType;
 
   Const(const std::shared_ptr<const GlobalGridPartType> globalGrdPrt,
         const std::shared_ptr<const IndexContainerType> indexContainer,
@@ -164,7 +160,7 @@ public:
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
       // get the information for this entity
-      const std::map<int, int>& info = result->second;
+      const std::map<int, size_t>& info = result->second;
       // return wrapped iterator
       return IntersectionIteratorType(*globalGridPart_, ent, info);
     } else {
@@ -180,7 +176,7 @@ public:
     // if this is an entity at the boundary
     if (result != boundaryInfoContainer_->end()) {
       // get the information for this entity
-      const std::map<int, int>& info = result->second;
+      const std::map<int, size_t>& info = result->second;
       // return wrapped iterator
       return IntersectionIteratorType(*globalGridPart_, ent, info, true);
     } else {
@@ -192,7 +188,7 @@ public:
   int boundaryId(const IntersectionType& intersection) const
   {
     DUNE_THROW(Dune::NotImplemented, "Call intersection.boundaryId() instead!");
-    return intersection.boundaryId();
+    return -1;
   }
 
   int level() const

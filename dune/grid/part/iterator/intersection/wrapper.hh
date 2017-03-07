@@ -45,7 +45,7 @@ public:
 
   typedef typename GlobalGridPartType::template Codim<0>::EntityType EntityType;
 
-  typedef std::map<int, int> InfoContainerType;
+  typedef std::map<int, size_t> InfoContainerType;
 
 private:
   typedef typename BaseType::Intersection BaseIntersectionType;
@@ -102,7 +102,7 @@ private:
       typename InfoContainerType::const_iterator result = infoContainer_.find(intersectionIndex);
       if (result != infoContainer_.end()) {
         intersection_.setPassThrough(false);
-        intersection_.setBoundaryId(result->second);
+        intersection_.setBoundarySegmentIndex(result->second);
       } else {
         intersection_.setPassThrough(true);
       } // if this intersection is special

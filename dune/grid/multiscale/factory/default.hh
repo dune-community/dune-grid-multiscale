@@ -180,9 +180,9 @@ private:
   }; // struct Add
 
 public:
-  Default(const GridType& grid, const int boundaryId = 7)
+  Default(const GridType& grid, const size_t boundary_segment_index = std::numeric_limits<size_t>::max() - 42)
     : grid_(Dune::stackobject_to_shared_ptr(grid))
-    , boundaryId_(boundaryId)
+    , boundary_segment_index_(boundary_segment_index)
     , prepared_(false)
     , finalized_(false)
     , size_(0)
@@ -190,9 +190,10 @@ public:
   {
   }
 
-  Default(const std::shared_ptr<const GridType> grid, const int boundaryId = 7)
+  Default(const std::shared_ptr<const GridType> grid,
+          const size_t boundary_segment_index = std::numeric_limits<size_t>::max() - 42)
     : grid_(grid)
-    , boundaryId_(boundaryId)
+    , boundary_segment_index_(boundary_segment_index)
     , prepared_(false)
     , finalized_(false)
     , size_(0)
@@ -269,7 +270,7 @@ public:
       // init data structures
       // for the subdomains inner boundaries
       //   * to map the local intersection index to the desired fake boundary id
-      typedef std::map<int, int> IntersectionToBoundaryIdMapType;
+      typedef std::map<int, size_t> IntersectionToBoundaryIdMapType;
       //   * to map the global entity index to one of those maps
       typedef std::map<IndexType, IntersectionToBoundaryIdMapType> EntityToIntersectionInfoMapType;
       //   * to hold one of those maps for each subdomain
@@ -413,7 +414,7 @@ public:
               //   * get the boundary info map for this entity
               IntersectionToBoundaryIdMapType& entityInnerBoundaryInfo = subdomainInnerBoundaryInfo[entityGlobalIndex];
               //   * and add the local intersection id and its desired fake boundary id to this entities map
-              entityInnerBoundaryInfo.insert(std::pair<int, int>(intersectionLocalIndex, boundaryId_));
+              entityInnerBoundaryInfo.insert(std::pair<int, size_t>(intersectionLocalIndex, boundary_segment_index_));
               // for the coupling grid part
               //   * get the coupling map for this subdomain
               SubdomainMapType& couplingMap = couplingMaps[entitySubdomain];
@@ -665,7 +666,7 @@ private:
     // init data structures
     // for the subdomains inner boundaries
     //   * to map the local intersection index to the desired fake boundary id
-    typedef std::map<int, int> IntersectionToBoundaryIdMapType;
+    typedef std::map<int, size_t> IntersectionToBoundaryIdMapType;
     //   * to map the global entity index to one of those maps
     typedef std::map<IndexType, IntersectionToBoundaryIdMapType> EntityToIntersectionInfoMapType;
     //   * to hold one of those maps for each subdomain
@@ -769,7 +770,7 @@ private:
                   // get the boundary info map for this entity
                   IntersectionToBoundaryIdMapType& entityBoundaryInfo = localBoundaryInfo[entityIndex];
                   // and add the local intersection id and its desired fake boundary id to this entities map
-                  entityBoundaryInfo.insert(std::pair<int, int>(intersectionLocalIndex, boundaryId_));
+                  entityBoundaryInfo.insert(std::pair<int, size_t>(intersectionLocalIndex, boundary_segment_index_));
                 } // if (!isInSame)
               }
             } // then walk the neighbors
@@ -860,7 +861,7 @@ private:
 
   // members
   const std::shared_ptr<const GridType> grid_;
-  const int boundaryId_;
+  const size_t boundary_segment_index_;
   bool prepared_;
   bool finalized_;
   size_t size_;

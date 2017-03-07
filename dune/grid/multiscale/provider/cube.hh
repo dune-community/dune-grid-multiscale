@@ -48,7 +48,7 @@ static inline XT::Common::Configuration cube_gridprovider_default_config()
   XT::Common::Configuration config = XT::Grid::cube_gridprovider_default_config();
   config["num_partitions"] = "[2 2 2]";
   config["oversampling_layers"] = "0";
-  config["inner_boundary_id"] = "7";
+  config["inner_boundary_segment_index"] = XT::Common::to_string(std::numeric_limits<size_t>::max() - 42);
   return config;
 }
 
@@ -80,7 +80,7 @@ public:
                                           const std::array<unsigned int, GridType::dimension>& overlap_size,
                                           const std::array<unsigned int, GridType::dimension>& num_partitions,
                                           const size_t num_oversampling_layers,
-                                          const int inner_boundary_id)
+                                          const size_t inner_boundary_segment_index)
   {
     auto grid = XT::Grid::make_cube_grid<GridType>(lower_left, upper_right, num_elements, num_refinements, overlap_size)
                     .grid_ptr();
@@ -88,7 +88,7 @@ public:
     typedef Factory::Default<GridType> MsGridFactoryType;
     const size_t neighbor_recursion_level = Factory::NeighborRecursionLevel<GridType>::compute();
     // prepare
-    MsGridFactoryType factory(*grid, inner_boundary_id);
+    MsGridFactoryType factory(*grid, inner_boundary_segment_index);
     factory.prepare();
     // global grid part
     const auto global_grid_part = factory.globalGridPart();
@@ -142,7 +142,7 @@ typename std::enable_if<XT::Grid::is_grid<GridType>::value, DefaultProvider<Grid
         XT::Common::make_array<unsigned int, GridType::dimension>(
             cube_gridprovider_default_config().template get<std::vector<unsigned int>>("num_partitions")),
     const size_t num_oversampling_layers = cube_gridprovider_default_config().template get<size_t>("num_refinements"),
-    const int inner_boundary_id = cube_gridprovider_default_config().template get<int>("inner_boundary_id"))
+    const size_t inner_boundary_segment_index = cube_gridprovider_default_config().template get<int>("inner_boundary_segment_index"))
 {
   return CubeGridProviderFactory<GridType>::create(lower_left,
                                                    upper_right,
@@ -151,7 +151,7 @@ typename std::enable_if<XT::Grid::is_grid<GridType>::value, DefaultProvider<Grid
                                                    overlap_size,
                                                    num_partitions,
                                                    num_oversampling_layers,
-                                                   inner_boundary_id);
+                                                   inner_boundary_segment_index);
 }
 
 

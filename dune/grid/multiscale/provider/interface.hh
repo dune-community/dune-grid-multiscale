@@ -324,7 +324,7 @@ public:
         if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
           isOnBoundary = true;
           numberOfBoundarySegments += 1;
-          data["global boundary id"][index] += double(intersectionIt->boundaryId());
+          data["global boundary id"][index] += double(intersectionIt->boundarySegmentIndex());
         }
       }
       if (isOnBoundary) {
@@ -344,7 +344,7 @@ public:
              ++intersectionIt) {
           if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
             numberOfBoundarySegments += 1u;
-            data["local boundary id"][index] += double(intersectionIt->boundaryId());
+            data["local boundary id"][index] += double(intersectionIt->boundarySegmentIndex());
           }
         }
         if (numberOfBoundarySegments > 0)
@@ -393,7 +393,7 @@ public:
                ++intersectionIt) {
             if (!intersectionIt->neighbor() && intersectionIt->boundary()) {
               numberOfBoundarySegments += 1u;
-              data[string_id][index] += double(intersectionIt->boundaryId());
+              data[string_id][index] += double(intersectionIt->boundarySegmentIndex());
             }
           }
           if (numberOfBoundarySegments > 0) {

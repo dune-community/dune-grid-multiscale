@@ -12,11 +12,17 @@
 #include <config.h>
 #endif // ifdef HAVE_CMAKE_CONFIG
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <dune/common/deprecated.hh>
+
 // dune-geometry
 #include <dune/geometry/type.hh>
 
 // dune-grid
 #include <dune/grid/common/intersection.hh>
+
+#include <dune/xt/common/exceptions.hh>
 
 namespace Dune {
 
@@ -59,7 +65,7 @@ public:
   FakeDomainBoundary(const IntersectionIteratorType& intersectionIterator)
     : intersectionIterator_(intersectionIterator)
     , passThrough_(true)
-    , boundaryId_(-1)
+    , boundary_segment_index_(std::numeric_limits<size_t>::max())
   {
   }
 
@@ -68,9 +74,14 @@ public:
     passThrough_ = passThrough;
   }
 
-  void setBoundaryId(const int id)
+  void DUNE_DEPRECATED_MSG("Use setBoundarySegmentIndex(id) instead (07.03.2017)!") setBoundaryId(const int /*id*/)
   {
-    boundaryId_ = id;
+    DUNE_THROW(XT::Common::Exceptions::you_are_using_this_wrong, "Use setBoundarySegmentIndex(id) instead!");
+  }
+
+  void setBoundarySegmentIndex(const size_t index)
+  {
+    boundary_segment_index_ = index;
   }
 
   bool neighbor() const
@@ -89,17 +100,17 @@ public:
       return true;
   }
 
-  int boundaryId() const
+  int DUNE_DEPRECATED_MSG("Use boundarySegmentIndex(id) instead (07.03.2017)!") boundaryId() const
   {
-    if (passThrough_)
-      return intersectionIterator_.getBaseIntersection().boundaryId();
-    else
-      return boundaryId_;
+    return boost::numeric_cast<int>(boundarySegmentIndex());
   }
 
   size_t boundarySegmentIndex() const
   {
-    return intersectionIterator_.getBaseIntersection().boundarySegmentIndex();
+    if (passThrough_)
+      return intersectionIterator_.getBaseIntersection().boundarySegmentIndex();
+    else
+      return boundary_segment_index_;
   }
 
   Entity inside() const
@@ -175,7 +186,7 @@ public:
 private:
   const IntersectionIteratorType& intersectionIterator_;
   bool passThrough_;
-  int boundaryId_;
+  size_t boundary_segment_index_;
 }; // class FakeDomainBoundary
 
 } // namespace Wrapper

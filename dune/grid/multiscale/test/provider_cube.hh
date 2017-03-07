@@ -107,7 +107,8 @@ struct CubeProviderTest : public ::testing::Test
                                                                                         num_refinements(),
                                                                                         overlap_size(),
                                                                                         num_partitions(),
-                                                                                        /*oversampling_layers=*/0));
+                                                                                        /*oversampling_layers=*/0,
+                                                                                        local_boundary_id()));
     if (!ms_grid_provider_w_oversampling_)
       ms_grid_provider_w_oversampling_ =
           std::make_shared<ProviderType>(grid::Multiscale::Providers::make_cube_grid<G>(lower_left(),
@@ -116,7 +117,8 @@ struct CubeProviderTest : public ::testing::Test
                                                                                         num_refinements(),
                                                                                         overlap_size(),
                                                                                         num_partitions(),
-                                                                                        /*oversampling_layers=*/2));
+                                                                                        /*oversampling_layers=*/2,
+                                                                                        local_boundary_id()));
 
     ASSERT_EQ(num_subdomains(), ms_grid_provider_->ms_grid()->size());
     ASSERT_EQ(num_subdomains(), ms_grid_provider_w_oversampling_->ms_grid()->size());
@@ -235,10 +237,10 @@ struct CubeProviderTest : public ::testing::Test
                 ++global_equals_local;
                 if (global_intersection.boundary() && !global_intersection.neighbor()) {
                   // and this is also on the domain boundary
-                  EXPECT_EQ(global_intersection.boundaryId(), local_intersection.boundaryId());
+                  EXPECT_EQ(global_intersection.boundarySegmentIndex(), local_intersection.boundarySegmentIndex());
                 } else if (global_intersection.neighbor() && !global_intersection.boundary()) {
                   // and this is an inner intersection globally
-                  EXPECT_EQ(local_boundary_id(), local_intersection.boundaryId())
+                  EXPECT_EQ(local_boundary_id(), local_intersection.boundarySegmentIndex())
                       << "The wrapped intersections of the local grid part "
                          "should report a predefined boundary id on "
                          "subdomain boundaries!";
@@ -676,9 +678,9 @@ struct CubeProviderTest : public ::testing::Test
     return ret;
   }
 
-  static int local_boundary_id()
+  static size_t local_boundary_id()
   {
-    return 7; // <- this is predefined in the factory
+    return std::numeric_limits<size_t>::max() - 17;
   }
 
   std::shared_ptr<ProviderType> ms_grid_provider_;
