@@ -70,7 +70,7 @@ class NeighborRecursionLevel<YaspGrid<2, Coordinates>>
 public:
   static size_t compute()
   {
-    return 1;
+    return 2;
   }
 };
 
@@ -86,6 +86,17 @@ public:
 
 // ALUGrid
 #if HAVE_DUNE_ALUGRID
+
+template <Dune::ALUGridRefinementType ref, class Comm>
+class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::cube, ref, Comm>>
+{
+public:
+  static size_t compute()
+  {
+    return 2;
+  }
+};
+
 template <Dune::ALUGridRefinementType ref, class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, ref, Comm>>
 {
