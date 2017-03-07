@@ -18,19 +18,12 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dune/stuff/common/disable_warnings.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/grid/yaspgrid.hh>
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid.hh>
-#endif
-#include <dune/stuff/common/reenable_warnings.hh>
+#include <dune/xt/common/logging.hh>
+#include <dune/xt/common/type_traits.hh>
+#include <dune/xt/grid/grids.hh>
 
 #include <dune/grid/part/local/indexbased.hh>
 #include <dune/grid/multiscale/default.hh>
-
-#include <dune/stuff/common/logging.hh>
-#include <dune/stuff/common/type_utils.hh>
 
 namespace Dune {
 namespace grid {
@@ -38,7 +31,8 @@ namespace Multiscale {
 namespace Factory {
 
 
-/// \todo: collect all specializations below into this implementation, differentiate at runtime using std::is_same, allow user to override via template specialization
+/// \todo: collect all specializations below into this implementation, differentiate at runtime using std::is_same,
+/// allow user to override via template specialization
 template <class GridImp>
 class NeighborRecursionLevel
 {
@@ -48,40 +42,9 @@ public:
   static size_t compute() = delete;
 };
 
-// SGrid
-template <>
-class NeighborRecursionLevel<SGrid<1, 1>>
-{
-public:
-  static size_t compute()
-  {
-    return 1;
-  }
-};
-
-template <>
-class NeighborRecursionLevel<SGrid<2, 2>>
-{
-public:
-  static size_t compute()
-  {
-    return 1;
-  }
-};
-
-template <>
-class NeighborRecursionLevel<SGrid<3, 3>>
-{
-public:
-  static size_t compute()
-  {
-    return 3;
-  }
-};
-
 // YaspGrid
-template <>
-class NeighborRecursionLevel<YaspGrid<1>>
+template <class Coordinates>
+class NeighborRecursionLevel<YaspGrid<1, Coordinates>>
 {
 public:
   static size_t compute()
@@ -90,8 +53,8 @@ public:
   }
 };
 
-template <>
-class NeighborRecursionLevel<YaspGrid<2>>
+template <class Coordinates>
+class NeighborRecursionLevel<YaspGrid<2, Coordinates>>
 {
 public:
   static size_t compute()
@@ -100,8 +63,8 @@ public:
   }
 };
 
-template <>
-class NeighborRecursionLevel<YaspGrid<3>>
+template <class Coordinates>
+class NeighborRecursionLevel<YaspGrid<3, Coordinates>>
 {
 public:
   static size_t compute()
@@ -111,7 +74,7 @@ public:
 };
 
 // ALUGrid
-#if HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 template <Dune::ALUGridRefinementType ref, class Comm>
 class NeighborRecursionLevel<Dune::ALUGrid<2, 2, Dune::simplex, ref, Comm>>
 {
@@ -142,7 +105,7 @@ public:
   } // just a guess!
 };
 
-#endif // HAVE_ALUGRID
+#endif // HAVE_DUNE_ALUGRID
 
 template <class GridImp>
 class Default
@@ -205,11 +168,10 @@ private:
       //      // suppress output, since we are not codim 0
       //      Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
       // loop over all codim c subentities of the entity
-      typedef typename EntityType::template Codim<c>::EntityPointer CodimCentityPtrType;
-      for (int i = 0; i < entity.template count<c>(); ++i) {
-        const CodimCentityPtrType codimCentityPtr = entity.template subEntity<c>(i);
-        const GeometryType& geometryType = codimCentityPtr->type();
-        const IndexType globalIndex = factory.globalGridPart_->indexSet().index(*codimCentityPtr);
+      for (size_t i = 0; i < entity.subEntities(c); ++i) {
+        const auto codimCentity = entity.template subEntity<c>(i);
+        const GeometryType& geometryType = codimCentity.type();
+        const IndexType globalIndex = factory.globalGridPart_->indexSet().index(codimCentity);
         factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex /*, prefix, out*/);
       } // loop over all codim c subentities of the entity
       // add all codim c + 1 subentities
@@ -429,9 +391,7 @@ public:
           } else if (intersection.neighbor()) {
             // then this entity lies inside the domain
             // and has a neighbor
-            typedef typename IntersectionType::EntityPointer EntityPtrType;
-            const EntityPtrType neighborPtr = intersection.outside();
-            const EntityType& neighbor = *neighborPtr;
+            const auto neighbor = intersection.outside();
             const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
             const size_t neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
             // check if neighbor is in another or in the same subdomain
@@ -636,7 +596,7 @@ public:
     } // if (!finalized_)
   } // void finalize()
 
-  const std::shared_ptr<const MsGridType> createMsGrid() const
+  std::shared_ptr<MsGridType> createMsGrid()
   {
     assert(finalized_ && "Please call finalize() before calling createMsGrid()!");
     if (oversampled_)
@@ -741,8 +701,7 @@ private:
             // if this intersection is not on the domain boundary
             if (intersection.neighbor()) {
               // get the neighbor
-              const auto neighborPtr = intersection.outside();
-              const auto& neighbor = *neighborPtr;
+              const auto neighbor = intersection.outside();
               const IndexType& neighborGlobalIndex = globalGridPart_->indexSet().index(neighbor);
               //              const size_t neighborSubdomain = getSubdomainOf(neighborGlobalIndex);
               // if the neighbor is not in the subdomain
@@ -791,8 +750,7 @@ private:
                  ++intersectionIt) {
               const auto& intersection = *intersectionIt;
               if (intersection.neighbor()) {
-                const auto neighborPtr = intersection.outside();
-                const auto& neighbor = *neighborPtr;
+                const auto neighbor = intersection.outside();
                 const IndexType neighborIndex = globalGridPart_->indexSet().index(neighbor);
                 // and check, if the neighbor is in the same subdomain
                 bool isInSame = false;
@@ -858,8 +816,7 @@ private:
       const auto& neighborIntersection = *neighborIntersectionIt;
       if (neighborIntersection.neighbor()) {
         // get the neighbors neighbor
-        const auto neighborsNeighborPtr = neighborIntersection.outside();
-        const auto& neighborsNeighbor = *neighborsNeighborPtr;
+        const auto neighborsNeighbor = neighborIntersection.outside();
         const IndexType neighborsNeighborGlobalIndex = globalGridPart_->indexSet().index(neighborsNeighbor);
         bool neighborsNeighborIsNotInThisSubdomain = true;
         if (geometryMap.find(neighborsNeighbor.type()) != geometryMap.end()) {
@@ -940,12 +897,10 @@ struct Default<GridType>::Add<c, c>
     //    // suppress output, since we are not codim 0
     //    Dune::Stuff::Common::LogStream& devnull = Dune::Stuff::Common::Logger().devnull();
     // loop over all codim c subentities of this entity
-    typedef typename Default<GridType>::EntityType::template Codim<c>::EntityPointer CodimCentityPtrType;
-    for (int i = 0; i < entity.template count<c>(); ++i) {
-      const CodimCentityPtrType codimCentityPtr = entity.template subEntity<c>(i);
-      const Default<GridType>::GeometryType& geometryType = codimCentityPtr->type();
-      const typename Default<GridType>::IndexType globalIndex =
-          factory.globalGridPart_->indexSet().index(*codimCentityPtr);
+    for (size_t i = 0; i < entity.subEntities(c); ++i) {
+      const auto codimCentity = entity.template subEntity<c>(i);
+      const Default<GridType>::GeometryType& geometryType = codimCentity.type();
+      const typename Default<GridType>::IndexType globalIndex = factory.globalGridPart_->indexSet().index(codimCentity);
       factory.addGeometryAndIndex(geometryMap, localCodimSizes, geometryType, globalIndex /*, prefix, out*/);
     } // loop over all codim c subentities of this entity
   } // static void subEntities()

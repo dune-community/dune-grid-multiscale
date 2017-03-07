@@ -19,8 +19,8 @@
 #include <dune/fem/gridpart/leafgridpart.hh>
 #endif
 
-#include <dune/stuff/common/color.hh>
-#include <dune/stuff/common/type_utils.hh>
+#include <dune/xt/common/color.hh>
+#include <dune/xt/common/type_traits.hh>
 
 #include <dune/grid/part/local/indexbased.hh>
 
@@ -88,20 +88,20 @@ public:
     return "grid.multiscale.default";
   }
 
-  Default(const std::shared_ptr<const GridType> grid,
-          const std::shared_ptr<const GlobalGridPartType> globalGridPart,
-          const size_t size,
+  Default(const std::shared_ptr<const GridType> grd,
+          const std::shared_ptr<const GlobalGridPartType> globalGrdPrt,
+          const size_t sz,
           const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
-          const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdomainMap,
+          const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdMap,
           const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> localGridParts,
           const std::shared_ptr<const std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>> boundaryGridParts,
           const std::shared_ptr<const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>>
               couplingGridPartsMaps)
-    : grid_(grid)
-    , globalGridPart_(globalGridPart)
-    , size_(size)
+    : grid_(grd)
+    , globalGridPart_(globalGrdPrt)
+    , size_(sz)
     , neighboringSetsPtr_(neighboringSets)
-    , entityToSubdomainMap_(entityToSubdomainMap)
+    , entityToSubdomainMap_(entityToSubdMap)
     , localGridParts_(localGridParts)
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
@@ -131,21 +131,21 @@ public:
     createGridViews();
   } // Default()
 
-  Default(const std::shared_ptr<const GridType> grid,
-          const std::shared_ptr<const GlobalGridPartType> globalGridPart,
-          const size_t size,
+  Default(const std::shared_ptr<const GridType> grd,
+          const std::shared_ptr<const GlobalGridPartType> globalGrdPrt,
+          const size_t sz,
           const std::shared_ptr<const std::vector<NeighborSetType>> neighboringSets,
-          const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdomainMap,
+          const std::shared_ptr<const EntityToSubdomainMapType> entityToSubdMap,
           const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> localGridParts,
           const std::shared_ptr<const std::map<size_t, std::shared_ptr<const BoundaryGridPartType>>> boundaryGridParts,
           const std::shared_ptr<const std::vector<std::map<size_t, std::shared_ptr<const CouplingGridPartType>>>>
               couplingGridPartsMaps,
           const std::shared_ptr<const std::vector<std::shared_ptr<const LocalGridPartType>>> oversampledLocalGridParts)
-    : grid_(grid)
-    , globalGridPart_(globalGridPart)
-    , size_(size)
+    : grid_(grd)
+    , globalGridPart_(globalGrdPrt)
+    , size_(sz)
     , neighboringSetsPtr_(neighboringSets)
-    , entityToSubdomainMap_(entityToSubdomainMap)
+    , entityToSubdomainMap_(entityToSubdMap)
     , localGridParts_(localGridParts)
     , boundaryGridParts_(boundaryGridParts)
     , couplingGridPartsMaps_(couplingGridPartsMaps)
@@ -185,7 +185,7 @@ public:
     return grid_;
   }
 
-  GlobalGridPartType globalGridPart() const
+  const GlobalGridPartType& globalGridPart() const
   {
     return *globalGridPart_;
   }
@@ -205,16 +205,16 @@ public:
     return oversampling_;
   }
 
-  LocalGridPartType localGridPart(const size_t subdomain, const bool oversampling = false) const
+  LocalGridPartType localGridPart(const size_t subdomain, const bool ovrsmplng = false) const
   {
     assert(subdomain < size_);
-    if (!oversampling) {
+    if (!ovrsmplng) {
       const std::vector<std::shared_ptr<const LocalGridPartType>>& localGridParts = *localGridParts_;
       return *(localGridParts[subdomain]);
     } else {
       if (!oversampling_)
         DUNE_THROW(Dune::InvalidStateException,
-                   "\n" << Dune::Stuff::Common::colorStringRed("ERROR:")
+                   "\n" << Dune::XT::Common::color_string_red("ERROR:")
                         << " oversampled local gridpart requested from a grid without oversampling!");
       const std::vector<std::shared_ptr<const LocalGridPartType>>& oversampledLocalGridParts =
           *oversampledLocalGridParts_;
