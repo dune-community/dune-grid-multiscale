@@ -106,6 +106,20 @@ public:
 };
 
 #endif // HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_UGGRID
+
+template <>
+class NeighborRecursionLevel<UGGrid<2>>
+{
+public:
+  static size_t compute()
+  {
+    return 3; // just a guess!
+  }
+};
+
+#endif // HAVE_DUNE_UGGRID
+
 
 template <class GridImp>
 class Default
