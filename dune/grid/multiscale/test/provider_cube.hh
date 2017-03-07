@@ -274,7 +274,8 @@ struct CubeProviderTest : public ::testing::Test
       if (ms_grid_provider_->ms_grid()->boundary(ss)) {
         ASSERT_NE(expected_boundary_sizes.end(), expected_boundary_sizes.find(ss))
             << "This subdomain is not supposed to have a boundary grid part!\n"
-            << "ss: " << ss << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
+            << "ss: " << ss << "\n"
+            << "expected_boundary_sizes: " << expected_boundary_sizes << "\n"
             << "actual boundary sizes: " << compute_boundary_sizes(*ms_grid_provider_);
         ASSERT_NE(expected_boundary_sizes.end(), expected_boundary_sizes.find(ss))
             << "Please record the expected results!\n"
@@ -357,11 +358,15 @@ struct CubeProviderTest : public ::testing::Test
     auto global_boundary_entities = compute_boundary_indices(global_grid_part);
     std::map<size_t, std::set<size_t>> sum_of_local_boundary_entities;
 
-    // we have at least 9 entities in each dimension
-    size_t min_num_boudnary_intersections = 0;
-    for (size_t ii = 0; ii < d; ++ii)
-      min_num_boudnary_intersections += 9;
-    ASSERT_GE(global_boundary_entities.size(), min_num_boudnary_intersections);
+    size_t min_num_boundary_intersections = 0;
+    if (d == 1)
+      min_num_boundary_intersections = 2;
+    else {
+      // we have at least 9 entities in each dimension
+      for (size_t ii = 0; ii < d; ++ii)
+        min_num_boundary_intersections += 9;
+    }
+    ASSERT_GE(global_boundary_entities.size(), min_num_boundary_intersections);
 
     // test that each local boundary entity and intersection is also a global
     // one
