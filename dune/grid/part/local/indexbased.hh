@@ -451,12 +451,6 @@ struct hasEntity<grid::Part::Local::IndexBased::Const<GridPartType>, codim>
   static const bool v = hasEntity<GridPartType, codim>::v;
 };
 
-template <class GridPartType>
-struct isParallel<grid::Part::Local::IndexBased::Const<GridPartType>>
-{
-  static const bool v = false;
-};
-
 template <class GridPartType, int codim>
 struct canCommunicate<grid::Part::Local::IndexBased::Const<GridPartType>, codim>
 {
