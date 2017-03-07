@@ -144,6 +144,41 @@ struct ExpectedResults<UGGrid<2>, anything>
 }; // ExpectedResults<UGGrid<2>, ...>
 
 #endif // HAVE_DUNE_UGGRID
+#if HAVE_ALBERTA
+
+template <bool anything>
+struct ExpectedResults<AlbertaGrid<2, 2>, anything>
+{
+  static std::string grid_name()
+  {
+    return "alberta_2d";
+  }
+
+  static std::vector<size_t> local_sizes()
+  {
+    return {18, 18, 18, 18, 18, 18, 18, 18, 18};
+  }
+
+  static std::map<size_t, size_t> boundary_sizes()
+  {
+    return {{0, 6}, {1, 3}, {2, 5}, {3, 3}, {5, 3}, {6, 5}, {7, 3}, {8, 6}};
+  }
+
+  static std::vector<std::map<size_t, size_t>> coupling_sizes()
+  {
+    return {{{1, 3}, {3, 3}},
+            {{0, 3}, {2, 3}, {4, 3}},
+            {{1, 3}, {5, 3}},
+            {{0, 3}, {4, 3}, {6, 3}},
+            {{1, 3}, {3, 3}, {5, 3}, {7, 3}},
+            {{2, 3}, {4, 3}, {8, 3}},
+            {{3, 3}, {7, 3}},
+            {{4, 3}, {6, 3}, {8, 3}},
+            {{5, 3}, {7, 3}}};
+  }
+}; // ExpectedResults<AlbertaGrid<2, 2>, ...>
+
+#endif // HAVE_ALBERTA
 
 
 // clang-format off
@@ -154,6 +189,9 @@ typedef ::testing::Types< YaspGrid<2, EquidistantOffsetCoordinates<double, 2>>
 #endif
 #if HAVE_DUNE_UGGRID
                         , UGGrid<2>
+#endif
+#if HAVE_ALBERTA
+                        , AlbertaGrid<2, 2>
 #endif
                         >
     GridTypes; // clang-format on
