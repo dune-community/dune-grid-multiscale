@@ -9,14 +9,9 @@
 
 #include "provider_cube.hh"
 
-template <bool anything>
-struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, anything>
-{
-  static std::string grid_name()
-  {
-    return "yasp_3d";
-  }
 
+struct Expected3dCubeResults
+{
   static std::vector<size_t> local_sizes()
   {
     return std::vector<size_t>(27, 27);
@@ -59,71 +54,11 @@ struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, any
             {{16, 9}, {22, 9}, {24, 9}, {26, 9}},
             {{17, 9}, {23, 9}, {25, 9}}};
   }
-}; // ... YaspGrid<3, EquidistantOffsetCoordinates<double, 3>> ...
+}; // Expected3dCubeResults
 
-#if HAVE_DUNE_ALUGRID
 
-template <bool anything>
-struct ExpectedResults<Dune::ALUGrid<3, 3, cube, nonconforming>, anything>
+struct Expected3dSimplexResults
 {
-  static std::string grid_name()
-  {
-    return "alu_3d_cube_nonconforming";
-  }
-
-  static std::vector<size_t> local_sizes()
-  {
-    return std::vector<size_t>(27, 27);
-  }
-
-  static std::map<size_t, size_t> boundary_sizes()
-  {
-    return {{0, 19},  {1, 15},  {2, 19},  {3, 15}, {4, 9},   {5, 15},  {6, 19},  {7, 15},  {8, 19},
-            {9, 15},  {10, 9},  {11, 15}, {12, 9}, {14, 9},  {15, 15}, {16, 9},  {17, 15}, {18, 19},
-            {19, 15}, {20, 19}, {21, 15}, {22, 9}, {23, 15}, {24, 19}, {25, 15}, {26, 19}};
-  }
-
-  static std::vector<std::map<size_t, size_t>> coupling_sizes()
-  {
-    return {{{1, 9}, {3, 9}, {9, 9}},
-            {{0, 9}, {2, 9}, {4, 9}, {10, 9}},
-            {{1, 9}, {5, 9}, {11, 9}},
-            {{0, 9}, {4, 9}, {6, 9}, {12, 9}},
-            {{1, 9}, {3, 9}, {5, 9}, {7, 9}, {13, 9}},
-            {{2, 9}, {4, 9}, {8, 9}, {14, 9}},
-            {{3, 9}, {7, 9}, {15, 9}},
-            {{4, 9}, {6, 9}, {8, 9}, {16, 9}},
-            {{5, 9}, {7, 9}, {17, 9}},
-            {{0, 9}, {10, 9}, {12, 9}, {18, 9}},
-            {{1, 9}, {9, 9}, {11, 9}, {13, 9}, {19, 9}},
-            {{2, 9}, {10, 9}, {14, 9}, {20, 9}},
-            {{3, 9}, {9, 9}, {13, 9}, {15, 9}, {21, 9}},
-            {{4, 9}, {10, 9}, {12, 9}, {14, 9}, {16, 9}, {22, 9}},
-            {{5, 9}, {11, 9}, {13, 9}, {17, 9}, {23, 9}},
-            {{6, 9}, {12, 9}, {16, 9}, {24, 9}},
-            {{7, 9}, {13, 9}, {15, 9}, {17, 9}, {25, 9}},
-            {{8, 9}, {14, 9}, {16, 9}, {26, 9}},
-            {{9, 9}, {19, 9}, {21, 9}},
-            {{10, 9}, {18, 9}, {20, 9}, {22, 9}},
-            {{11, 9}, {19, 9}, {23, 9}},
-            {{12, 9}, {18, 9}, {22, 9}, {24, 9}},
-            {{13, 9}, {19, 9}, {21, 9}, {23, 9}, {25, 9}},
-            {{14, 9}, {20, 9}, {22, 9}, {26, 9}},
-            {{15, 9}, {21, 9}, {25, 9}},
-            {{16, 9}, {22, 9}, {24, 9}, {26, 9}},
-            {{17, 9}, {23, 9}, {25, 9}}};
-  }
-}; // ... Dune::ALUGrid<3, 3, cube, nonconforming> ...
-
-template <Dune::ALUGridRefinementType ref, bool anything>
-struct ExpectedResults<Dune::ALUGrid<3, 3, simplex, ref>, anything>
-{
-  static std::string grid_name()
-  {
-    return std::string("alu_3d_simplex_") + (ref == Dune::ALUGridRefinementType::conforming ? "" : "non")
-           + "conforming";
-  }
-
   static std::vector<size_t> local_sizes()
   {
     return std::vector<size_t>(27, 162);
@@ -166,9 +101,53 @@ struct ExpectedResults<Dune::ALUGrid<3, 3, simplex, ref>, anything>
             {{16, 18}, {22, 18}, {24, 18}, {26, 18}},
             {{17, 18}, {23, 18}, {25, 18}}};
   }
-}; // ... Dune::ALUGrid<3, 3, simplex, conforming> ...
+}; // Expected3dSimplexResults
+
+
+template <bool anything>
+struct ExpectedResults<YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>, anything> : public Expected3dCubeResults
+{
+  static std::string grid_name()
+  {
+    return "yasp_3d";
+  }
+};
+
+#if HAVE_DUNE_ALUGRID
+
+template <bool anything>
+struct ExpectedResults<Dune::ALUGrid<3, 3, cube, nonconforming>, anything> : public Expected3dCubeResults
+{
+  static std::string grid_name()
+  {
+    return "alu_3d_cube";
+  }
+};
+
+template <Dune::ALUGridRefinementType ref, bool anything>
+struct ExpectedResults<Dune::ALUGrid<3, 3, simplex, ref>, anything> : public Expected3dSimplexResults
+{
+  static std::string grid_name()
+  {
+    return std::string("alu_3d_simplex_") + (ref == Dune::ALUGridRefinementType::conforming ? "" : "non")
+           + "conforming";
+  }
+};
 
 #endif // HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_UGGRID
+
+template <bool anything>
+struct ExpectedResults<UGGrid<3>, anything> : public Expected3dSimplexResults
+{
+  static std::string grid_name()
+  {
+    return "ug_3d";
+  }
+};
+
+#endif // HAVE_DUNE_UGGRID
+
 
 // clang-format off
 typedef ::testing::Types< YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>
@@ -176,6 +155,9 @@ typedef ::testing::Types< YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>
                         , Dune::ALUGrid<3, 3, cube, nonconforming>
                         , Dune::ALUGrid<3, 3, simplex, conforming>
                         , Dune::ALUGrid<3, 3, simplex, nonconforming>
+#endif
+#if HAVE_DUNE_UGGRID
+                        , UGGrid<3>
 #endif
                         > GridTypes; // clang-format on
 
