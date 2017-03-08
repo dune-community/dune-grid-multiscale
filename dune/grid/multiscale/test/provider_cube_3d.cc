@@ -147,6 +147,18 @@ struct ExpectedResults<UGGrid<3>, anything> : public Expected3dSimplexResults
 };
 
 #endif // HAVE_DUNE_UGGRID
+#if HAVE_ALBERTA
+
+template <bool anything>
+struct ExpectedResults<AlbertaGrid<3, 3>, anything> : public Expected3dSimplexResults
+{
+  static std::string grid_name()
+  {
+    return "alberta_3d";
+  }
+};
+
+#endif // HAVE_ALBERTA
 
 
 // clang-format off
@@ -158,6 +170,9 @@ typedef ::testing::Types< YaspGrid<3, EquidistantOffsetCoordinates<double, 3>>
 #endif
 #if HAVE_DUNE_UGGRID
                         , UGGrid<3>
+#endif
+#if HAVE_ALBERTA
+                        , AlbertaGrid<3, 3>
 #endif
                         > GridTypes; // clang-format on
 
